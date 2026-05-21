@@ -1,0 +1,31 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# next.js
+.next/
+out/
+
+# env
+.env
+.env.local
+.env.*.local
+
+# misc
+.DS_Store
+*.pem
+*.log
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# uploads (dev)
+uploads/
+data/
+
+# ignored
+internal/

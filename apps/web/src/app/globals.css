@@ -1,0 +1,66 @@
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap");
+
+/* @snowztech/ui v0.3 ships styles separately — imported in layout.tsx via
+   `import "@snowztech/ui/styles.css"`. We only keep app-level overrides here. */
+
+@tailwind components;
+@tailwind utilities;
+
+/* Terminal feel — mono everywhere. */
+html, body, button, input, textarea, select {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono",
+    Menlo, Monaco, Consolas, monospace;
+}
+
+html, body {
+  height: 100%;
+  background: var(--sn-bg);
+  color: var(--sn-fg);
+}
+
+a:not(.sn-btn) {
+  color: inherit;
+  text-decoration: none;
+}
+a:not(.sn-btn):hover {
+  opacity: 0.85;
+}
+
+/* We disabled Tailwind preflight in favour of snowztech's reset, but bare
+   <button> elements still get the OS default (light grey). Normalise them
+   so any unstyled button blends with the dark/light page. .sn-btn variants
+   keep their own styling. */
+button:not(.sn-btn) {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+button:not(.sn-btn):disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.muted { color: var(--sn-fg-muted); }
+.subtle { color: var(--sn-fg-subtle); }
+.accent { color: var(--sn-accent); }
+
+/* @snowztech/ui v0.3 currently loses the accent button's text color on
+   hover when applied to an <a>. Force a stable foreground in both states.
+   The accent palette is a light lavender in both themes — dark text reads
+   well on it regardless of theme. */
+.sn-btn--accent,
+.sn-btn--accent:hover,
+.sn-btn--accent:focus,
+.sn-btn--accent:active {
+  color: #161616;
+  text-decoration: none;
+}
+.sn-btn--secondary,
+.sn-btn--secondary:hover,
+.sn-btn--secondary:focus,
+.sn-btn--secondary:active {
+  text-decoration: none;
+}

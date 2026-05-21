@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: helia_postgres
+    environment:
+      POSTGRES_USER: helia
+      POSTGRES_PASSWORD: helia
+      POSTGRES_DB: helia
+    ports:
+      - "5432:5432"
+    volumes:
+      - helia_pgdata:/var/lib/postgresql/data
+      - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U helia -d helia"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  helia_pgdata:
