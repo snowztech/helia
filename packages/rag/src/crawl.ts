@@ -24,7 +24,7 @@ const DEFAULT_IGNORE_PATTERNS = [
   /\?.*utm_/i,
 ];
 
-const DEFAULT_UA = "helia-bot/0.1 (+https://helia.io)";
+const DEFAULT_UA = "helia-bot/0.1 (+https://helia.snowztech.com)";
 
 /**
  * Crawl a website starting from `seedUrl`. BFS, respects robots.txt,
