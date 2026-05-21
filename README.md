@@ -56,7 +56,9 @@ packages/
 └── rag/    # extract / chunk / embed / retrieve / prompt / crawl / ingest
 ```
 
-`apps/api` plugs the agent in `src/agent/tools.ts` — concrete tools that bind `@helia/rag` retrieval to the workspace. The generic loop in `@helia/agent` stays app-agnostic.
+`apps/api` plugs the agent in `src/agent/tools.ts`. Those are the concrete tools that bind `@helia/rag` retrieval to the workspace. The generic loop in `@helia/agent` stays app agnostic.
+
+For the full picture (RAG pipeline, agent loop, schema, design choices) read [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
 Stack: Next.js 15 · TypeScript · pnpm workspaces · Hono · Postgres + pgvector · Drizzle · Vercel AI SDK · OpenAI.
 
