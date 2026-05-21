@@ -31,13 +31,12 @@ export default async function Home() {
     <div className="space-y-10">
       <AutoRefresh enabled={hasInFlight} intervalMs={2000} />
 
-      <section className="space-y-3">
+      <section className="space-y-2">
         <h1 className="text-2xl">
           your own <span className="text-primary">ai assistant</span>.
         </h1>
         <p className="text-sm text-muted-foreground">
-          Upload your docs, plug in your APIs, drop one script tag. Set it up
-          in three steps below.
+          Docs, APIs, one script tag.
         </p>
       </section>
 
@@ -65,14 +64,11 @@ export default async function Home() {
 
         {sources.length === 0 ? (
           <Card>
-            <CardContent className="py-8 text-center">
-              <p className="text-sm text-muted-foreground">
-                No sources yet.{" "}
-                <Link href="/upload" className="text-primary hover:underline">
-                  Add a PDF, paste text, or crawl a URL
-                </Link>{" "}
-                to give your assistant something to answer with.
-              </p>
+            <CardContent className="flex flex-col items-center gap-3 py-8">
+              <p className="text-sm text-muted-foreground">No sources yet.</p>
+              <Button asChild size="sm" variant="outline">
+                <Link href="/upload">+ add source</Link>
+              </Button>
             </CardContent>
           </Card>
         ) : (

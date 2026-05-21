@@ -10,7 +10,6 @@ interface State {
   open: boolean;
   streaming: boolean;
   messages: ChatMessage[];
-  position: "right" | "left";
 }
 
 export function mount(config: WidgetConfig): WidgetHandle {
@@ -53,6 +52,7 @@ export function mount(config: WidgetConfig): WidgetHandle {
   panel.setAttribute("aria-label", `${botName} chat`);
   panel.innerHTML = `
     <div class="header">
+      <div class="avatar" aria-hidden="true">${avatarIcon()}</div>
       <div class="header-text">
         <div class="header-title">${escapeHtml(botName)}</div>
         <div class="header-subtitle"></div>
@@ -76,11 +76,14 @@ export function mount(config: WidgetConfig): WidgetHandle {
   const titleEl = panel.querySelector(".header-title") as HTMLElement;
   const subtitleEl = panel.querySelector(".header-subtitle") as HTMLElement;
 
+  const suggestionsEl = document.createElement("ul");
+  suggestionsEl.className = "suggestions hidden";
+  messagesEl.appendChild(suggestionsEl);
+
   const state: State = {
     open: false,
     streaming: false,
     messages: [],
-    position: "right",
   };
 
   const greetingEl = appendMessage("assistant", greeting);
@@ -109,7 +112,29 @@ export function mount(config: WidgetConfig): WidgetHandle {
 
     if (state.messages.length === 0) {
       greetingEl.textContent = greeting;
+      renderSuggestions(remote.bot.suggestions ?? []);
     }
+  }
+
+  function renderSuggestions(items: string[]): void {
+    suggestionsEl.innerHTML = "";
+    if (items.length === 0 || state.messages.length > 0) {
+      suggestionsEl.classList.add("hidden");
+      return;
+    }
+    for (const q of items) {
+      const li = document.createElement("li");
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = q;
+      btn.addEventListener("click", () => {
+        input.value = q;
+        void send();
+      });
+      li.appendChild(btn);
+      suggestionsEl.appendChild(li);
+    }
+    suggestionsEl.classList.remove("hidden");
   }
 
   function applyThemeMode(mode: RemoteConfig["theme"]["mode"]): void {
@@ -121,7 +146,6 @@ export function mount(config: WidgetConfig): WidgetHandle {
     pos: "bottom-right" | "bottom-left" | undefined,
   ): void {
     const next: "left" | "right" = pos === "bottom-left" ? "left" : "right";
-    state.position = next;
     launcher.classList.remove("left", "right");
     launcher.classList.add(next);
     panel.classList.remove("left", "right");
@@ -163,10 +187,10 @@ export function mount(config: WidgetConfig): WidgetHandle {
     return el;
   }
 
-  function appendToolIndicator(toolName: string): HTMLElement {
+  function appendToolPill(toolName: string): HTMLElement {
     const el = document.createElement("div");
-    el.className = "message tool";
-    el.textContent = `using ${toolName}…`;
+    el.className = "tool-pill";
+    el.innerHTML = `<span class="dot"></span><span class="label">${escapeHtml(toolLabel(toolName))}</span>`;
     messagesEl.appendChild(el);
     scrollToBottom();
     return el;
@@ -179,6 +203,41 @@ export function mount(config: WidgetConfig): WidgetHandle {
     messagesEl.appendChild(el);
     scrollToBottom();
     return el;
+  }
+
+  function appendCitations(
+    sources: Array<{ title: string; url: string | null }>,
+  ): void {
+    if (sources.length === 0) return;
+    const wrap = document.createElement("div");
+    wrap.className = "citations";
+
+    const head = document.createElement("div");
+    head.className = "citations-header";
+    head.textContent = `${sources.length} ${sources.length === 1 ? "source" : "sources"}`;
+    wrap.appendChild(head);
+
+    const ul = document.createElement("ul");
+    for (const s of sources.slice(0, 4)) {
+      const li = document.createElement("li");
+      if (s.url) {
+        const a = document.createElement("a");
+        a.href = s.url;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = s.title;
+        li.appendChild(a);
+      } else {
+        const span = document.createElement("span");
+        span.className = "cite";
+        span.textContent = s.title;
+        li.appendChild(span);
+      }
+      ul.appendChild(li);
+    }
+    wrap.appendChild(ul);
+    messagesEl.appendChild(wrap);
+    scrollToBottom();
   }
 
   function scrollToBottom(): void {
@@ -195,17 +254,19 @@ export function mount(config: WidgetConfig): WidgetHandle {
 
     const userMsg: ChatMessage = { role: "user", content: text };
     state.messages.push(userMsg);
+    suggestionsEl.classList.add("hidden");
     appendMessage("user", text);
 
     const typingEl = appendTyping();
     let assistantEl: HTMLElement | null = null;
     let assistantText = "";
-    let toolEl: HTMLElement | null = null;
+    let activeToolPill: HTMLElement | null = null;
+    let sources: Array<{ title: string; url: string | null }> = [];
 
     await streamChat(apiUrl, state.messages, {
       onDelta: (delta) => {
         if (!assistantEl) {
-          typingEl.remove();
+          if (typingEl.isConnected) typingEl.remove();
           assistantEl = document.createElement("div");
           assistantEl.className = "message assistant";
           messagesEl.appendChild(assistantEl);
@@ -215,20 +276,29 @@ export function mount(config: WidgetConfig): WidgetHandle {
         scrollToBottom();
       },
       onToolStart: (toolName) => {
-        if (toolEl) toolEl.remove();
-        toolEl = appendToolIndicator(toolName);
+        // The "thinking" typing dots are no longer useful — replace with a
+        // concrete agent step.
+        if (typingEl.isConnected) typingEl.remove();
+        activeToolPill = appendToolPill(toolName);
       },
-      onToolEnd: () => {
-        if (toolEl) {
-          toolEl.remove();
-          toolEl = null;
+      onToolResult: (toolName, result) => {
+        if (activeToolPill) {
+          activeToolPill.classList.add("done");
+          const dot = activeToolPill.querySelector(".dot");
+          if (dot) dot.remove();
+          activeToolPill = null;
+        }
+        // Pull source titles from search_knowledge for citation rendering.
+        if (toolName === "search_knowledge") {
+          const extracted = extractSources(result);
+          for (const s of extracted) sources.push(s);
         }
       },
       onDone: () => {
         if (typingEl.isConnected) typingEl.remove();
-        if (toolEl?.isConnected) toolEl.remove();
         if (assistantText) {
           state.messages.push({ role: "assistant", content: assistantText });
+          appendCitations(dedupeSources(sources));
         }
         state.streaming = false;
         sendBtn.disabled = input.value.trim().length === 0;
@@ -236,7 +306,7 @@ export function mount(config: WidgetConfig): WidgetHandle {
       },
       onError: (err) => {
         if (typingEl.isConnected) typingEl.remove();
-        if (toolEl?.isConnected) toolEl.remove();
+        if (activeToolPill?.isConnected) activeToolPill.remove();
         const errEl = document.createElement("div");
         errEl.className = "message assistant";
         errEl.textContent = `Sorry, something went wrong: ${err.message}`;
@@ -259,31 +329,85 @@ function resolveTheme(mode: RemoteConfig["theme"]["mode"]): "light" | "dark" {
     : "light";
 }
 
+// Icon SVGs copied from @hugeicons/core-free-icons so the deployed widget
+// (pure TS, no React) renders the same marks as the admin preview.
+// Source: SparklesIcon, Cancel01Icon, ArrowUp02Icon. Strokes use currentColor.
+
+function toolLabel(name: string): string {
+  if (name === "search_knowledge") return "Searching your knowledge…";
+  return `Calling ${name}…`;
+}
+
+function extractSources(
+  result: unknown,
+): Array<{ title: string; url: string | null }> {
+  if (!result || typeof result !== "object") return [];
+  const r = result as { results?: unknown };
+  if (!Array.isArray(r.results)) return [];
+  const out: Array<{ title: string; url: string | null }> = [];
+  for (const row of r.results) {
+    if (!row || typeof row !== "object") continue;
+    const obj = row as { title?: unknown; url?: unknown };
+    const title = typeof obj.title === "string" ? obj.title : null;
+    if (!title) continue;
+    const url = typeof obj.url === "string" ? obj.url : null;
+    out.push({ title, url });
+  }
+  return out;
+}
+
+function dedupeSources(
+  list: Array<{ title: string; url: string | null }>,
+): Array<{ title: string; url: string | null }> {
+  const seen = new Set<string>();
+  const out: Array<{ title: string; url: string | null }> = [];
+  for (const s of list) {
+    const key = `${s.title}|${s.url ?? ""}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(s);
+  }
+  return out;
+}
+
+function avatarIcon(): string {
+  // Same Sparkles path as the launcher, scaled down for the header avatar.
+  return /* html */ `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="1.6" stroke-linejoin="round" aria-hidden="true">
+      <path d="M15 2L15.5387 4.39157C15.9957 6.42015 17.5798 8.00431 19.6084 8.46127L22 9L19.6084 9.53873C17.5798 9.99569 15.9957 11.5798 15.5387 13.6084L15 16L14.4613 13.6084C14.0043 11.5798 12.4202 9.99569 10.3916 9.53873L8 9L10.3916 8.46127C12.4201 8.00431 14.0043 6.42015 14.4613 4.39158L15 2Z" />
+      <path d="M7 12L7.38481 13.7083C7.71121 15.1572 8.84275 16.2888 10.2917 16.6152L12 17L10.2917 17.3848C8.84275 17.7112 7.71121 18.8427 7.38481 20.2917L7 22L6.61519 20.2917C6.28879 18.8427 5.15725 17.7112 3.70827 17.3848L2 17L3.70827 16.6152C5.15725 16.2888 6.28879 15.1573 6.61519 13.7083L7 12Z" />
+    </svg>
+  `;
+}
+
 function chatIcon(): string {
   return /* html */ `
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="1.6" stroke-linejoin="round" aria-hidden="true">
+      <path d="M15 2L15.5387 4.39157C15.9957 6.42015 17.5798 8.00431 19.6084 8.46127L22 9L19.6084 9.53873C17.5798 9.99569 15.9957 11.5798 15.5387 13.6084L15 16L14.4613 13.6084C14.0043 11.5798 12.4202 9.99569 10.3916 9.53873L8 9L10.3916 8.46127C12.4201 8.00431 14.0043 6.42015 14.4613 4.39158L15 2Z" />
+      <path d="M7 12L7.38481 13.7083C7.71121 15.1572 8.84275 16.2888 10.2917 16.6152L12 17L10.2917 17.3848C8.84275 17.7112 7.71121 18.8427 7.38481 20.2917L7 22L6.61519 20.2917C6.28879 18.8427 5.15725 17.7112 3.70827 17.3848L2 17L3.70827 16.6152C5.15725 16.2888 6.28879 15.1573 6.61519 13.7083L7 12Z" />
     </svg>
   `;
 }
 
 function closeIcon(): string {
   return /* html */ `
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+         aria-hidden="true">
+      <path d="M19 5L5 19M5 5L19 19" />
     </svg>
   `;
 }
 
 function sendIcon(): string {
   return /* html */ `
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <line x1="22" y1="2" x2="11" y2="13" />
-      <polygon points="22 2 15 22 11 13 2 9 22 2" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+         aria-hidden="true">
+      <path d="M12 4V20" />
+      <path d="M6 10L11.2929 4.70711C11.6262 4.37377 11.7929 4.20711 12 4.20711C12.2071 4.20711 12.3738 4.37377 12.7071 4.70711L18 10" />
     </svg>
   `;
 }

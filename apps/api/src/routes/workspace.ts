@@ -31,6 +31,7 @@ const PatchBody = z.object({
   widgetPosition: z.enum(["bottom-right", "bottom-left"]).optional(),
   widgetTheme: z.enum(["light", "dark", "auto"]).optional(),
   widgetRadius: z.number().int().min(0).max(24).optional(),
+  botSuggestions: z.array(z.string().min(1).max(120)).max(6).optional(),
 });
 
 /**

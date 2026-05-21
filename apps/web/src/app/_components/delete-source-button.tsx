@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { X } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Cancel01Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -45,7 +46,7 @@ export function DeleteSourceButton({ id, name }: { id: string; name: string }) {
           aria-label={`Delete ${name}`}
           title="Delete source"
         >
-          <X />
+          <HugeiconsIcon icon={Cancel01Icon} size={16} />
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>

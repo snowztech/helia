@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, X } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Cancel01Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import {
   Dialog,
   DialogContent,
@@ -127,10 +128,6 @@ export function ToolDialog({
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEdit ? "edit tool" : "new tool"}</DialogTitle>
-          <DialogDescription>
-            Describe an endpoint the assistant can call. Keep the description
-            sharp — the agent uses it to decide when to call.
-          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5">
@@ -177,10 +174,6 @@ export function ToolDialog({
                 setDraft({ ...draft, description: e.target.value })
               }
             />
-            <p className="text-[11px] text-muted-foreground">
-              Surfaces to the LLM verbatim. Be precise about what the endpoint
-              returns and when it should be called.
-            </p>
           </div>
 
           <div className="space-y-1.5">
@@ -281,15 +274,11 @@ function ParamsEditor({
       <div className="flex items-center justify-between">
         <Label>parameters</Label>
         <Button type="button" variant="ghost" size="sm" onClick={onAdd}>
-          <Plus /> add param
+          <HugeiconsIcon icon={PlusSignIcon} size={14} /> add param
         </Button>
       </div>
 
-      {params.length === 0 ? (
-        <p className="text-xs text-muted-foreground">
-          No parameters. The agent will call the endpoint with an empty body.
-        </p>
-      ) : (
+      {params.length === 0 ? null : (
         <ul className="space-y-2">
           {params.map((p, i) => (
             <li
@@ -347,7 +336,7 @@ function ParamsEditor({
                   aria-label="Remove parameter"
                   className="h-8 w-8"
                 >
-                  <X />
+                  <HugeiconsIcon icon={Cancel01Icon} size={14} />
                 </Button>
               </div>
             </li>
@@ -374,15 +363,11 @@ function HeadersEditor({
       <div className="flex items-center justify-between">
         <Label>outbound headers</Label>
         <Button type="button" variant="ghost" size="sm" onClick={onAdd}>
-          <Plus /> add header
+          <HugeiconsIcon icon={PlusSignIcon} size={14} /> add header
         </Button>
       </div>
 
-      {entries.length === 0 ? (
-        <p className="text-xs text-muted-foreground">
-          Optional. e.g. <code>Authorization: Bearer …</code> for your API.
-        </p>
-      ) : (
+      {entries.length === 0 ? null : (
         <ul className="space-y-2">
           {entries.map(([key, value], i) => (
             <li
@@ -409,7 +394,7 @@ function HeadersEditor({
                 aria-label="Remove header"
                 className="h-8 w-8"
               >
-                <X />
+                <HugeiconsIcon icon={Cancel01Icon} size={14} />
               </Button>
             </li>
           ))}

@@ -51,6 +51,7 @@ widgetRouter.get("/config", async (c) => {
       subtitle: workspace.botSubtitle,
       greeting: workspace.botGreeting,
       placeholder: workspace.botPlaceholder,
+      suggestions: workspace.botSuggestions,
     },
   });
 });

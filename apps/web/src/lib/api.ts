@@ -57,6 +57,7 @@ export type Workspace = {
   botSubtitle: string;
   botGreeting: string;
   botPlaceholder: string;
+  botSuggestions: string[];
   widgetPosition: WidgetPosition;
   widgetTheme: WidgetTheme;
   widgetRadius: number;
@@ -72,6 +73,7 @@ export type WorkspacePatch = Partial<
     | "botSubtitle"
     | "botGreeting"
     | "botPlaceholder"
+    | "botSuggestions"
     | "widgetPosition"
     | "widgetTheme"
     | "widgetRadius"

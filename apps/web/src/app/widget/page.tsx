@@ -1,7 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Check, Copy } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Cancel01Icon,
+  Copy01Icon,
+  PlusSignIcon,
+  Tick02Icon,
+} from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,8 +34,54 @@ const PRESETS = [
 const RADIUS_PRESETS = [0, 8, 14, 22];
 const WIDGET_PROD_URL = "https://helia.snowztech.com/w.js";
 
+// Fields we persist on save. Everything else on the workspace is read-only here.
+const EDITABLE_FIELDS = [
+  "brandPrimary",
+  "botName",
+  "botSubtitle",
+  "botGreeting",
+  "botPlaceholder",
+  "botSuggestions",
+  "widgetPosition",
+  "widgetTheme",
+  "widgetRadius",
+] as const;
+
+type EditableSnapshot = Pick<Workspace, (typeof EDITABLE_FIELDS)[number]>;
+
+function snapshot(ws: Workspace): EditableSnapshot {
+  return {
+    brandPrimary: ws.brandPrimary,
+    botName: ws.botName,
+    botSubtitle: ws.botSubtitle,
+    botGreeting: ws.botGreeting,
+    botPlaceholder: ws.botPlaceholder,
+    botSuggestions: ws.botSuggestions,
+    widgetPosition: ws.widgetPosition,
+    widgetTheme: ws.widgetTheme,
+    widgetRadius: ws.widgetRadius,
+  };
+}
+
+function shallowEqual(a: EditableSnapshot, b: EditableSnapshot): boolean {
+  for (const k of EDITABLE_FIELDS) {
+    if (k === "botSuggestions") {
+      const av = a.botSuggestions;
+      const bv = b.botSuggestions;
+      if (av.length !== bv.length) return false;
+      for (let i = 0; i < av.length; i++) {
+        if (av[i] !== bv[i]) return false;
+      }
+      continue;
+    }
+    if (a[k] !== b[k]) return false;
+  }
+  return true;
+}
+
 export default function WidgetPage() {
   const [ws, setWs] = useState<Workspace | null>(null);
+  const [saved, setSaved] = useState<EditableSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -37,16 +89,22 @@ export default function WidgetPage() {
   useEffect(() => {
     api
       .getWorkspace()
-      .then(({ workspace }) => setWs(workspace))
+      .then(({ workspace }) => {
+        setWs(workspace);
+        setSaved(snapshot(workspace));
+      })
       .catch((err: Error) => toast.error(err.message ?? "load failed"))
       .finally(() => setLoading(false));
   }, []);
 
+  const dirty = useMemo(() => {
+    if (!ws || !saved) return false;
+    return !shallowEqual(snapshot(ws), saved);
+  }, [ws, saved]);
+
   if (loading || !ws) {
     return <p className="text-sm text-muted-foreground">loading…</p>;
   }
-
-  const dirty = false; // for now we trust local state, post on save
 
   const config: PreviewConfig = {
     primary: ws.brandPrimary,
@@ -57,6 +115,7 @@ export default function WidgetPage() {
     botSubtitle: ws.botSubtitle,
     botGreeting: ws.botGreeting,
     botPlaceholder: ws.botPlaceholder,
+    suggestions: ws.botSuggestions,
   };
 
   const snippet = `<script src="${WIDGET_PROD_URL}" data-workspace="${ws.id}" async></script>`;
@@ -64,17 +123,9 @@ export default function WidgetPage() {
   const save = async () => {
     setSaving(true);
     try {
-      const { workspace } = await api.patchWorkspace({
-        brandPrimary: ws.brandPrimary,
-        botName: ws.botName,
-        botSubtitle: ws.botSubtitle,
-        botGreeting: ws.botGreeting,
-        botPlaceholder: ws.botPlaceholder,
-        widgetPosition: ws.widgetPosition,
-        widgetTheme: ws.widgetTheme,
-        widgetRadius: ws.widgetRadius,
-      });
+      const { workspace } = await api.patchWorkspace(snapshot(ws));
       setWs(workspace);
+      setSaved(snapshot(workspace));
       toast.success("widget saved");
     } catch (err) {
       toast.error(String(err));
@@ -100,12 +151,11 @@ export default function WidgetPage() {
         <div className="space-y-1">
           <h1 className="text-2xl">widget.</h1>
           <p className="text-xs text-muted-foreground">
-            Customize how the widget looks. Test it live on the right.
-            Hit save when it's ready.
+            Customize the widget. Save when ready.
           </p>
         </div>
-        <Button onClick={save} disabled={saving || dirty}>
-          {saving ? "saving…" : "save"}
+        <Button onClick={save} disabled={!dirty || saving}>
+          {saving ? "saving…" : dirty ? "save" : "saved"}
         </Button>
       </header>
 
@@ -185,6 +235,13 @@ export default function WidgetPage() {
             </div>
           </Section>
 
+          <Section title="Suggested questions">
+            <SuggestionsEditor
+              suggestions={ws.botSuggestions}
+              onChange={(next) => setWs({ ...ws, botSuggestions: next })}
+            />
+          </Section>
+
           <Section title="Layout">
             <div className="space-y-4">
               <Field label="position">
@@ -236,30 +293,30 @@ export default function WidgetPage() {
 
         <div className="space-y-6">
           <Section title="Live preview">
-            <p className="mb-3 text-xs text-muted-foreground">
-              Click the launcher to test the assistant. Messages go through
-              your real agent.
-            </p>
             <WidgetPreview config={config} />
           </Section>
 
           <Section title="Install">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">
+            <div className="rounded-lg border border-border bg-card p-4">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                   html
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <pre className="overflow-x-auto rounded-md bg-muted px-3 py-2 text-[11px] leading-relaxed">
-                  {snippet}
-                </pre>
-                <Button size="sm" onClick={copy}>
-                  {copied ? <Check /> : <Copy />}
-                  {copied ? "copied" : "copy snippet"}
+                </span>
+                <Button size="sm" variant="ghost" onClick={copy}>
+                  <HugeiconsIcon
+                    icon={copied ? Tick02Icon : Copy01Icon}
+                    size={14}
+                  />
+                  {copied ? "copied" : "copy"}
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+              <pre className="overflow-x-auto rounded-md bg-muted px-3 py-2.5 text-[11px] leading-relaxed text-foreground">
+                {snippet}
+              </pre>
+              <p className="mt-3 text-[11px] text-muted-foreground">
+                Paste before <code>&lt;/body&gt;</code> on any page of your site.
+              </p>
+            </div>
           </Section>
         </div>
       </div>
@@ -309,7 +366,7 @@ function SegGroup({
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="inline-flex rounded-md border border-border bg-card p-0.5">
+    <div className="inline-flex rounded-md border border-border bg-card p-1">
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -319,7 +376,7 @@ function SegGroup({
             data-shadcn=""
             onClick={() => onChange(o.value)}
             className={cn(
-              "rounded-[5px] px-3 py-1 text-xs transition-colors",
+              "rounded-md px-3 py-1.5 text-xs transition-colors",
               active
                 ? "bg-muted text-foreground"
                 : "text-muted-foreground hover:text-foreground",
@@ -329,6 +386,74 @@ function SegGroup({
           </button>
         );
       })}
+    </div>
+  );
+}
+
+function SuggestionsEditor({
+  suggestions,
+  onChange,
+}: {
+  suggestions: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const [draft, setDraft] = useState("");
+
+  const add = () => {
+    const v = draft.trim();
+    if (!v) return;
+    if (suggestions.length >= 6) {
+      toast.error("max 6 suggestions");
+      return;
+    }
+    onChange([...suggestions, v]);
+    setDraft("");
+  };
+
+  const remove = (i: number) => {
+    onChange(suggestions.filter((_, j) => j !== i));
+  };
+
+  return (
+    <div className="space-y-3">
+      {suggestions.length > 0 && (
+        <ul className="flex flex-wrap gap-2">
+          {suggestions.map((q, i) => (
+            <li
+              key={`${i}-${q}`}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1 text-xs"
+            >
+              {q}
+              <button
+                type="button"
+                data-shadcn=""
+                aria-label={`remove ${q}`}
+                onClick={() => remove(i)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} size={12} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="flex gap-2">
+        <Input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              add();
+            }
+          }}
+          placeholder="how do I get started?"
+          maxLength={120}
+        />
+        <Button type="button" variant="outline" size="sm" onClick={add}>
+          <HugeiconsIcon icon={PlusSignIcon} size={14} /> add
+        </Button>
+      </div>
     </div>
   );
 }

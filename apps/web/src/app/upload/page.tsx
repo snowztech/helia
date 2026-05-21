@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,7 +37,8 @@ export default function UploadPage() {
       } else {
         setStatus({ kind: "ok", id: res.source.id });
         toast.success("source created");
-        router.refresh();
+        // Take the user straight to the timeline so they see ingest progress.
+        router.push(`/sources/${res.source.id}`);
       }
     } catch (err) {
       setStatus({ kind: "error", msg: String(err) });
@@ -52,14 +54,11 @@ export default function UploadPage() {
         href="/"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:opacity-80"
       >
-        <ArrowLeft className="h-3.5 w-3.5" /> back
+        <HugeiconsIcon icon={ArrowLeft01Icon} size={14} /> back
       </a>
 
-      <header className="space-y-1">
+      <header>
         <h1 className="text-2xl">add a source.</h1>
-        <p className="text-xs text-muted-foreground">
-          PDF and text ingest synchronously · URL crawls run in the background.
-        </p>
       </header>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>

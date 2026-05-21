@@ -44,6 +44,10 @@ export const workspaces = pgTable("workspaces", {
     .default("auto")
     .notNull(),
   widgetRadius: integer("widget_radius").default(14).notNull(),
+  botSuggestions: jsonb("bot_suggestions")
+    .$type<string[]>()
+    .default(sql`'[]'::jsonb`)
+    .notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

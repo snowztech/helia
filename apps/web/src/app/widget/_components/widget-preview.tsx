@@ -2,7 +2,12 @@
 
 import { useChat } from "@ai-sdk/react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MessageCircle, Send, X } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowUp02Icon,
+  Cancel01Icon,
+  SparklesIcon,
+} from "@hugeicons/core-free-icons";
 import { API_URL } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +20,7 @@ export interface PreviewConfig {
   botSubtitle: string;
   botGreeting: string;
   botPlaceholder: string;
+  suggestions: string[];
 }
 
 /**
@@ -26,11 +32,13 @@ export interface PreviewConfig {
  * actually exercises the agent end-to-end.
  */
 export function WidgetPreview({ config }: { config: PreviewConfig }) {
-  const [open, setOpen] = useState(false);
+  // Default open in the admin preview — you're configuring the panel, not
+  // the launcher, so showing the panel first is the right context.
+  const [open, setOpen] = useState(true);
   const themeMode = useResolvedTheme(config.theme);
 
   return (
-    <FakeBrowser theme={themeMode}>
+    <FakeBrowser>
       {open ? (
         <Panel
           config={config}
@@ -61,52 +69,20 @@ function useResolvedTheme(theme: PreviewConfig["theme"]): "light" | "dark" {
   return theme === "auto" ? auto : theme;
 }
 
-function FakeBrowser({
-  theme,
-  children,
-}: {
-  theme: "light" | "dark";
-  children: React.ReactNode;
-}) {
-  const dark = theme === "dark";
+function FakeBrowser({ children }: { children: React.ReactNode }) {
+  // The frame represents the customer's website chrome — neutral, following
+  // the admin's theme tokens. The widget panel inside is what reacts to the
+  // widget's own light/dark/auto setting.
   return (
-    <div
-      className={cn(
-        "relative h-[520px] w-full overflow-hidden rounded-lg border border-border",
-        dark ? "bg-[#0e0e0e] text-zinc-400" : "bg-zinc-50 text-zinc-500",
-      )}
-    >
-      <div className="absolute left-0 right-0 top-0 h-6 border-b border-border/40 bg-black/20 px-3 py-1.5">
-        <div className="flex items-center gap-1.5">
-          <div className="h-2 w-2 rounded-full bg-zinc-600" />
-          <div className="h-2 w-2 rounded-full bg-zinc-600" />
-          <div className="h-2 w-2 rounded-full bg-zinc-600" />
-          <div className="ml-3 text-[10px] uppercase tracking-wider opacity-60">
-            your website
-          </div>
-        </div>
+    <div className="relative w-full overflow-hidden rounded-lg border border-border bg-muted/40">
+      <div className="flex h-6 items-center gap-1.5 border-b border-border bg-muted/60 px-3">
+        <div className="h-2 w-2 rounded-full bg-muted-foreground/40" />
+        <div className="h-2 w-2 rounded-full bg-muted-foreground/40" />
+        <div className="h-2 w-2 rounded-full bg-muted-foreground/40" />
       </div>
-      <div className="px-6 pt-10">
-        <div
-          className={cn(
-            "h-3 w-1/3 rounded",
-            dark ? "bg-zinc-800" : "bg-zinc-200",
-          )}
-        />
-        <div
-          className={cn(
-            "mt-3 h-3 w-2/3 rounded",
-            dark ? "bg-zinc-800" : "bg-zinc-200",
-          )}
-        />
-        <div
-          className={cn(
-            "mt-3 h-3 w-1/2 rounded",
-            dark ? "bg-zinc-800" : "bg-zinc-200",
-          )}
-        />
+      <div className="relative flex h-[580px] items-end justify-center p-4">
+        {children}
       </div>
-      {children}
     </div>
   );
 }
@@ -121,7 +97,7 @@ function Launcher({
   onClick: () => void;
 }) {
   const posClass =
-    config.position === "bottom-right" ? "bottom-5 right-5" : "bottom-5 left-5";
+    config.position === "bottom-right" ? "right-4" : "left-4";
   return (
     <button
       type="button"
@@ -129,13 +105,15 @@ function Launcher({
       onClick={onClick}
       aria-label="Open chat"
       className={cn(
-        "absolute h-12 w-12 rounded-full text-white shadow-lg transition-all duration-150",
+        "absolute bottom-4 h-12 w-12 rounded-full text-white shadow-lg transition-all duration-150",
         posClass,
-        hidden ? "scale-90 opacity-0 pointer-events-none" : "scale-100 opacity-100 hover:-translate-y-0.5",
+        hidden
+          ? "scale-90 opacity-0 pointer-events-none"
+          : "scale-100 opacity-100 hover:-translate-y-0.5",
       )}
       style={{ background: config.primary }}
     >
-      <MessageCircle className="mx-auto h-5 w-5" />
+      <HugeiconsIcon icon={SparklesIcon} size={22} className="mx-auto" />
     </button>
   );
 }
@@ -150,52 +128,44 @@ function Panel({
   onClose: () => void;
 }) {
   const posClass =
-    config.position === "bottom-right" ? "bottom-5 right-5" : "bottom-5 left-5";
+    config.position === "bottom-right" ? "right-4" : "left-4";
   const dark = themeMode === "dark";
 
-  const { messages, input, handleInputChange, handleSubmit, status } = useChat({
-    api: `${API_URL}/v1/chat`,
-  });
+  const { messages, input, handleInputChange, handleSubmit, status, append } =
+    useChat({
+      api: `${API_URL}/v1/chat`,
+    });
 
+  const waiting = status === "submitted";
   const busy = status === "submitted" || status === "streaming";
   const messagesEnd = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEnd.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const allMessages = useMemo(() => {
-    return [
-      {
-        id: "greeting",
-        role: "assistant" as const,
-        content: config.botGreeting,
-      },
-      ...messages.map((m) => ({
-        id: m.id,
-        role: m.role as "user" | "assistant",
-        content: m.content,
-      })),
-    ];
-  }, [messages, config.botGreeting]);
+  }, [messages, status]);
 
   return (
     <div
       className={cn(
-        "absolute flex w-[340px] flex-col overflow-hidden shadow-2xl",
+        "absolute bottom-4 flex w-[360px] flex-col overflow-hidden shadow-2xl",
         posClass,
         dark ? "bg-[#161616] text-zinc-100" : "bg-white text-zinc-900",
       )}
-      style={{ borderRadius: config.radius, height: 440 }}
+      style={{ borderRadius: config.radius, height: 540 }}
     >
       <header
-        className="flex items-start justify-between px-4 py-3 text-white"
+        className="flex items-start gap-3 px-4 py-3.5 text-white"
         style={{ background: config.primary }}
       >
-        <div className="min-w-0">
-          <div className="truncate text-sm font-semibold">{config.botName}</div>
+        <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/20">
+          <HugeiconsIcon icon={SparklesIcon} size={16} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[15px] font-semibold leading-tight">
+            {config.botName}
+          </div>
           {config.botSubtitle && (
-            <div className="truncate text-xs opacity-90">
+            <div className="mt-0.5 truncate text-xs opacity-90">
               {config.botSubtitle}
             </div>
           )}
@@ -207,36 +177,57 @@ function Panel({
           aria-label="Close"
           className="rounded p-1 opacity-80 hover:bg-white/10 hover:opacity-100"
         >
-          <X className="h-4 w-4" />
+          <HugeiconsIcon icon={Cancel01Icon} size={16} />
         </button>
       </header>
 
       <div className="flex-1 space-y-2 overflow-y-auto px-3 py-3 text-sm">
-        {allMessages.map((m) => (
-          <div
+        <AssistantBubble dark={dark}>{config.botGreeting}</AssistantBubble>
+
+        {messages.map((m) => (
+          <MessageRender
             key={m.id}
-            className={cn(
-              "max-w-[85%] whitespace-pre-wrap px-3 py-2 text-[13px] leading-snug",
-              m.role === "user"
-                ? "ml-auto rounded-2xl rounded-br-sm text-white"
-                : dark
-                  ? "mr-auto rounded-2xl rounded-bl-sm bg-zinc-800"
-                  : "mr-auto rounded-2xl rounded-bl-sm bg-zinc-100",
-            )}
-            style={
-              m.role === "user" ? { background: config.primary } : undefined
-            }
-          >
-            {m.content}
-          </div>
+            message={m}
+            primary={config.primary}
+            dark={dark}
+          />
         ))}
-        {busy && (
-          <div className="mr-auto inline-flex items-center gap-1 rounded-2xl rounded-bl-sm bg-zinc-100 px-3 py-2 dark:bg-zinc-800">
+
+        {waiting && (
+          <div
+            className={cn(
+              "mr-auto inline-flex items-center gap-1 rounded-2xl rounded-bl-sm px-3 py-2",
+              dark ? "bg-zinc-800" : "bg-zinc-100",
+            )}
+          >
             <Dot delay={0} />
             <Dot delay={150} />
             <Dot delay={300} />
           </div>
         )}
+
+        {messages.length === 0 && config.suggestions.length > 0 && !busy && (
+          <ul className="space-y-1.5 pt-1">
+            {config.suggestions.map((q) => (
+              <li key={q}>
+                <button
+                  type="button"
+                  data-shadcn=""
+                  onClick={() => void append({ role: "user", content: q })}
+                  className={cn(
+                    "w-full rounded-2xl border px-3 py-2 text-left text-[13px] leading-snug transition-colors",
+                    dark
+                      ? "border-zinc-700 hover:bg-zinc-800"
+                      : "border-zinc-200 hover:bg-zinc-50",
+                  )}
+                >
+                  {q}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
         <div ref={messagesEnd} />
       </div>
 
@@ -267,7 +258,7 @@ function Panel({
           style={{ background: config.primary }}
           aria-label="Send"
         >
-          <Send className="h-3.5 w-3.5" />
+          <HugeiconsIcon icon={ArrowUp02Icon} size={14} />
         </button>
       </form>
 
@@ -290,4 +281,218 @@ function Dot({ delay }: { delay: number }) {
       style={{ animationDelay: `${delay}ms` }}
     />
   );
+}
+
+function AssistantBubble({
+  dark,
+  children,
+}: {
+  dark: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        "mr-auto max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-bl-sm px-3 py-2 text-[13px] leading-snug",
+        dark ? "bg-zinc-800" : "bg-zinc-100",
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+type ChatPart = {
+  type: string;
+  text?: string;
+  toolInvocation?: {
+    toolName: string;
+    state: string;
+    result?: unknown;
+  };
+};
+
+type ChatRenderMessage = {
+  id: string;
+  role: string;
+  content: string;
+  parts?: ChatPart[];
+};
+
+function MessageRender({
+  message,
+  primary,
+  dark,
+}: {
+  message: ChatRenderMessage;
+  primary: string;
+  dark: boolean;
+}) {
+  if (message.role === "user") {
+    return (
+      <div
+        className="ml-auto max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-sm px-3 py-2 text-[13px] leading-snug text-white"
+        style={{ background: primary }}
+      >
+        {message.content}
+      </div>
+    );
+  }
+
+  // Assistant message — walk parts to interleave tool pills + text bubbles.
+  const parts: ChatPart[] = message.parts ?? [
+    { type: "text", text: message.content },
+  ];
+
+  const sources = collectSources(parts);
+
+  return (
+    <>
+      {parts.map((p, i) => {
+        if (p.type === "text" && p.text) {
+          return (
+            <AssistantBubble key={i} dark={dark}>
+              {p.text}
+            </AssistantBubble>
+          );
+        }
+        if (p.type === "tool-invocation" && p.toolInvocation) {
+          return (
+            <ToolPill
+              key={i}
+              name={p.toolInvocation.toolName}
+              done={p.toolInvocation.state === "result"}
+              primary={primary}
+              dark={dark}
+            />
+          );
+        }
+        return null;
+      })}
+      {sources.length > 0 && (
+        <Citations sources={sources} dark={dark} />
+      )}
+    </>
+  );
+}
+
+function ToolPill({
+  name,
+  done,
+  primary,
+  dark,
+}: {
+  name: string;
+  done: boolean;
+  primary: string;
+  dark: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "mr-auto inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs",
+        done && "opacity-70",
+        dark ? "bg-zinc-800/60" : "bg-zinc-50",
+      )}
+      style={{
+        borderColor: `color-mix(in srgb, ${primary} 25%, transparent)`,
+      }}
+    >
+      {!done && (
+        <span
+          className="h-1.5 w-1.5 animate-pulse rounded-full"
+          style={{ background: primary }}
+        />
+      )}
+      <span>{toolLabel(name)}</span>
+    </div>
+  );
+}
+
+function Citations({
+  sources,
+  dark,
+}: {
+  sources: Array<{ title: string; url: string | null }>;
+  dark: boolean;
+}) {
+  return (
+    <div className="mr-auto flex max-w-full flex-col gap-1.5">
+      <div className="text-[10px] uppercase tracking-wider opacity-60">
+        {sources.length} {sources.length === 1 ? "source" : "sources"}
+      </div>
+      <ul className="flex flex-col gap-1">
+        {sources.slice(0, 4).map((s, i) => {
+          const inner = (
+            <span className="block max-w-[280px] truncate">{s.title}</span>
+          );
+          return (
+            <li key={i}>
+              {s.url ? (
+                <a
+                  href={s.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    "inline-block rounded-lg border px-2 py-1 text-[12px] transition-colors",
+                    dark
+                      ? "border-zinc-700 hover:border-zinc-500"
+                      : "border-zinc-200 hover:border-zinc-400",
+                  )}
+                >
+                  {inner}
+                </a>
+              ) : (
+                <span
+                  className={cn(
+                    "inline-block rounded-lg border px-2 py-1 text-[12px]",
+                    dark ? "border-zinc-700" : "border-zinc-200",
+                  )}
+                >
+                  {inner}
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+function toolLabel(name: string): string {
+  if (name === "search_knowledge") return "Searching your knowledge…";
+  return `Calling ${name}…`;
+}
+
+function collectSources(
+  parts: ChatPart[],
+): Array<{ title: string; url: string | null }> {
+  const out: Array<{ title: string; url: string | null }> = [];
+  const seen = new Set<string>();
+  for (const p of parts) {
+    if (
+      p.type !== "tool-invocation" ||
+      !p.toolInvocation ||
+      p.toolInvocation.state !== "result"
+    )
+      continue;
+    if (p.toolInvocation.toolName !== "search_knowledge") continue;
+    const result = p.toolInvocation.result;
+    if (!result || typeof result !== "object") continue;
+    const r = result as { results?: unknown };
+    if (!Array.isArray(r.results)) continue;
+    for (const row of r.results) {
+      if (!row || typeof row !== "object") continue;
+      const obj = row as { title?: unknown; url?: unknown };
+      const title = typeof obj.title === "string" ? obj.title : null;
+      if (!title) continue;
+      const url = typeof obj.url === "string" ? obj.url : null;
+      const key = `${title}|${url ?? ""}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ title, url });
+    }
+  }
+  return out;
 }

@@ -3,11 +3,15 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Nav } from "./_components/nav";
+import { WorkspaceChip } from "./_components/workspace-chip";
 
 export const metadata: Metadata = {
   title: "Helia",
-  description: "Your own AI assistant. Upload your docs, plug in your APIs, drop one script tag.",
+  description:
+    "Your own AI assistant. Upload your docs, plug in your APIs, drop one script tag.",
 };
+
+const VERSION = "0.0.1";
 
 // Inline FOUC guard: applies the persisted theme before React hydrates,
 // so the page paints in the right palette on first paint.
@@ -18,7 +22,11 @@ try {
 } catch (e) {}
 `;
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
       <head>
@@ -26,25 +34,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <div className="mx-auto max-w-5xl px-6 py-8">
-          <header className="mb-10 flex items-center justify-between">
-            <a href="/" className="text-sm font-semibold text-primary">
-              helia
-            </a>
+          <header className="mb-10 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <a href="/" className="text-sm font-semibold text-primary">
+                helia
+              </a>
+              <WorkspaceChip />
+            </div>
             <div className="flex items-center gap-2">
               <Nav />
               <ThemeToggle />
             </div>
           </header>
           {children}
-          <footer className="mt-20 text-xs text-muted-foreground">
-            v0.0.1 · open source ·{" "}
+          <footer className="mt-20 flex items-center justify-between border-t border-border-subtle pt-4 text-xs text-muted-foreground">
+            <span>v{VERSION} · open source</span>
             <a
               href="https://github.com/snowztech/helia"
               target="_blank"
               rel="noreferrer"
-              className="text-primary hover:underline"
+              className="hover:text-foreground"
             >
-              github
+              github ↗
             </a>
           </footer>
         </div>

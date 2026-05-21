@@ -2,8 +2,8 @@ import type { ChatMessage } from "./types";
 
 export interface StreamCallbacks {
   onDelta: (text: string) => void;
-  onToolStart: (toolName: string) => void;
-  onToolEnd: () => void;
+  onToolStart: (toolName: string, args: unknown) => void;
+  onToolResult: (toolName: string, result: unknown) => void;
   onDone: () => void;
   onError: (err: Error) => void;
 }
@@ -13,8 +13,8 @@ export interface StreamCallbacks {
  *
  * Each line is `<type>:<json>`. We care about:
  *  - "0" text delta
- *  - "9" tool call start
- *  - "a" tool call result
+ *  - "9" tool call start (with toolCallId, toolName, args)
+ *  - "a" tool call result (with toolCallId, result)
  *  - "d" finish
  *  - "3" error
  */
@@ -44,6 +44,10 @@ export async function streamChat(
   const decoder = new TextDecoder();
   let buf = "";
 
+  // Track in-flight tool calls so we can pair `a:` results with `9:` starts
+  // and report the tool name on result events.
+  const toolNames = new Map<string, string>();
+
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
@@ -54,15 +58,19 @@ export async function streamChat(
 
     for (const line of lines) {
       if (!line) continue;
-      handleLine(line, cb);
+      handleLine(line, cb, toolNames);
     }
   }
 
-  if (buf) handleLine(buf, cb);
+  if (buf) handleLine(buf, cb, toolNames);
   cb.onDone();
 }
 
-function handleLine(line: string, cb: StreamCallbacks): void {
+function handleLine(
+  line: string,
+  cb: StreamCallbacks,
+  toolNames: Map<string, string>,
+): void {
   const colon = line.indexOf(":");
   if (colon < 1) return;
   const type = line.slice(0, colon);
@@ -81,12 +89,17 @@ function handleLine(line: string, cb: StreamCallbacks): void {
       return;
     }
     case "9": {
-      const name = (data as { toolName?: string })?.toolName ?? "tool";
-      cb.onToolStart(name);
+      const info = data as { toolCallId?: string; toolName?: string; args?: unknown };
+      const name = info.toolName ?? "tool";
+      if (info.toolCallId) toolNames.set(info.toolCallId, name);
+      cb.onToolStart(name, info.args ?? null);
       return;
     }
     case "a": {
-      cb.onToolEnd();
+      const info = data as { toolCallId?: string; result?: unknown };
+      const name =
+        (info.toolCallId && toolNames.get(info.toolCallId)) ?? "tool";
+      cb.onToolResult(name, info.result ?? null);
       return;
     }
     case "3": {

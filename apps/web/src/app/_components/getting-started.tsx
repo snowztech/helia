@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Tick02Icon } from "@hugeicons/core-free-icons";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
@@ -12,7 +13,8 @@ interface Props {
 }
 
 interface StepState {
-  hasContent: boolean; // sources or tools
+  hasSources: boolean;
+  hasTools: boolean;
   brandCustomized: boolean;
 }
 
@@ -21,46 +23,60 @@ const DEFAULT_BOT_NAME = "Assistant";
 
 export function GettingStarted({ hasSources }: Props) {
   const [state, setState] = useState<StepState>({
-    hasContent: hasSources,
+    hasSources,
+    hasTools: false,
     brandCustomized: false,
   });
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     if (dismissed) return;
-    api
-      .getWorkspace()
-      .then(({ workspace }) => {
+    Promise.all([api.getWorkspace(), api.listTools()])
+      .then(([{ workspace }, { tools }]) => {
         setState((s) => ({
           ...s,
+          hasTools: tools.length > 0,
           brandCustomized:
             workspace.brandPrimary !== DEFAULT_PRIMARY ||
             workspace.botName !== DEFAULT_BOT_NAME,
         }));
       })
       .catch(() => {
-        // silent — getting started is a hint, not load-blocking
+        // silent — hint, not load-blocking
       });
   }, [dismissed]);
 
+  const knowledgeDone = state.hasSources || state.hasTools;
+
   const steps = [
     {
-      done: state.hasContent,
-      label: "Add knowledge or tools",
-      href: "/upload",
-      hint: "Upload a PDF, paste text, crawl a URL, or plug in an HTTP tool.",
+      done: knowledgeDone,
+      label: "Give your assistant something to answer with",
+      hint: state.hasSources
+        ? "Docs added. You can also plug in your APIs as tools."
+        : state.hasTools
+          ? "Tools connected. You can also upload docs."
+          : "Upload PDFs or paste text · or plug in your APIs.",
+      paths: state.hasSources
+        ? [{ label: "add tool", href: "/tools" }]
+        : state.hasTools
+          ? [{ label: "add source", href: "/upload" }]
+          : [
+              { label: "add source", href: "/upload" },
+              { label: "add tool", href: "/tools" },
+            ],
     },
     {
       done: state.brandCustomized,
       label: "Brand your widget",
-      href: "/widget",
       hint: "Name your bot and pick a color.",
+      paths: [{ label: "customize", href: "/widget" }],
     },
     {
       done: false,
       label: "Install on your site",
-      href: "/widget",
       hint: "Copy one script tag.",
+      paths: [{ label: "get snippet", href: "/widget" }],
     },
   ];
 
@@ -91,29 +107,40 @@ export function GettingStarted({ hasSources }: Props) {
         <ol className="space-y-2">
           {steps.map((s, i) => (
             <li key={s.label}>
-              <Link
-                href={s.href}
+              <div
                 className={cn(
-                  "flex items-center gap-3 rounded-md border border-border px-3 py-2.5 text-sm transition-colors hover:bg-muted",
+                  "flex items-start gap-3 rounded-md border border-border px-3 py-2.5 text-sm",
                   s.done && "opacity-60",
                 )}
               >
                 <span
                   className={cn(
-                    "flex h-5 w-5 items-center justify-center rounded-full border text-[10px]",
+                    "mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border text-[10px]",
                     s.done
                       ? "border-success bg-success/15 text-success"
                       : "border-border text-muted-foreground",
                   )}
                 >
-                  {s.done ? <Check className="h-3 w-3" /> : i + 1}
+                  {s.done ? <HugeiconsIcon icon={Tick02Icon} size={12} /> : i + 1}
                 </span>
-                <div className="flex-1">
+                <div className="flex-1 space-y-1">
                   <div className={s.done ? "line-through" : ""}>{s.label}</div>
                   <div className="text-xs text-muted-foreground">{s.hint}</div>
+                  {!s.done && (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {s.paths.map((p) => (
+                        <Link
+                          key={p.href + p.label}
+                          href={p.href}
+                          className="text-xs text-primary hover:underline"
+                        >
+                          {p.label} →
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <span className="text-xs text-muted-foreground">→</span>
-              </Link>
+              </div>
             </li>
           ))}
         </ol>

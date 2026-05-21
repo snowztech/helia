@@ -13,6 +13,7 @@ export interface RemoteConfig {
     subtitle?: string;
     greeting: string;
     placeholder?: string;
+    suggestions?: string[];
   };
 }
 

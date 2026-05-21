@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Delete02Icon,
+  PencilEdit01Icon,
+  PlusSignIcon,
+} from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -116,12 +121,11 @@ export default function ToolsPage() {
         <div className="min-w-0 space-y-1">
           <h1 className="text-2xl">tools.</h1>
           <p className="text-xs text-muted-foreground">
-            HTTP endpoints the agent can call mid-conversation. Define a tool,
-            point it at your API, the assistant uses it when relevant.
+            HTTP endpoints the agent can call.
           </p>
         </div>
         <Button onClick={openCreate}>
-          <Plus /> add tool
+          <HugeiconsIcon icon={PlusSignIcon} size={14} /> add tool
         </Button>
       </header>
 
@@ -129,13 +133,10 @@ export default function ToolsPage() {
         <p className="text-sm text-muted-foreground">loading…</p>
       ) : tools.length === 0 ? (
         <Card>
-          <CardContent className="py-10 text-center">
-            <p className="text-sm text-muted-foreground">
-              No tools yet. Plug in your first endpoint to give the agent live
-              data.
-            </p>
-            <Button className="mt-4" onClick={openCreate}>
-              <Plus /> add your first tool
+          <CardContent className="flex flex-col items-center gap-4 py-10">
+            <p className="text-sm text-muted-foreground">No tools yet.</p>
+            <Button onClick={openCreate}>
+              <HugeiconsIcon icon={PlusSignIcon} size={14} /> add your first tool
             </Button>
           </CardContent>
         </Card>
@@ -168,7 +169,7 @@ export default function ToolsPage() {
                   onClick={() => openEdit(t)}
                   aria-label="Edit"
                 >
-                  <Pencil />
+                  <HugeiconsIcon icon={PencilEdit01Icon} size={16} />
                 </Button>
                 <Button
                   variant="ghost"
@@ -176,7 +177,7 @@ export default function ToolsPage() {
                   onClick={() => setPendingDelete(t)}
                   aria-label="Delete"
                 >
-                  <Trash2 />
+                  <HugeiconsIcon icon={Delete02Icon} size={16} />
                 </Button>
               </div>
             </li>
