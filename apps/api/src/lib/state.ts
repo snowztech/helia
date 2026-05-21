@@ -15,5 +15,31 @@ export const log = pino({
       : { target: "pino-pretty", options: { colorize: true } },
 });
 
-export const CORS_ORIGIN =
-  process.env.HELIA_CORS_ORIGIN ?? "http://localhost:3000";
+const rawCors = process.env.HELIA_CORS_ORIGIN?.trim();
+
+/**
+ * CORS policy resolved from HELIA_CORS_ORIGIN.
+ *
+ *   unset / empty   → "dev-localhost": allow any http(s)://localhost:* or
+ *                     127.0.0.1:* origin. Convenient for local dev when the
+ *                     widget runs on a different port than the admin.
+ *   "*"             → wildcard, any origin (do not use in production).
+ *   "a,b,c" or "x"  → comma-separated allowlist of exact origins.
+ */
+export type CorsPolicy =
+  | { kind: "wildcard" }
+  | { kind: "list"; origins: string[] }
+  | { kind: "dev-localhost" };
+
+export const CORS_POLICY: CorsPolicy =
+  !rawCors
+    ? { kind: "dev-localhost" }
+    : rawCors === "*"
+      ? { kind: "wildcard" }
+      : {
+          kind: "list",
+          origins: rawCors
+            .split(",")
+            .map((o) => o.trim())
+            .filter(Boolean),
+        };

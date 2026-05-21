@@ -2,7 +2,7 @@ import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger as honoLogger } from "hono/logger";
-import { CORS_ORIGIN, log } from "./lib/state";
+import { CORS_POLICY, log } from "./lib/state";
 import { sourcesRouter } from "./routes/sources";
 import { chunksRouter } from "./routes/chunks";
 import { chatRouter } from "./routes/chat";
@@ -10,10 +10,19 @@ import { healthRouter } from "./routes/health";
 
 const app = new Hono();
 
+const LOCALHOST_RE = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
 app.use(
   "*",
   cors({
-    origin: CORS_ORIGIN,
+    origin: (origin) => {
+      if (CORS_POLICY.kind === "wildcard") return origin ?? "*";
+      if (!origin) return null;
+      if (CORS_POLICY.kind === "list") {
+        return CORS_POLICY.origins.includes(origin) ? origin : null;
+      }
+      return LOCALHOST_RE.test(origin) ? origin : null;
+    },
     allowMethods: ["GET", "POST", "DELETE", "OPTIONS"],
     allowHeaders: ["content-type", "authorization"],
     exposeHeaders: ["x-helia-sources"],

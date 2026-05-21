@@ -1,11 +1,12 @@
-.PHONY: help dev dev-api dev-web setup db install schema init build typecheck clean down reset env
+.PHONY: help dev dev-api dev-web dev-widget setup db install schema init build typecheck clean down reset env
 
 help:
 	@echo "Helia — make targets"
 	@echo ""
-	@echo "  dev        - Setup if needed, then run api + web in parallel"
+	@echo "  dev        - Setup if needed, then run api + web + widget in parallel"
 	@echo "  dev-api    - Run only the API (port 4000)"
 	@echo "  dev-web    - Run only the web UI (port 3000)"
+	@echo "  dev-widget - Run only the widget dev server (port 5173)"
 	@echo ""
 	@echo "  setup      - One-shot: db + env + install + schema + bootstrap"
 	@echo "  db         - Start Postgres only"
@@ -60,7 +61,7 @@ setup: db env install schema init
 	@echo "  Next: make dev"
 
 dev: setup
-	@echo "→ Starting api (:4000) + web (:3000)…"
+	@echo "→ Starting api (:4000) + web (:3000) + widget (:5173)…"
 	@pnpm dev
 
 dev-api:
@@ -68,6 +69,9 @@ dev-api:
 
 dev-web:
 	@pnpm dev:web
+
+dev-widget:
+	@pnpm dev:widget
 
 build:
 	@pnpm -r build

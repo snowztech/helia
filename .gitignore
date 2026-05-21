@@ -6,6 +6,9 @@ node_modules/
 .next/
 out/
 
+# build artifacts
+dist/
+
 # env
 .env
 .env.local

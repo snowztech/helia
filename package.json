@@ -3,9 +3,10 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "pnpm --parallel --filter @helia/api --filter @helia/web dev",
+    "dev": "pnpm --parallel --filter @helia/api --filter @helia/web --filter @helia/widget dev",
     "dev:api": "pnpm --filter @helia/api dev",
     "dev:web": "pnpm --filter @helia/web dev",
+    "dev:widget": "pnpm --filter @helia/widget dev",
     "build": "pnpm -r build",
     "start:api": "pnpm --filter @helia/api start",
     "start:web": "pnpm --filter @helia/web start",
