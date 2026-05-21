@@ -1,5 +1,6 @@
 export const baseStyles = /* css */ `
   :host {
+    /* Themeable. Default = dark surface with a blue accent. */
     --helia-primary: #0ea5e9;
     --helia-background: #ffffff;
     --helia-surface: #f4f4f5;
@@ -7,8 +8,18 @@ export const baseStyles = /* css */ `
     --helia-muted: #6b7280;
     --helia-border: #e5e7eb;
     --helia-radius: 14px;
+    --helia-edge: 24px;       /* distance from the page edge */
     --helia-font: system-ui, -apple-system, "Segoe UI", sans-serif;
     all: initial;
+  }
+
+  /* Dark mode tokens — applied when host data-mode="dark" is set. */
+  :host([data-mode="dark"]) {
+    --helia-background: #161616;
+    --helia-surface: #1f1f1f;
+    --helia-text: #f1f1f1;
+    --helia-muted: #9a9a9a;
+    --helia-border: #2a2a2a;
   }
 
   * {
@@ -19,8 +30,6 @@ export const baseStyles = /* css */ `
   /* Launcher */
   .launcher {
     position: fixed;
-    right: 24px;
-    bottom: 24px;
     width: 56px;
     height: 56px;
     border-radius: 50%;
@@ -35,6 +44,8 @@ export const baseStyles = /* css */ `
     transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
     z-index: 2147483647;
   }
+  .launcher.right { right: var(--helia-edge); bottom: var(--helia-edge); }
+  .launcher.left  { left: var(--helia-edge);  bottom: var(--helia-edge); }
   .launcher:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
@@ -46,8 +57,6 @@ export const baseStyles = /* css */ `
   /* Panel */
   .panel {
     position: fixed;
-    right: 24px;
-    bottom: 24px;
     width: 380px;
     height: 560px;
     max-height: calc(100vh - 48px);
@@ -58,18 +67,24 @@ export const baseStyles = /* css */ `
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    transform-origin: bottom right;
-    transform: scale(0.92) translateY(8px);
     opacity: 0;
     pointer-events: none;
     transition: transform 0.18s ease, opacity 0.18s ease;
     z-index: 2147483647;
   }
-  .panel.open {
-    transform: scale(1) translateY(0);
-    opacity: 1;
-    pointer-events: auto;
+  .panel.right {
+    right: var(--helia-edge);
+    bottom: var(--helia-edge);
+    transform-origin: bottom right;
+    transform: scale(0.92) translateY(8px);
   }
+  .panel.left {
+    left: var(--helia-edge);
+    bottom: var(--helia-edge);
+    transform-origin: bottom left;
+    transform: scale(0.92) translateY(8px);
+  }
+  .panel.open { opacity: 1; pointer-events: auto; transform: scale(1) translateY(0); }
 
   /* Header */
   .header {
@@ -77,15 +92,29 @@ export const baseStyles = /* css */ `
     color: #ffffff;
     padding: 14px 16px;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
+    gap: 8px;
     flex-shrink: 0;
   }
+  .header-text { min-width: 0; }
   .header-title {
     font-weight: 600;
     font-size: 15px;
     line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
+  .header-subtitle {
+    margin-top: 2px;
+    font-size: 12px;
+    opacity: 0.9;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .header-subtitle:empty { display: none; }
   .close {
     background: transparent;
     border: none;
@@ -95,6 +124,7 @@ export const baseStyles = /* css */ `
     display: flex;
     border-radius: 6px;
     opacity: 0.85;
+    flex-shrink: 0;
   }
   .close:hover { opacity: 1; background: rgba(255, 255, 255, 0.12); }
   .close svg { width: 18px; height: 18px; }
@@ -210,7 +240,9 @@ export const baseStyles = /* css */ `
   /* Mobile */
   @media (max-width: 480px) {
     .panel {
-      right: 0; bottom: 0; left: 0;
+      right: 0 !important;
+      left: 0 !important;
+      bottom: 0;
       width: 100%;
       height: 100vh;
       max-height: 100vh;

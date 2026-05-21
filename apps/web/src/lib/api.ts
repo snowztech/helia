@@ -45,6 +45,39 @@ export type Chunk = {
   } | null;
 };
 
+export type WidgetPosition = "bottom-right" | "bottom-left";
+export type WidgetTheme = "light" | "dark" | "auto";
+
+export type Workspace = {
+  id: string;
+  name: string;
+  locale: string;
+  brandPrimary: string;
+  botName: string;
+  botSubtitle: string;
+  botGreeting: string;
+  botPlaceholder: string;
+  widgetPosition: WidgetPosition;
+  widgetTheme: WidgetTheme;
+  widgetRadius: number;
+  createdAt: string;
+};
+
+export type WorkspacePatch = Partial<
+  Pick<
+    Workspace,
+    | "name"
+    | "brandPrimary"
+    | "botName"
+    | "botSubtitle"
+    | "botGreeting"
+    | "botPlaceholder"
+    | "widgetPosition"
+    | "widgetTheme"
+    | "widgetRadius"
+  >
+>;
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
@@ -95,4 +128,69 @@ export const api = {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ url, maxPages }),
     }),
+
+  getWorkspace: () => request<{ workspace: Workspace }>("/v1/workspace"),
+
+  patchWorkspace: (patch: WorkspacePatch) =>
+    request<{ workspace: Workspace }>("/v1/workspace", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(patch),
+    }),
+
+  listTools: () => request<{ tools: HeliaTool[] }>("/v1/tools"),
+
+  createTool: (input: ToolInput) =>
+    request<{ tool: HeliaTool }>("/v1/tools", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+
+  updateTool: (id: string, patch: Partial<ToolInput>) =>
+    request<{ tool: HeliaTool }>(`/v1/tools/${id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(patch),
+    }),
+
+  deleteTool: (id: string) =>
+    request<{ ok: true }>(`/v1/tools/${id}`, { method: "DELETE" }),
+};
+
+export type ToolParam = {
+  name: string;
+  type: "string" | "number" | "boolean";
+  description: string;
+  required: boolean;
+  source: "llm" | "context";
+  contextPath?: string;
+};
+
+export type HeliaTool = {
+  id: string;
+  workspaceId: string;
+  name: string;
+  description: string;
+  url: string;
+  method: "GET" | "POST";
+  paramsSchema: ToolParam[];
+  headers: Record<string, string>;
+  timeoutMs: number;
+  maxResponseBytes: number;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ToolInput = {
+  name: string;
+  description: string;
+  url: string;
+  method: "GET" | "POST";
+  paramsSchema: ToolParam[];
+  headers: Record<string, string>;
+  timeoutMs?: number;
+  maxResponseBytes?: number;
+  enabled?: boolean;
 };

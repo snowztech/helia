@@ -1,8 +1,11 @@
+import Link from "next/link";
 import { api } from "@/lib/api";
 import { AutoRefresh } from "./_components/auto-refresh";
 import { StatusBadge } from "./_components/status-badge";
 import { DeleteSourceButton } from "./_components/delete-source-button";
-import { QuickAsk } from "./_components/quick-ask";
+import { GettingStarted } from "./_components/getting-started";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
@@ -25,86 +28,66 @@ export default async function Home() {
   const hasInFlight = counts.queued > 0 || counts.processing > 0;
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-10">
       <AutoRefresh enabled={hasInFlight} intervalMs={2000} />
 
       <section className="space-y-3">
-        <h1 className="text-3xl">
-          turn your <span className="accent">docs</span> into an{" "}
-          <span className="accent">ai assistant</span>.
+        <h1 className="text-2xl">
+          your own <span className="text-primary">ai assistant</span>.
         </h1>
-        <p className="muted text-sm leading-relaxed">
-          Upload PDFs, paste text, or crawl a website. Then chat with them.
+        <p className="text-sm text-muted-foreground">
+          Upload your docs, plug in your APIs, drop one script tag. Set it up
+          in three steps below.
         </p>
-        <div className="flex gap-2 pt-2">
-          <a href="/upload" className="sn-btn sn-btn--accent sn-btn--sm">
-            add source →
-          </a>
-          <a href="/chat" className="sn-btn sn-btn--ghost sn-btn--sm">
-            open chat →
-          </a>
-        </div>
-
-        <div className="pt-4">
-          <QuickAsk />
-        </div>
       </section>
+
+      <GettingStarted hasSources={sources.length > 0} />
 
       {apiError && (
-        <section className="sn-card p-4 text-sm">
-          <span style={{ color: "var(--sn-danger)" }}>api unreachable</span>{" "}
-          <span className="muted">— run </span>
-          <code>make dev-api</code>
-        </section>
+        <Card>
+          <CardContent className="py-4 text-sm">
+            <span className="text-destructive">API unreachable</span>{" "}
+            <span className="text-muted-foreground">— run</span>{" "}
+            <code className="rounded bg-muted px-1.5 py-0.5">make dev-api</code>
+          </CardContent>
+        </Card>
       )}
 
-      <section>
-        <h2 className="subtle mb-3 text-[11px] uppercase tracking-[0.18em]">
-          state
-        </h2>
-        <div className="grid grid-cols-4 gap-2">
-          <StateCell label="queued" value={counts.queued} active={counts.queued > 0} />
-          <StateCell
-            label="processing"
-            value={counts.processing}
-            active={counts.processing > 0}
-          />
-          <StateCell label="ready" value={counts.ready} />
-          <StateCell label="failed" value={counts.failed} danger={counts.failed > 0} />
-        </div>
-      </section>
-
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="subtle text-[11px] uppercase tracking-[0.18em]">
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
             sources
           </h2>
-          {hasInFlight && (
-            <span className="subtle text-[11px]">· live</span>
-          )}
+          <Button asChild size="sm" variant="outline">
+            <Link href="/upload">+ add source</Link>
+          </Button>
         </div>
 
         {sources.length === 0 ? (
-          <p className="subtle text-sm">
-            no sources yet ·{" "}
-            <a href="/upload" className="accent">
-              add one
-            </a>
-          </p>
+          <Card>
+            <CardContent className="py-8 text-center">
+              <p className="text-sm text-muted-foreground">
+                No sources yet.{" "}
+                <Link href="/upload" className="text-primary hover:underline">
+                  Add a PDF, paste text, or crawl a URL
+                </Link>{" "}
+                to give your assistant something to answer with.
+              </p>
+            </CardContent>
+          </Card>
         ) : (
-          <ul className="space-y-px">
+          <ul className="divide-y divide-border rounded-md border border-border">
             {sources.map((s) => (
               <li
                 key={s.id}
-                className="flex items-center gap-3 border-b py-3 text-sm"
-                style={{ borderColor: "var(--sn-border-subtle)" }}
+                className="flex items-center gap-3 px-4 py-3 text-sm"
               >
                 <a
                   href={`/sources/${s.id}`}
                   className="min-w-0 flex-1 truncate hover:opacity-80"
                 >
                   <span>{s.name}</span>
-                  <span className="subtle ml-2 text-xs">
+                  <span className="ml-2 text-xs text-muted-foreground">
                     {s.type} · {s.id.slice(0, 7)}
                   </span>
                 </a>
@@ -115,32 +98,6 @@ export default async function Home() {
           </ul>
         )}
       </section>
-    </div>
-  );
-}
-
-function StateCell({
-  label,
-  value,
-  active,
-  danger,
-}: {
-  label: string;
-  value: number;
-  active?: boolean;
-  danger?: boolean;
-}) {
-  const color = danger
-    ? "var(--sn-danger)"
-    : active
-      ? "var(--sn-accent)"
-      : "var(--sn-fg)";
-  return (
-    <div className="border py-3 px-3" style={{ borderColor: "var(--sn-border-subtle)" }}>
-      <div className="subtle text-[10px] uppercase tracking-wider">{label}</div>
-      <div className="mt-0.5 text-xl" style={{ color }}>
-        {value}
-      </div>
     </div>
   );
 }

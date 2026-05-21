@@ -2,32 +2,67 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { toast } from "@/components/ui/sonner";
 import { api } from "@/lib/api";
 
 export function DeleteSourceButton({ id, name }: { id: string; name: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
+  const confirmDelete = async () => {
+    setBusy(true);
+    try {
+      await api.deleteSource(id);
+      toast.success(`deleted "${name}"`);
+      router.refresh();
+    } catch (err) {
+      toast.error(`delete failed: ${err}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
-    <button
-      type="button"
-      className="sn-btn sn-btn--ghost sn-btn--sm"
-      disabled={busy}
-      title="Delete source"
-      onClick={async () => {
-        if (!confirm(`Delete "${name}"? This removes its chunks and events.`)) return;
-        setBusy(true);
-        try {
-          await api.deleteSource(id);
-          router.refresh();
-        } catch (err) {
-          alert(`Delete failed: ${err}`);
-        } finally {
-          setBusy(false);
-        }
-      }}
-    >
-      ✕
-    </button>
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          disabled={busy}
+          aria-label={`Delete ${name}`}
+          title="Delete source"
+        >
+          <X />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete "{name}"?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This removes the source along with its chunks and event history.
+            This cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmDelete}>
+            delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

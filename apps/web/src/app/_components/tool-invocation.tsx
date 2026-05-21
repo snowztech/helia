@@ -3,12 +3,9 @@
 import { useState } from "react";
 
 /**
- * Visual for a single tool call in a chat message. We render different states:
- *  - partial-call / call → spinner-like line with the tool name and query
- *  - result              → "found N sources" header, expandable details
- *
- * Today only one tool is wired (`search_knowledge`) but the component is
- * generic over tool name so we can add more without UI churn.
+ * Visual for a single tool call inside a chat message. Generic over tool
+ * name; today `search_knowledge` is the main consumer, more will land as
+ * HTTP tools ship.
  */
 export type ToolInvocationLike = {
   toolCallId: string;
@@ -38,23 +35,17 @@ export function ToolInvocation({ inv }: { inv: ToolInvocationLike }) {
   const found = results.length;
 
   return (
-    <div
-      className="my-2 border-l-2 pl-3 text-xs"
-      style={{ borderColor: "var(--sn-border)" }}
-    >
+    <div className="my-2 border-l-2 border-border pl-3 text-xs">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-baseline gap-2 text-left"
-        style={{ color: "var(--sn-fg-muted)" }}
+        className="flex items-baseline gap-2 text-left text-muted-foreground"
       >
-        <span className="uppercase tracking-wider text-[10px]">
+        <span className="text-[10px] uppercase tracking-wider">
           {inv.toolName}
         </span>
         {query && (
-          <span className="font-mono" style={{ color: "var(--sn-fg)" }}>
-            "{query}"
-          </span>
+          <span className="font-mono text-foreground">"{query}"</span>
         )}
         {!isDone && <span>· searching…</span>}
         {isDone && (
@@ -72,15 +63,9 @@ export function ToolInvocation({ inv }: { inv: ToolInvocationLike }) {
           {results.map((r) => (
             <li
               key={r.chunkId}
-              className="border p-2"
-              style={{
-                borderColor: "var(--sn-border-subtle)",
-                background: "var(--sn-bg-inset)",
-              }}
+              className="rounded-md border border-border bg-muted/40 p-2"
             >
-              <div
-                className="subtle mb-1 flex items-center justify-between text-[10px] uppercase tracking-wider"
-              >
+              <div className="mb-1 flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
                 <span>
                   [{r.index}] {r.title} · score {r.score}
                 </span>
@@ -89,7 +74,7 @@ export function ToolInvocation({ inv }: { inv: ToolInvocationLike }) {
                     href={r.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="accent"
+                    className="text-primary hover:underline"
                   >
                     open ↗
                   </a>
@@ -104,7 +89,7 @@ export function ToolInvocation({ inv }: { inv: ToolInvocationLike }) {
       )}
 
       {isDone && results.length === 0 && inv.result?.note && (
-        <p className="subtle mt-1 italic">{inv.result.note}</p>
+        <p className="mt-1 italic text-muted-foreground">{inv.result.note}</p>
       )}
     </div>
   );

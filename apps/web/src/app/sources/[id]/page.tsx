@@ -5,10 +5,10 @@ import { DeleteSourceButton } from "../../_components/delete-source-button";
 
 export const dynamic = "force-dynamic";
 
-const LEVEL_COLOR: Record<string, string> = {
-  info: "var(--sn-fg-muted)",
-  warn: "var(--sn-warning)",
-  error: "var(--sn-danger)",
+const LEVEL_CLASS: Record<string, string> = {
+  info: "text-muted-foreground",
+  warn: "text-warning",
+  error: "text-destructive",
 };
 
 export default async function SourcePage({
@@ -22,7 +22,10 @@ export default async function SourcePage({
   let events: Awaited<ReturnType<typeof api.getSourceEvents>>["events"] = [];
   let error: string | null = null;
   try {
-    const [s, e] = await Promise.all([api.getSource(id), api.getSourceEvents(id)]);
+    const [s, e] = await Promise.all([
+      api.getSource(id),
+      api.getSourceEvents(id),
+    ]);
     source = s.source;
     events = e.events;
   } catch (err) {
@@ -32,24 +35,25 @@ export default async function SourcePage({
   if (error || !source) {
     return (
       <div className="space-y-4">
-        <a href="/" className="subtle text-sm">
+        <a href="/" className="text-sm text-muted-foreground">
           ← back
         </a>
-        <p style={{ color: "var(--sn-danger)" }} className="text-sm">
+        <p className="text-sm text-destructive">
           source not found · {error}
         </p>
       </div>
     );
   }
 
-  const isInFlight = source.status === "queued" || source.status === "processing";
+  const isInFlight =
+    source.status === "queued" || source.status === "processing";
 
   return (
     <div className="space-y-10">
       <AutoRefresh enabled={isInFlight} intervalMs={2000} />
 
       <div className="flex items-center justify-between">
-        <a href="/" className="subtle text-sm hover:opacity-80">
+        <a href="/" className="text-sm text-muted-foreground hover:opacity-80">
           ← back
         </a>
         <DeleteSourceButton id={source.id} name={source.name} />
@@ -60,50 +64,43 @@ export default async function SourcePage({
           <h1 className="truncate text-2xl">{source.name}</h1>
           <StatusBadge status={source.status} progress={source.progress} />
         </div>
-        <p className="subtle text-xs">
+        <p className="text-xs text-muted-foreground">
           {source.type} · {source.id} · created{" "}
           {new Date(source.createdAt).toLocaleString()}
         </p>
 
         {source.status === "processing" && (
-          <div
-            className="h-1 w-full overflow-hidden"
-            style={{ background: "var(--sn-bg-inset)" }}
-          >
+          <div className="h-1 w-full overflow-hidden rounded bg-muted">
             <div
-              className="h-full transition-all"
-              style={{ width: `${source.progress}%`, background: "var(--sn-accent)" }}
+              className="h-full bg-primary transition-all"
+              style={{ width: `${source.progress}%` }}
             />
           </div>
         )}
 
         {source.error && (
-          <p className="text-xs" style={{ color: "var(--sn-danger)" }}>
-            {source.error}
-          </p>
+          <p className="text-xs text-destructive">{source.error}</p>
         )}
       </header>
 
       <section>
-        <h2 className="subtle mb-3 text-[11px] uppercase tracking-[0.18em]">
+        <h2 className="mb-3 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
           events
         </h2>
         {events.length === 0 ? (
-          <p className="subtle text-sm">no events yet.</p>
+          <p className="text-sm text-muted-foreground">no events yet.</p>
         ) : (
-          <ol className="space-y-px">
+          <ol className="divide-y divide-border rounded-md border border-border">
             {events.map((ev) => (
               <li
                 key={ev.id}
-                className="flex items-baseline gap-3 border-b py-2 text-sm"
-                style={{ borderColor: "var(--sn-border-subtle)" }}
+                className="flex items-baseline gap-3 px-3 py-2 text-sm"
               >
-                <span className="subtle min-w-[5.5rem] text-xs">
+                <span className="min-w-[5.5rem] text-xs text-muted-foreground">
                   {new Date(ev.createdAt).toLocaleTimeString()}
                 </span>
                 <span
-                  className="min-w-[3rem] text-[10px] uppercase tracking-wider"
-                  style={{ color: LEVEL_COLOR[ev.level] }}
+                  className={`min-w-[3rem] text-[10px] uppercase tracking-wider ${LEVEL_CLASS[ev.level]}`}
                 >
                   {ev.level}
                 </span>

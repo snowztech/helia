@@ -31,7 +31,7 @@ chatRouter.post("/", zValidator("json", Body), async (c) => {
   if (!lastUser) return c.json({ error: "no user message" }, 400);
 
   const ws = await defaultWorkspace();
-  const tools = makeAgentTools(ws.id);
+  const tools = await makeAgentTools(ws.id);
 
   const result = runAgent({
     persona: { name: ws.name, locale: ws.locale },

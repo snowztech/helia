@@ -1,11 +1,12 @@
+import { Badge } from "@/components/ui/badge";
+
 type Status = "queued" | "processing" | "ready" | "failed";
 
-// snowztech/ui modifier syntax: double-dash.
-const VARIANT: Record<Status, string> = {
-  queued: "sn-badge",
-  processing: "sn-badge sn-badge--accent",
-  ready: "sn-badge sn-badge--success",
-  failed: "sn-badge sn-badge--danger",
+const VARIANT: Record<Status, "default" | "primary" | "success" | "destructive"> = {
+  queued: "default",
+  processing: "primary",
+  ready: "success",
+  failed: "destructive",
 };
 
 export function StatusBadge({
@@ -19,5 +20,5 @@ export function StatusBadge({
     status === "processing" && typeof progress === "number"
       ? `processing · ${progress}%`
       : status;
-  return <span className={VARIANT[status]}>{label}</span>;
+  return <Badge variant={VARIANT[status]}>{label}</Badge>;
 }

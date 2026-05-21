@@ -7,6 +7,9 @@ import { sourcesRouter } from "./routes/sources";
 import { chunksRouter } from "./routes/chunks";
 import { chatRouter } from "./routes/chat";
 import { healthRouter } from "./routes/health";
+import { widgetRouter } from "./routes/widget";
+import { workspaceRouter } from "./routes/workspace";
+import { toolsRouter } from "./routes/tools";
 
 const app = new Hono();
 
@@ -37,6 +40,9 @@ app.route("/v1/health", healthRouter);
 app.route("/v1/sources", sourcesRouter);
 app.route("/v1/chunks", chunksRouter);
 app.route("/v1/chat", chatRouter);
+app.route("/v1/widget", widgetRouter);
+app.route("/v1/workspace", workspaceRouter);
+app.route("/v1/tools", toolsRouter);
 
 app.onError((err, c) => {
   log.error({ err }, "unhandled error");

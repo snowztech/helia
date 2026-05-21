@@ -1,5 +1,6 @@
 import { baseStyles } from "./styles";
 import { streamChat } from "./stream";
+import { loadRemoteConfig, type RemoteConfig } from "./config";
 import type { ChatMessage, WidgetConfig, WidgetHandle } from "./types";
 
 const HOST_ID = "helia-widget";
@@ -9,6 +10,7 @@ interface State {
   open: boolean;
   streaming: boolean;
   messages: ChatMessage[];
+  position: "right" | "left";
 }
 
 export function mount(config: WidgetConfig): WidgetHandle {
@@ -18,8 +20,10 @@ export function mount(config: WidgetConfig): WidgetHandle {
   }
 
   const apiUrl = config.apiUrl ?? DEFAULT_API_URL;
-  const botName = config.botName ?? "Assistant";
-  const greeting = config.greeting ?? "Hi, how can I help?";
+
+  let botName = config.botName ?? "Assistant";
+  let greeting = config.greeting ?? "Hi, how can I help?";
+  let placeholder = "Ask a question...";
 
   const host = document.createElement("div");
   host.id = HOST_ID;
@@ -32,9 +36,11 @@ export function mount(config: WidgetConfig): WidgetHandle {
   style.textContent = baseStyles;
   root.appendChild(style);
 
+  const hostEl = root.host as HTMLElement;
+
   // --- Launcher
   const launcher = document.createElement("button");
-  launcher.className = "launcher";
+  launcher.className = "launcher right";
   launcher.type = "button";
   launcher.setAttribute("aria-label", "Open chat");
   launcher.innerHTML = chatIcon();
@@ -42,17 +48,20 @@ export function mount(config: WidgetConfig): WidgetHandle {
 
   // --- Panel
   const panel = document.createElement("div");
-  panel.className = "panel";
+  panel.className = "panel right";
   panel.setAttribute("role", "dialog");
   panel.setAttribute("aria-label", `${botName} chat`);
   panel.innerHTML = `
     <div class="header">
-      <div class="header-title">${escapeHtml(botName)}</div>
+      <div class="header-text">
+        <div class="header-title">${escapeHtml(botName)}</div>
+        <div class="header-subtitle"></div>
+      </div>
       <button class="close" type="button" aria-label="Close chat">${closeIcon()}</button>
     </div>
     <div class="messages" role="log" aria-live="polite"></div>
     <form class="input">
-      <input type="text" placeholder="Ask ${escapeHtml(botName)}..." aria-label="Message input" autocomplete="off" />
+      <input type="text" placeholder="${escapeHtml(placeholder)}" aria-label="Message input" autocomplete="off" />
       <button type="submit" aria-label="Send" disabled>${sendIcon()}</button>
     </form>
     <div class="footer">powered by <a href="https://helia.snowztech.com" target="_blank" rel="noopener">helia</a></div>
@@ -64,11 +73,60 @@ export function mount(config: WidgetConfig): WidgetHandle {
   const input = panel.querySelector("input") as HTMLInputElement;
   const sendBtn = panel.querySelector('button[type="submit"]') as HTMLButtonElement;
   const closeBtn = panel.querySelector(".close") as HTMLButtonElement;
+  const titleEl = panel.querySelector(".header-title") as HTMLElement;
+  const subtitleEl = panel.querySelector(".header-subtitle") as HTMLElement;
 
-  const state: State = { open: false, streaming: false, messages: [] };
+  const state: State = {
+    open: false,
+    streaming: false,
+    messages: [],
+    position: "right",
+  };
 
-  // Initial greeting
-  appendMessage("assistant", greeting);
+  const greetingEl = appendMessage("assistant", greeting);
+
+  // Fetch the workspace config and apply it.
+  void loadRemoteConfig(apiUrl, config.workspace).then((remote) => {
+    if (!remote) return;
+    applyRemote(remote);
+  });
+
+  function applyRemote(remote: RemoteConfig): void {
+    hostEl.style.setProperty("--helia-primary", remote.theme.primary);
+    if (typeof remote.theme.radius === "number") {
+      hostEl.style.setProperty("--helia-radius", `${remote.theme.radius}px`);
+    }
+    applyThemeMode(remote.theme.mode);
+    applyPosition(remote.layout?.position);
+
+    botName = remote.bot.name;
+    greeting = remote.bot.greeting;
+    placeholder = remote.bot.placeholder ?? placeholder;
+    titleEl.textContent = botName;
+    subtitleEl.textContent = remote.bot.subtitle ?? "";
+    input.placeholder = placeholder;
+    panel.setAttribute("aria-label", `${botName} chat`);
+
+    if (state.messages.length === 0) {
+      greetingEl.textContent = greeting;
+    }
+  }
+
+  function applyThemeMode(mode: RemoteConfig["theme"]["mode"]): void {
+    const resolved = resolveTheme(mode);
+    hostEl.dataset.mode = resolved;
+  }
+
+  function applyPosition(
+    pos: "bottom-right" | "bottom-left" | undefined,
+  ): void {
+    const next: "left" | "right" = pos === "bottom-left" ? "left" : "right";
+    state.position = next;
+    launcher.classList.remove("left", "right");
+    launcher.classList.add(next);
+    panel.classList.remove("left", "right");
+    panel.classList.add(next);
+  }
 
   // --- Wiring
   launcher.addEventListener("click", () => setOpen(true));
@@ -190,6 +248,15 @@ export function mount(config: WidgetConfig): WidgetHandle {
   }
 
   return { destroy: () => host.remove() };
+}
+
+function resolveTheme(mode: RemoteConfig["theme"]["mode"]): "light" | "dark" {
+  if (mode === "light") return "light";
+  if (mode === "dark") return "dark";
+  if (typeof window === "undefined") return "light";
+  return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches
+    ? "dark"
+    : "light";
 }
 
 function chatIcon(): string {
