@@ -2,6 +2,10 @@
 
 > Open-source AI support agent. Upload your docs, get a chatbot.
 
+![Helia home](docs/images/home.png)
+![Helia upload](docs/images/upload.png)
+![Helia chat](docs/images/chat.png)
+
 ## Quick start
 
 Prerequisites: **Node 22+**, **pnpm 9+**, **Docker**, an **OpenAI API key**.
