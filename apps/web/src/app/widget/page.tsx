@@ -9,9 +9,9 @@ import {
   Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
@@ -103,7 +103,19 @@ export default function WidgetPage() {
   }, [ws, saved]);
 
   if (loading || !ws) {
-    return <p className="text-sm text-muted-foreground">loading…</p>;
+    return (
+      <div className="grid gap-8 lg:grid-cols-2">
+        <div className="space-y-8">
+          <Skeleton className="h-7 w-32" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-20 w-full" />
+        </div>
+        <div className="space-y-6">
+          <Skeleton className="h-[620px] w-full rounded-lg" />
+        </div>
+      </div>
+    );
   }
 
   const config: PreviewConfig = {
@@ -147,7 +159,7 @@ export default function WidgetPage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex items-end justify-between">
+      <header className="sticky top-0 z-10 -mx-6 flex items-end justify-between border-b border-border-subtle bg-background/80 px-6 py-3 backdrop-blur">
         <div className="space-y-1">
           <h1 className="text-2xl">widget.</h1>
           <p className="text-xs text-muted-foreground">

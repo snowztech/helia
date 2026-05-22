@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
@@ -130,7 +131,18 @@ export default function ToolsPage() {
       </header>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">loading…</p>
+        <ul className="divide-y divide-border rounded-md border border-border">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <li key={i} className="flex items-start gap-4 px-4 py-3">
+              <div className="min-w-0 flex-1 space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-2/3" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+              <Skeleton className="h-5 w-9 rounded-full" />
+            </li>
+          ))}
+        </ul>
       ) : tools.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center gap-4 py-10">
@@ -144,18 +156,20 @@ export default function ToolsPage() {
         <ul className="divide-y divide-border rounded-md border border-border">
           {tools.map((t) => (
             <li key={t.id} className="flex items-start gap-4 px-4 py-3">
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
+              <div className="min-w-0 flex-1 space-y-1">
+                <div className="flex items-center gap-2">
                   <code className="text-sm">{t.name}</code>
-                  <Badge variant="outline">{t.method}</Badge>
                   {!t.enabled && <Badge>disabled</Badge>}
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {t.description}
                 </p>
-                <p className="mt-1 truncate font-mono text-[11px] text-muted-foreground">
-                  {t.url}
-                </p>
+                <div className="flex min-w-0 items-center gap-2 font-mono text-[11px] text-muted-foreground">
+                  <span className="rounded border border-border px-1.5 py-0.5 text-[10px]">
+                    {t.method}
+                  </span>
+                  <span className="truncate">{t.url}</span>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <Switch

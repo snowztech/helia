@@ -1,9 +1,21 @@
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Alert02Icon,
+  Cancel01Icon,
+  InformationCircleIcon,
+} from "@hugeicons/core-free-icons";
 import { api } from "@/lib/api";
 import { AutoRefresh } from "../../_components/auto-refresh";
 import { StatusBadge } from "../../_components/status-badge";
 import { DeleteSourceButton } from "../../_components/delete-source-button";
 
 export const dynamic = "force-dynamic";
+
+const LEVEL_ICON = {
+  info: InformationCircleIcon,
+  warn: Alert02Icon,
+  error: Cancel01Icon,
+} as const;
 
 const LEVEL_CLASS: Record<string, string> = {
   info: "text-muted-foreground",
@@ -65,7 +77,7 @@ export default async function SourcePage({
           <StatusBadge status={source.status} progress={source.progress} />
         </div>
         <p className="text-xs text-muted-foreground">
-          {source.type} · {source.id} · created{" "}
+          {source.type} · <span className="font-mono">{source.id.slice(0, 8)}</span> · created{" "}
           {new Date(source.createdAt).toLocaleString()}
         </p>
 
@@ -94,17 +106,19 @@ export default async function SourcePage({
             {events.map((ev) => (
               <li
                 key={ev.id}
-                className="flex items-baseline gap-3 px-3 py-2 text-sm"
+                className="flex items-start gap-3 px-3 py-2.5 text-sm"
               >
-                <span className="min-w-[5.5rem] text-xs text-muted-foreground">
+                <span
+                  className={`mt-0.5 flex-shrink-0 ${LEVEL_CLASS[ev.level]}`}
+                  aria-label={ev.level}
+                  title={ev.level}
+                >
+                  <HugeiconsIcon icon={LEVEL_ICON[ev.level]} size={14} />
+                </span>
+                <span className="min-w-[5.5rem] flex-shrink-0 text-xs text-muted-foreground">
                   {new Date(ev.createdAt).toLocaleTimeString()}
                 </span>
-                <span
-                  className={`min-w-[3rem] text-[10px] uppercase tracking-wider ${LEVEL_CLASS[ev.level]}`}
-                >
-                  {ev.level}
-                </span>
-                <span className="flex-1">{ev.message}</span>
+                <span className="flex-1 leading-snug">{ev.message}</span>
               </li>
             ))}
           </ol>

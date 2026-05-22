@@ -167,7 +167,7 @@ export function ToolDialog({
             <Label htmlFor="t-desc">description</Label>
             <Textarea
               id="t-desc"
-              rows={2}
+              rows={3}
               placeholder="Looks up orders for the current customer by status or date."
               value={draft.description}
               onChange={(e) =>
