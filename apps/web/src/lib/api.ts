@@ -52,6 +52,7 @@ export type Workspace = {
   id: string;
   name: string;
   locale: string;
+  model: string;
   brandPrimary: string;
   botName: string;
   botSubtitle: string;
@@ -68,6 +69,8 @@ export type WorkspacePatch = Partial<
   Pick<
     Workspace,
     | "name"
+    | "locale"
+    | "model"
     | "brandPrimary"
     | "botName"
     | "botSubtitle"
@@ -79,6 +82,15 @@ export type WorkspacePatch = Partial<
     | "widgetRadius"
   >
 >;
+
+export type SystemInfo = {
+  version: string;
+  provider: "openai";
+  model: string;
+  keyConfigured: boolean;
+  allowedOrigins: string[] | "wildcard" | "dev-localhost";
+  nodeEnv: string;
+};
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
@@ -158,6 +170,8 @@ export const api = {
 
   deleteTool: (id: string) =>
     request<{ ok: true }>(`/v1/tools/${id}`, { method: "DELETE" }),
+
+  getSystem: () => request<SystemInfo>("/v1/system"),
 };
 
 export type ToolParam = {

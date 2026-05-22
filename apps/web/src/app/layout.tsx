@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Link from "next/link";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Settings02Icon } from "@hugeicons/core-free-icons";
+import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Nav } from "./_components/nav";
 import { WorkspaceChip } from "./_components/workspace-chip";
+import { WorkspaceProvider } from "./_components/workspace-provider";
 
 export const metadata: Metadata = {
   title: "Helia",
@@ -33,6 +38,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
       </head>
       <body>
+        <WorkspaceProvider>
         <div className="mx-auto max-w-5xl px-6 py-8">
           <header className="mb-10 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -43,6 +49,11 @@ export default function RootLayout({
             </div>
             <div className="flex items-center gap-2">
               <Nav />
+              <Button asChild variant="ghost" size="icon" aria-label="Settings">
+                <Link href="/settings">
+                  <HugeiconsIcon icon={Settings02Icon} size={16} />
+                </Link>
+              </Button>
               <ThemeToggle />
             </div>
           </header>
@@ -59,6 +70,7 @@ export default function RootLayout({
             </a>
           </footer>
         </div>
+        </WorkspaceProvider>
         <Toaster />
       </body>
     </html>

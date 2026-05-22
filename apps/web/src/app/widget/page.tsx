@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 import { api, type Workspace } from "@/lib/api";
+import { useWorkspace } from "../_components/workspace-provider";
 import {
   WidgetPreview,
   type PreviewConfig,
@@ -80,6 +81,7 @@ function shallowEqual(a: EditableSnapshot, b: EditableSnapshot): boolean {
 }
 
 export default function WidgetPage() {
+  const { refresh: refreshGlobalWorkspace } = useWorkspace();
   const [ws, setWs] = useState<Workspace | null>(null);
   const [saved, setSaved] = useState<EditableSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
@@ -138,6 +140,7 @@ export default function WidgetPage() {
       const { workspace } = await api.patchWorkspace(snapshot(ws));
       setWs(workspace);
       setSaved(snapshot(workspace));
+      void refreshGlobalWorkspace();
       toast.success("widget saved");
     } catch (err) {
       toast.error(String(err));
@@ -159,7 +162,7 @@ export default function WidgetPage() {
 
   return (
     <div className="space-y-6">
-      <header className="sticky top-0 z-10 -mx-6 flex items-end justify-between border-b border-border-subtle bg-background/80 px-6 py-3 backdrop-blur">
+      <header className="sticky top-0 z-20 -mx-6 flex items-end justify-between border-b border-border-subtle bg-background px-6 py-3">
         <div className="space-y-1">
           <h1 className="text-2xl">widget.</h1>
           <p className="text-xs text-muted-foreground">

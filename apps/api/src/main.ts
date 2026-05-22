@@ -10,6 +10,7 @@ import { healthRouter } from "./routes/health";
 import { widgetRouter } from "./routes/widget";
 import { workspaceRouter } from "./routes/workspace";
 import { toolsRouter } from "./routes/tools";
+import { systemRouter } from "./routes/system";
 
 const app = new Hono();
 
@@ -26,7 +27,7 @@ app.use(
       }
       return LOCALHOST_RE.test(origin) ? origin : null;
     },
-    allowMethods: ["GET", "POST", "DELETE", "OPTIONS"],
+    allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allowHeaders: ["content-type", "authorization"],
     exposeHeaders: ["x-helia-sources"],
   }),
@@ -43,6 +44,7 @@ app.route("/v1/chat", chatRouter);
 app.route("/v1/widget", widgetRouter);
 app.route("/v1/workspace", workspaceRouter);
 app.route("/v1/tools", toolsRouter);
+app.route("/v1/system", systemRouter);
 
 app.onError((err, c) => {
   log.error({ err }, "unhandled error");

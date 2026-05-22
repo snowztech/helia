@@ -37,6 +37,7 @@ chatRouter.post("/", zValidator("json", Body), async (c) => {
     persona: { name: ws.name, locale: ws.locale },
     messages,
     tools,
+    model: { provider: "openai", model: ws.model },
     onError: (err) => log.error({ err }, "agent error"),
   });
 

@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import type { ToolInput, ToolParam } from "@/lib/api";
 
 export type ToolDraft = ToolInput;
@@ -283,51 +282,36 @@ function ParamsEditor({
           {params.map((p, i) => (
             <li
               key={i}
-              className="grid grid-cols-[1.4fr_0.8fr_2fr_auto] items-start gap-2 rounded-md border border-border bg-card p-2"
+              className="rounded-md border border-border bg-card p-3"
             >
-              <Input
-                placeholder="name"
-                value={p.name}
-                onChange={(e) => onUpdate(i, { name: e.target.value })}
-                className="h-8 font-mono"
-              />
-              <select
-                value={p.type}
-                onChange={(e) =>
-                  onUpdate(i, { type: e.target.value as ToolParam["type"] })
-                }
-                className="h-8 rounded-md border border-input bg-transparent px-2 text-sm"
-              >
-                {TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-              <Input
-                placeholder="description shown to the LLM"
-                value={p.description}
-                onChange={(e) => onUpdate(i, { description: e.target.value })}
-                className="h-8"
-              />
-              <div className="flex items-center gap-1">
-                <label
-                  className={cn(
-                    "inline-flex h-8 cursor-pointer items-center gap-1 rounded-md border border-border px-2 text-xs",
-                    p.required && "bg-muted",
-                  )}
-                  title="required parameter"
+              <div className="grid grid-cols-[1.4fr_0.8fr_2fr_auto] items-start gap-2">
+                <Input
+                  placeholder="name"
+                  value={p.name}
+                  onChange={(e) => onUpdate(i, { name: e.target.value })}
+                  className="h-8 font-mono"
+                />
+                <select
+                  value={p.type}
+                  onChange={(e) =>
+                    onUpdate(i, { type: e.target.value as ToolParam["type"] })
+                  }
+                  className="h-8 rounded-md border border-input bg-transparent px-2 text-sm"
                 >
-                  <input
-                    type="checkbox"
-                    checked={p.required}
-                    onChange={(e) =>
-                      onUpdate(i, { required: e.target.checked })
-                    }
-                    className="h-3 w-3"
-                  />
-                  req
-                </label>
+                  {TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+                <Input
+                  placeholder="what this parameter is for"
+                  value={p.description}
+                  onChange={(e) =>
+                    onUpdate(i, { description: e.target.value })
+                  }
+                  className="h-8"
+                />
                 <Button
                   type="button"
                   variant="ghost"
@@ -339,6 +323,20 @@ function ParamsEditor({
                   <HugeiconsIcon icon={Cancel01Icon} size={14} />
                 </Button>
               </div>
+              <label
+                className="mt-2 inline-flex cursor-pointer items-center gap-2 text-xs text-muted-foreground"
+                title="The agent must provide this value"
+              >
+                <input
+                  type="checkbox"
+                  checked={p.required}
+                  onChange={(e) =>
+                    onUpdate(i, { required: e.target.checked })
+                  }
+                  className="h-3.5 w-3.5 cursor-pointer accent-primary"
+                />
+                required
+              </label>
             </li>
           ))}
         </ul>

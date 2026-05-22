@@ -20,6 +20,8 @@ workspaceRouter.get("/", async (c) => {
 
 const PatchBody = z.object({
   name: z.string().min(1).max(80).optional(),
+  locale: z.string().min(2).max(8).optional(),
+  model: z.string().min(1).max(60).optional(),
   brandPrimary: z
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/, "expected hex color like #0ea5e9")

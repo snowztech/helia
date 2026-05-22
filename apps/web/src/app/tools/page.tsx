@@ -118,7 +118,7 @@ export default function ToolsPage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex items-end justify-between gap-4">
+      <header className="sticky top-0 z-20 -mx-6 flex items-end justify-between gap-4 border-b border-border-subtle bg-background px-6 py-3">
         <div className="min-w-0 space-y-1">
           <h1 className="text-2xl">tools.</h1>
           <p className="text-xs text-muted-foreground">

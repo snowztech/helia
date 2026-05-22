@@ -23,6 +23,8 @@ export const workspaces = pgTable("workspaces", {
   // BCP-47 locale (en, fr, ...). Used in the agent system prompt.
   // FTS uses 'simple' config (language-agnostic) for now.
   locale: text("locale").default("en").notNull(),
+  // LLM model the agent uses. Provider is implied (OpenAI only for now).
+  model: text("model").default("gpt-4o-mini").notNull(),
   // Branding rendered by the widget. Owner-editable from the admin.
   brandPrimary: text("brand_primary").default("#0ea5e9").notNull(),
   botName: text("bot_name").default("Assistant").notNull(),
