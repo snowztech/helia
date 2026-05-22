@@ -1,4 +1,9 @@
-# Plan
+# Plan (historical)
+
+> **This is historical context.** The current canonical sprint plan lives
+> in [`V1.md`](V1.md). The day-by-day checklist below was the 2026-05-25
+> framing; most of those tasks have shipped or been re-scoped. Kept for
+> reference.
 
 Day-by-day checklist for the eight-week MVP defined in [`MVP.md`](MVP.md). Each box is a half-day of focused work. Check a box when it is shipped to `main`, not when it is "almost done."
 

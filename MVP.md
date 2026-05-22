@@ -1,4 +1,8 @@
-# MVP
+# MVP (historical)
+
+> **This is historical context.** The current canonical sprint plan lives
+> in [`V1.md`](V1.md). The MVP framing below captured the 2026-05-21 plan
+> before the polish work landed. Kept for reference.
 
 The simplest version of Helia that small businesses can actually use and pay for.
 
