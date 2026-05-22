@@ -11,6 +11,8 @@ import { widgetRouter } from "./routes/widget";
 import { workspaceRouter } from "./routes/workspace";
 import { toolsRouter } from "./routes/tools";
 import { systemRouter } from "./routes/system";
+import { metricsRouter } from "./routes/metrics";
+import { conversationsRouter } from "./routes/conversations";
 
 const app = new Hono();
 
@@ -45,6 +47,8 @@ app.route("/v1/widget", widgetRouter);
 app.route("/v1/workspace", workspaceRouter);
 app.route("/v1/tools", toolsRouter);
 app.route("/v1/system", systemRouter);
+app.route("/v1/metrics", metricsRouter);
+app.route("/v1/conversations", conversationsRouter);
 
 app.onError((err, c) => {
   log.error({ err }, "unhandled error");

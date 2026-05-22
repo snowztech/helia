@@ -197,6 +197,57 @@ export const tools = pgTable(
   }),
 );
 
+/**
+ * One row per chat turn. Captures what the user asked, what the agent
+ * answered, which tools fired, how long it took, and what it cost.
+ *
+ * Powers the admin dashboard (counts, avg latency, recent conversations)
+ * and — later — a per-turn debug view.
+ */
+export const chatTraces = pgTable(
+  "chat_traces",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    workspaceId: uuid("workspace_id")
+      .references(() => workspaces.id, { onDelete: "cascade" })
+      .notNull(),
+    // Groups consecutive turns from the same widget session. The widget
+    // generates a random id in sessionStorage on mount. Nullable so direct
+    // /v1/chat calls (e.g. admin preview) still record cleanly.
+    conversationId: uuid("conversation_id"),
+    userMessage: text("user_message").notNull(),
+    finalAnswer: text("final_answer"),
+    totalTokens: integer("total_tokens").default(0).notNull(),
+    totalLatencyMs: integer("total_latency_ms").default(0).notNull(),
+    model: text("model").notNull(),
+    // Tool / LLM steps from the AI SDK. Stored raw for the future detail view.
+    steps: jsonb("steps")
+      .$type<unknown[]>()
+      .default(sql`'[]'::jsonb`)
+      .notNull(),
+    // Source titles + scores returned by search_knowledge, if any.
+    retrieval: jsonb("retrieval")
+      .$type<
+        Array<{ title: string; url: string | null; score: number }>
+      >()
+      .default(sql`'[]'::jsonb`)
+      .notNull(),
+    error: text("error"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    byWorkspaceTime: index("chat_traces_ws_time_idx").on(
+      t.workspaceId,
+      t.createdAt,
+    ),
+  }),
+);
+
+export type ChatTrace = typeof chatTraces.$inferSelect;
+export type NewChatTrace = typeof chatTraces.$inferInsert;
+
 export type Workspace = typeof workspaces.$inferSelect;
 export type Source = typeof sources.$inferSelect;
 export type NewSource = typeof sources.$inferInsert;

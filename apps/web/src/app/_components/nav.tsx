@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const ITEMS = [
-  { href: "/", match: ["/", "/sources", "/upload"], label: "sources" },
+  { href: "/sources", match: ["/sources", "/upload"], label: "sources" },
   { href: "/tools", match: ["/tools"], label: "tools" },
-  { href: "/widget", match: ["/widget", "/brand", "/install", "/chat"], label: "widget" },
+  { href: "/widget", match: ["/widget"], label: "widget" },
 ] as const;
 
 export function Nav() {
@@ -15,9 +15,7 @@ export function Nav() {
   return (
     <nav className="flex items-center gap-1 text-sm">
       {ITEMS.map((item) => {
-        const active = item.match.some((m) =>
-          m === "/" ? pathname === "/" : pathname.startsWith(m),
-        );
+        const active = item.match.some((m) => pathname.startsWith(m));
         return (
           <Link
             key={item.href}

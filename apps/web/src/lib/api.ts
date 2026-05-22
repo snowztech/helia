@@ -172,6 +172,33 @@ export const api = {
     request<{ ok: true }>(`/v1/tools/${id}`, { method: "DELETE" }),
 
   getSystem: () => request<SystemInfo>("/v1/system"),
+
+  getMetrics: () => request<Metrics>("/v1/metrics"),
+
+  listConversations: (limit?: number) =>
+    request<{ conversations: ConversationSummary[] }>(
+      `/v1/conversations${limit ? `?limit=${limit}` : ""}`,
+    ),
+};
+
+export type Metrics = {
+  messagesToday: number;
+  messagesWeek: number;
+  messagesTotal: number;
+  avgLatencyMs: number;
+  tokensWeek: number;
+};
+
+export type ConversationSummary = {
+  id: string;
+  userMessage: string;
+  finalAnswer: string | null;
+  totalTokens: number;
+  totalLatencyMs: number;
+  model: string;
+  sourceCount: number;
+  error: string | null;
+  createdAt: string;
 };
 
 export type ToolParam = {

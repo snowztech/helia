@@ -8,41 +8,49 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
 
-interface Props {
-  hasSources: boolean;
-}
-
 interface StepState {
   hasSources: boolean;
   hasTools: boolean;
   brandCustomized: boolean;
+  hasMessages: boolean;
 }
 
 const DEFAULT_PRIMARY = "#0ea5e9";
 const DEFAULT_BOT_NAME = "Assistant";
 
-export function GettingStarted({ hasSources }: Props) {
+/**
+ * `hasSources` is an optional hint for pages that already know it (e.g.
+ * /sources). The component still self-fetches everything else.
+ */
+export function GettingStarted({ hasSources }: { hasSources?: boolean }) {
   const [state, setState] = useState<StepState>({
-    hasSources,
+    hasSources: hasSources ?? false,
     hasTools: false,
     brandCustomized: false,
+    hasMessages: false,
   });
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     if (dismissed) return;
-    Promise.all([api.getWorkspace(), api.listTools()])
-      .then(([{ workspace }, { tools }]) => {
-        setState((s) => ({
-          ...s,
+    Promise.all([
+      api.getWorkspace(),
+      api.listTools(),
+      api.listSources().catch(() => ({ sources: [] })),
+      api.getMetrics().catch(() => null),
+    ])
+      .then(([{ workspace }, { tools }, { sources }, metrics]) => {
+        setState({
+          hasSources: sources.length > 0,
           hasTools: tools.length > 0,
           brandCustomized:
             workspace.brandPrimary !== DEFAULT_PRIMARY ||
             workspace.botName !== DEFAULT_BOT_NAME,
-        }));
+          hasMessages: (metrics?.messagesTotal ?? 0) > 0,
+        });
       })
       .catch(() => {
-        // silent — hint, not load-blocking
+        // hint, not load-blocking
       });
   }, [dismissed]);
 
@@ -73,9 +81,11 @@ export function GettingStarted({ hasSources }: Props) {
       paths: [{ label: "customize", href: "/widget" }],
     },
     {
-      done: false,
+      done: state.hasMessages,
       label: "Install on your site",
-      hint: "Copy one script tag.",
+      hint: state.hasMessages
+        ? "We've seen real chat traffic — you're live."
+        : "Copy one script tag.",
       paths: [{ label: "get snippet", href: "/widget" }],
     },
   ];
@@ -121,7 +131,11 @@ export function GettingStarted({ hasSources }: Props) {
                       : "border-border text-muted-foreground",
                   )}
                 >
-                  {s.done ? <HugeiconsIcon icon={Tick02Icon} size={12} /> : i + 1}
+                  {s.done ? (
+                    <HugeiconsIcon icon={Tick02Icon} size={12} />
+                  ) : (
+                    i + 1
+                  )}
                 </span>
                 <div className="flex-1 space-y-1">
                   <div className={s.done ? "line-through" : ""}>{s.label}</div>
