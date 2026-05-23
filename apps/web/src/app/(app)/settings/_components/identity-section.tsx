@@ -96,18 +96,20 @@ export function IdentitySection({
           </p>
         </div>
         {identityConfigured ? (
-          <Badge>configured</Badge>
+          <Badge className="whitespace-nowrap">configured</Badge>
         ) : (
-          <Badge variant="warning">not set</Badge>
+          <Badge variant="warning" className="whitespace-nowrap">
+            not set
+          </Badge>
         )}
       </div>
 
       <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-muted/40 p-4">
         <div className="space-y-1">
-          <Label className="text-xs">Require signed identity on /chat</Label>
+          <Label className="text-xs">Reject anonymous chats</Label>
           <p className="text-[11px] text-muted-foreground">
-            Turn on once your widget is sending signatures. Until then, leave
-            off so anonymous chat keeps working.
+            Turn on once your widget is sending signed identities. Anonymous
+            chats will start getting rejected.
           </p>
         </div>
         <Switch
@@ -240,7 +242,7 @@ function CodeSamples({ workspaceId }: { workspaceId: string }) {
       <Step
         number={1}
         title="Add a backend route that signs the user"
-        description="Returns the current user's id and a signature. Helia verifies it with the secret above."
+        description="Reads your logged-in user from your own auth (sessions, JWT, whatever you already use) and returns a signed identity. Helia verifies the signature with the secret above."
       >
         <CodeBlock
           code={backendCode}

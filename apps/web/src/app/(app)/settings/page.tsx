@@ -61,6 +61,16 @@ export default function SettingsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Hash anchors don't work on this page because the sections render after
+  // the data fetch. Scroll manually once the content is in the DOM.
+  useEffect(() => {
+    if (loading) return;
+    const hash = window.location.hash.slice(1);
+    if (!hash) return;
+    const el = document.getElementById(hash);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [loading]);
+
   const dirty = useMemo(() => {
     if (!ws || !savedSnapshot) return false;
     return (
