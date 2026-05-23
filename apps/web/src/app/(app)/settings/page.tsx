@@ -276,7 +276,7 @@ export default function SettingsPage() {
         </div>
       </Section>
 
-      <Section title="User identity">
+      <Section title="User identity" id="user-identity">
         <IdentitySection
           workspaceId={ws.id}
           identityRequired={ws.identityRequired}
@@ -332,13 +332,15 @@ export default function SettingsPage() {
 
 function Section({
   title,
+  id,
   children,
 }: {
   title: string;
+  id?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="space-y-3">
+    <section id={id} className="scroll-mt-24 space-y-3">
       <h2 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
         {title}
       </h2>

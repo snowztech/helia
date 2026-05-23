@@ -205,7 +205,7 @@ function IntegrationGuide({
         <div className="space-y-0.5">
           <p className="text-sm font-medium">Integration guide</p>
           <p className="text-[11px] text-muted-foreground">
-            Three steps: embed, sign on your backend, identify on the page.
+            Two steps: sign on your backend, point the widget at your route.
           </p>
         </div>
         <HugeiconsIcon
@@ -230,26 +230,17 @@ function CodeSamples({ workspaceId }: { workspaceId: string }) {
   const [tab, setTab] = useState<"node" | "next">("node");
   const backendCode = tab === "node" ? NODE_SAMPLE : NEXT_SAMPLE;
 
-  const embedSnippet = `<script src="${WIDGET_PROD_URL}" data-workspace="${workspaceId}" async></script>`;
-  const frontendSnippet = `// after your user logs in
-fetch("/helia-token")
-  .then((r) => r.json())
-  .then((token) => Helia.identify(token));`;
+  const embedSnippet = `<script src="https://helia.snowztech.com/w.js"
+        data-workspace="${workspaceId}"
+        data-token-endpoint="/helia-token"
+        async></script>`;
 
   return (
     <div className="space-y-5">
       <Step
         number={1}
-        title="Embed the widget"
-        description="Add this script tag to the page where logged-in users see the assistant."
-      >
-        <CodeBlock code={embedSnippet} language="html" />
-      </Step>
-
-      <Step
-        number={2}
         title="Add a backend route that signs the user"
-        description="Returns the current user's id and a signature. Pick your stack:"
+        description="Returns the current user's id and a signature. Helia verifies it with the secret above."
       >
         <CodeBlock
           code={backendCode}
@@ -268,17 +259,15 @@ fetch("/helia-token")
       </Step>
 
       <Step
-        number={3}
-        title="Call identify from the page"
-        description="Fetch the token after login and hand it to the widget."
+        number={2}
+        title="Point the widget at your route"
+        description="Add data-token-endpoint to your script tag. The widget fetches the signed token on every page load."
       >
-        <CodeBlock code={frontendSnippet} language="js" />
+        <CodeBlock code={embedSnippet} language="html" />
       </Step>
     </div>
   );
 }
-
-const WIDGET_PROD_URL = "https://helia.snowztech.com/w.js";
 
 function Step({
   number,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Cancel01Icon,
@@ -330,7 +331,13 @@ export default function WidgetPage() {
                 {snippet}
               </pre>
               <p className="mt-3 text-[11px] text-muted-foreground">
-                Paste before <code>&lt;/body&gt;</code> on any page of your site.
+                Showing this to logged-in users? Set up{" "}
+                <Link
+                  href="/settings#user-identity"
+                  className="text-foreground underline underline-offset-2 hover:no-underline"
+                >
+                  user identity
+                </Link>
               </p>
             </div>
           </Section>

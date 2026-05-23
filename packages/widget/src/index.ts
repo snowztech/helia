@@ -1,5 +1,5 @@
 import { mount } from "./widget";
-import { setIdentity, clearIdentity } from "./identity";
+import { setIdentity, clearIdentity, fetchAndSetIdentity } from "./identity";
 import type { Identity, WidgetConfig, WidgetHandle } from "./types";
 
 const Helia = {
@@ -36,11 +36,17 @@ function autoMount(): void {
   if (!workspace) return;
 
   const apiUrl = script.getAttribute("data-api-url") ?? undefined;
+  const tokenEndpoint = script.getAttribute("data-token-endpoint") ?? undefined;
+
+  const boot = () => {
+    mount({ workspace, apiUrl });
+    if (tokenEndpoint) void fetchAndSetIdentity(tokenEndpoint);
+  };
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => mount({ workspace, apiUrl }));
+    document.addEventListener("DOMContentLoaded", boot);
   } else {
-    mount({ workspace, apiUrl });
+    boot();
   }
 }
 
