@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
-import { api, type SystemInfo, type Workspace } from "@/lib/api";
+import { api, type AuthUser, type SystemInfo, type Workspace } from "@/lib/api";
 import { useWorkspace } from "../_components/workspace-provider";
 import { DeleteAccountDialog } from "../_components/delete-account-dialog";
 
@@ -32,6 +32,7 @@ const LOCALES = [
 export default function SettingsPage() {
   const { refresh: refreshGlobalWorkspace } = useWorkspace();
   const [ws, setWs] = useState<Workspace | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [system, setSystem] = useState<SystemInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,10 +44,11 @@ export default function SettingsPage() {
   const [copiedId, setCopiedId] = useState(false);
 
   useEffect(() => {
-    Promise.all([api.getWorkspace(), api.getSystem()])
-      .then(([w, s]) => {
+    Promise.all([api.getWorkspace(), api.getSystem(), api.me()])
+      .then(([w, s, m]) => {
         setWs(w.workspace);
         setSystem(s);
+        setUser(m.user);
         setSavedSnapshot({
           name: w.workspace.name,
           locale: w.workspace.locale,
@@ -66,7 +68,7 @@ export default function SettingsPage() {
     );
   }, [ws, savedSnapshot]);
 
-  if (loading || !ws || !system) {
+  if (loading || !ws || !system || !user) {
     return (
       <div className="space-y-8">
         <Skeleton className="h-8 w-32" />
@@ -119,13 +121,32 @@ export default function SettingsPage() {
         <div className="space-y-1">
           <h1 className="text-2xl">settings.</h1>
           <p className="text-xs text-muted-foreground">
-            Configure your workspace, AI model, and inspect system state.
+            Manage your account, workspace, and AI configuration.
           </p>
         </div>
         <Button onClick={save} disabled={!dirty || saving}>
           {saving ? "saving…" : dirty ? "save" : "saved"}
         </Button>
       </header>
+
+      <Section title="Account">
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label>email</Label>
+            <div className="rounded-md border border-border bg-muted px-3 py-1.5 text-sm">
+              {user.email}
+            </div>
+          </div>
+          {user.name && (
+            <div className="space-y-1.5">
+              <Label>name</Label>
+              <div className="rounded-md border border-border bg-muted px-3 py-1.5 text-sm">
+                {user.name}
+              </div>
+            </div>
+          )}
+        </div>
+      </Section>
 
       <Section title="Workspace">
         <div className="space-y-4">
@@ -246,19 +267,6 @@ export default function SettingsPage() {
             — comma-separated origins for production.
           </p>
         </div>
-      </Section>
-
-      <Section title="System">
-        <dl className="grid grid-cols-2 gap-4 text-sm">
-          <div className="space-y-0.5">
-            <dt className="text-xs text-muted-foreground">version</dt>
-            <dd>v{system.version}</dd>
-          </div>
-          <div className="space-y-0.5">
-            <dt className="text-xs text-muted-foreground">environment</dt>
-            <dd className="capitalize">{system.nodeEnv}</dd>
-          </div>
-        </dl>
       </Section>
 
       <section className="space-y-3">
