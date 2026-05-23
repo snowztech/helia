@@ -22,7 +22,7 @@ export default function HomePage() {
   const [apiOk, setApiOk] = useState(true);
 
   useEffect(() => {
-    Promise.all([api.getMetrics(), api.listConversations(8)])
+    Promise.all([api.getMetrics(), api.listConversations({ limit: 8 })])
       .then(([m, c]) => {
         setMetrics(m);
         setConversations(c.conversations);
@@ -90,31 +90,30 @@ export default function HomePage() {
         ) : (
           <ul className="divide-y divide-border rounded-md border border-border">
             {conversations.map((c) => (
-              <li
-                key={c.id}
-                className="flex items-center gap-3 px-4 py-3 text-sm"
-              >
-                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                  <HugeiconsIcon icon={BubbleChatIcon} size={12} />
-                </span>
-                {c.userName && (
-                  <span className="flex-shrink-0 text-[11px] font-medium text-muted-foreground">
-                    {c.userName}
+              <li key={c.id}>
+                <Link
+                  href={`/conversations/${c.id}`}
+                  className="flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-muted/40"
+                >
+                  <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                    <HugeiconsIcon icon={BubbleChatIcon} size={12} />
                   </span>
-                )}
-                <span className="min-w-0 flex-1 truncate">
-                  {c.userMessage}
-                </span>
-                {c.error ? (
-                  <Badge variant="destructive">error</Badge>
-                ) : c.sourceCount > 0 ? (
-                  <Badge variant="primary">
-                    {c.sourceCount} {c.sourceCount === 1 ? "source" : "sources"}
+                  {c.userName && (
+                    <span className="flex-shrink-0 text-[11px] font-medium text-muted-foreground">
+                      {c.userName}
+                    </span>
+                  )}
+                  <span className="min-w-0 flex-1 truncate">
+                    {c.lastUserMessage}
+                  </span>
+                  {c.hasError && <Badge variant="destructive">error</Badge>}
+                  <Badge variant="outline">
+                    {c.turns} {c.turns === 1 ? "turn" : "turns"}
                   </Badge>
-                ) : null}
-                <span className="w-12 flex-shrink-0 text-right text-[11px] text-muted-foreground">
-                  {timeAgo(c.createdAt)}
-                </span>
+                  <span className="w-12 flex-shrink-0 text-right text-[11px] text-muted-foreground">
+                    {timeAgo(c.lastActiveAt)}
+                  </span>
+                </Link>
               </li>
             ))}
           </ul>

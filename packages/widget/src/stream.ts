@@ -21,6 +21,7 @@ export interface StreamCallbacks {
 export async function streamChat(
   apiUrl: string,
   workspace: string,
+  conversationId: string,
   messages: ChatMessage[],
   identity: Identity | null,
   cb: StreamCallbacks,
@@ -28,7 +29,9 @@ export async function streamChat(
   let res: Response;
   try {
     const base = apiUrl.replace(/\/$/, "");
-    const url = `${base}/v1/chat?ws=${encodeURIComponent(workspace)}`;
+    const url =
+      `${base}/v1/chat?ws=${encodeURIComponent(workspace)}` +
+      `&conv=${encodeURIComponent(conversationId)}`;
     const headers: Record<string, string> = {
       "content-type": "application/json",
     };

@@ -2,6 +2,7 @@ import { baseStyles } from "./styles";
 import { streamChat } from "./stream";
 import { loadRemoteConfig, type RemoteConfig } from "./config";
 import { getIdentity } from "./identity";
+import { getOrCreateConversationId } from "./conversation";
 import type { ChatMessage, WidgetConfig, WidgetHandle } from "./types";
 
 const HOST_ID = "helia-widget";
@@ -264,7 +265,14 @@ export function mount(config: WidgetConfig): WidgetHandle {
     let activeToolPill: HTMLElement | null = null;
     let sources: Array<{ title: string; url: string | null }> = [];
 
-    await streamChat(apiUrl, config.workspace, state.messages, getIdentity(), {
+    const conversationId = getOrCreateConversationId(config.workspace);
+    await streamChat(
+      apiUrl,
+      config.workspace,
+      conversationId,
+      state.messages,
+      getIdentity(),
+      {
       onDelta: (delta) => {
         if (!assistantEl) {
           if (typingEl.isConnected) typingEl.remove();

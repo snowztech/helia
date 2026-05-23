@@ -37,6 +37,11 @@ const Body = z.object({
  * Side effect: a `chat_traces` row is written after the stream completes,
  * powering the admin dashboard.
  */
+// Cap the number of past turns we feed the model. Older messages stay in
+// the DB for the admin's review but are dropped from the LLM's context to
+// keep token spend bounded.
+const HISTORY_TURN_CAP = 20;
+
 chatRouter.post("/", zValidator("json", Body), async (c) => {
   const { messages } = c.req.valid("json");
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
@@ -44,6 +49,8 @@ chatRouter.post("/", zValidator("json", Body), async (c) => {
 
   const ws = await resolveChatWorkspace(c);
   if (!ws) return c.json({ error: "workspace not found" }, 404);
+
+  const conversationId = resolveConversationId(c);
 
   const identity = resolveIdentity(c, ws);
   if (identity === "invalid") {
@@ -71,18 +78,42 @@ chatRouter.post("/", zValidator("json", Body), async (c) => {
   const tools = await makeAgentTools(ws.id, identity);
   const startedAt = Date.now();
 
+  const trimmed =
+    messages.length > HISTORY_TURN_CAP
+      ? messages.slice(-HISTORY_TURN_CAP)
+      : messages;
+
   const result = runAgent({
     persona: { name: ws.name, locale: ws.locale },
-    messages,
+    messages: trimmed,
     tools,
     model: { provider: "openai", model: ws.model },
     onError: (err) => log.error({ err }, "agent error"),
   });
 
-  void persistTrace(result, ws, identity, lastUser.content, startedAt);
+  void persistTrace(
+    result,
+    ws,
+    identity,
+    conversationId,
+    lastUser.content,
+    startedAt,
+  );
 
   return result.toDataStreamResponse();
 });
+
+/**
+ * Per-conversation grouping key. The widget generates one per session and
+ * sends it on every chat call so the admin UI can group turns into actual
+ * conversations. Falls back to null (each turn is its own conversation)
+ * when the caller doesn't pass one.
+ */
+function resolveConversationId(c: Context): string | null {
+  const conv = c.req.query("conv");
+  if (conv && UUID_RE.test(conv)) return conv;
+  return null;
+}
 
 /**
  * Verify the user identity headers if present.
@@ -156,6 +187,7 @@ async function persistTrace(
   result: AgentResult,
   ws: Workspace,
   identity: Identity | null,
+  conversationId: string | null,
   userMessage: string,
   startedAt: number,
 ): Promise<void> {
@@ -171,6 +203,7 @@ async function persistTrace(
 
     await db.insert(chatTraces).values({
       workspaceId: ws.id,
+      conversationId,
       userId: identity?.id ?? null,
       userName: identity?.name ?? null,
       userMessage,

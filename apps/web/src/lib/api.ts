@@ -218,10 +218,28 @@ export const api = {
 
   getUsage: () => request<Usage>("/v1/metrics/usage"),
 
-  listConversations: (limit?: number) =>
-    request<{ conversations: ConversationSummary[] }>(
-      `/v1/conversations${limit ? `?limit=${limit}` : ""}`,
-    ),
+  listConversations: (opts?: { limit?: number; errors?: boolean }) => {
+    const q = new URLSearchParams();
+    if (opts?.limit) q.set("limit", String(opts.limit));
+    if (opts?.errors) q.set("errors", "true");
+    const qs = q.toString();
+    return request<{ conversations: ConversationSummary[] }>(
+      `/v1/conversations${qs ? `?${qs}` : ""}`,
+    );
+  },
+
+  getConversation: (id: string) =>
+    request<{ conversation: ConversationDetail }>(`/v1/conversations/${id}`),
+
+  deleteConversation: (id: string) =>
+    request<{ ok: true; deleted: number }>(`/v1/conversations/${id}`, {
+      method: "DELETE",
+    }),
+
+  deleteAllConversations: () =>
+    request<{ ok: true; deleted: number }>(`/v1/conversations`, {
+      method: "DELETE",
+    }),
 
   signup: (input: { email: string; password: string; name?: string }) =>
     request<{ user: AuthUser; workspace: { id: string; name: string } }>(
@@ -290,14 +308,58 @@ export type ConversationSummary = {
   id: string;
   userId: string | null;
   userName: string | null;
+  lastUserMessage: string;
+  turns: number;
+  hasError: boolean;
+  lastActiveAt: string;
+};
+
+export type RetrievalChunk = {
+  title: string;
+  url: string | null;
+  score: number;
+};
+
+/**
+ * Agent step as recorded by the Vercel AI SDK. We don't model every shape
+ * here; the detail UI walks the fields it knows about and skips the rest.
+ */
+export type ConversationStep = {
+  text?: string;
+  toolCalls?: Array<{
+    toolCallId?: string;
+    toolName?: string;
+    args?: unknown;
+  }>;
+  toolResults?: Array<{
+    toolCallId?: string;
+    toolName?: string;
+    result?: unknown;
+  }>;
+};
+
+export type ConversationTurn = {
+  id: string;
   userMessage: string;
   finalAnswer: string | null;
   totalTokens: number;
   totalLatencyMs: number;
   model: string;
-  sourceCount: number;
+  retrieval: RetrievalChunk[];
+  steps: ConversationStep[];
   error: string | null;
   createdAt: string;
+};
+
+export type ConversationDetail = {
+  id: string;
+  userId: string | null;
+  userName: string | null;
+  model: string;
+  startedAt: string;
+  lastActiveAt: string;
+  totalTokens: number;
+  turns: ConversationTurn[];
 };
 
 export type ToolParam = {

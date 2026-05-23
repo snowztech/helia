@@ -132,9 +132,13 @@ function Panel({
     config.position === "bottom-right" ? "right-4" : "left-4";
   const dark = themeMode === "dark";
 
+  // One conversation per mount of the preview. We don't persist it: the
+  // admin is iterating on the widget, not having a real chat.
+  const previewConversationId = useMemo(() => crypto.randomUUID(), []);
+
   const { messages, input, handleInputChange, handleSubmit, status, append } =
     useChat({
-      api: `${API_URL}/v1/chat?ws=${encodeURIComponent(config.workspaceId)}`,
+      api: `${API_URL}/v1/chat?ws=${encodeURIComponent(config.workspaceId)}&conv=${previewConversationId}`,
     });
 
   const waiting = status === "submitted";
