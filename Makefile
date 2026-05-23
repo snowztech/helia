@@ -44,17 +44,17 @@ db:
 	@echo "✓ Postgres ready"
 
 env:
-	@if [ ! -f apps/api/.env ]; then \
-		cp apps/api/.env.example apps/api/.env; \
-		echo "✓ Created apps/api/.env from apps/api/.env.example"; \
-		echo "  → Edit apps/api/.env: set OPENAI_API_KEY (get one at https://platform.openai.com/api-keys)"; \
+	@if [ ! -f .env ]; then \
+		cp .env.example .env; \
+		echo "✓ Created .env from .env.example"; \
+		echo "  → Edit .env: set OPENAI_API_KEY and MASTER_KEY (openssl rand -hex 32)"; \
 	else \
-		echo "✓ apps/api/.env already exists"; \
+		echo "✓ .env already exists"; \
 	fi
-	@if grep -qE '^OPENAI_API_KEY=\s*$$' apps/api/.env 2>/dev/null; then \
+	@if grep -qE '^OPENAI_API_KEY=\s*$$' .env 2>/dev/null; then \
 		echo ""; \
-		echo "⚠  OPENAI_API_KEY is empty in apps/api/.env — chat and ingestion will fail."; \
-		echo "   Fill it in before running 'make dev'."; \
+		echo "⚠  OPENAI_API_KEY is empty in .env — chat and ingestion will fail."; \
+		echo "   Fill it in before running 'make dev' or 'make docker-up'."; \
 	fi
 
 install:
@@ -107,6 +107,14 @@ typecheck:
 docker-up:
 	@if [ ! -f .env ]; then \
 		echo "✗ .env missing — run: cp .env.example .env, then fill OPENAI_API_KEY + MASTER_KEY"; \
+		exit 1; \
+	fi
+	@if ! grep -qE '^OPENAI_API_KEY=.+' .env 2>/dev/null; then \
+		echo "✗ OPENAI_API_KEY not set in .env"; \
+		exit 1; \
+	fi
+	@if ! grep -qE '^MASTER_KEY=.+' .env 2>/dev/null; then \
+		echo "✗ MASTER_KEY not set in .env (generate with: openssl rand -hex 32)"; \
 		exit 1; \
 	fi
 	@echo "→ Building and starting Helia stack…"
