@@ -5,7 +5,7 @@ const AUTH_PATHS = new Set(["/login", "/signup", "/verify"]);
 /**
  * Soft auth gating. If there's no cookie at all on a protected path, bounce
  * to /login without a round-trip to the API. A stale cookie still gets
- * through — the `(app)` layout's `api.me()` check is the real gate, and
+ * through. The `(app)` layout's `api.me()` check is the real gate, and
  * has the full session-table truth to act on.
  *
  * The reverse ("logged-in user visits /login → send to /") is intentionally

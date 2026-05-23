@@ -95,7 +95,7 @@ async function resolveAuth(c: Context): Promise<AuthContext | null> {
 
 /**
  * Gate non-public routes. Public paths (chat widget, login/signup) pass
- * through with whatever auth context we could resolve — possibly none.
+ * through with whatever auth context we could resolve, possibly none.
  * Everything else demands a valid session.
  */
 const PUBLIC_PATHS = new Set([
@@ -130,7 +130,7 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
 };
 
 /**
- * Helpers for routes — typed access to the context the middleware filled.
+ * Helpers for routes. Typed access to the context the middleware filled.
  */
 export function currentUser(c: Context): User | null {
   return c.get("user") ?? null;

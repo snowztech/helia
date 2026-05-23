@@ -19,9 +19,10 @@ interface SendArgs {
   to: string;
   subject: string;
   text: string;
+  html: string;
 }
 
-async function send({ to, subject, text }: SendArgs): Promise<void> {
+async function send({ to, subject, text, html }: SendArgs): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     log.info({ to, subject }, "email (console-only):\n" + text);
@@ -35,7 +36,7 @@ async function send({ to, subject, text }: SendArgs): Promise<void> {
         Authorization: `Bearer ${apiKey}`,
         "content-type": "application/json",
       },
-      body: JSON.stringify({ from: FROM, to, subject, text }),
+      body: JSON.stringify({ from: FROM, to, subject, text, html }),
     });
     if (!res.ok) {
       const body = await res.text().catch(() => "");
@@ -49,16 +50,44 @@ async function send({ to, subject, text }: SendArgs): Promise<void> {
   }
 }
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 export async function sendVerificationEmail(args: {
   to: string;
   token: string;
 }): Promise<void> {
   const url = `${WEB_URL}/verify?token=${args.token}`;
+  const safeUrl = escapeHtml(url);
+
+  const text =
+    `Click to verify your email and finish signing up:\n\n${url}\n\n` +
+    `The link expires in 24 hours.`;
+
+  const html = `<!doctype html>
+<html>
+  <body style="font-family: -apple-system, system-ui, sans-serif; font-size: 14px; line-height: 1.5; color: #0f172a;">
+    <p>Click to verify your email and finish signing up:</p>
+    <p>
+      <a href="${safeUrl}" style="display: inline-block; padding: 10px 16px; background: #0ea5e9; color: #fff; text-decoration: none; border-radius: 8px;">
+        Verify email
+      </a>
+    </p>
+    <p style="color: #475569;">Or paste this link into your browser:</p>
+    <p><a href="${safeUrl}">${safeUrl}</a></p>
+    <p style="color: #475569; font-size: 12px;">The link expires in 24 hours.</p>
+  </body>
+</html>`;
+
   await send({
     to: args.to,
     subject: "Verify your Helia email",
-    text:
-      `Click to verify your email and finish signing up:\n\n${url}\n\n` +
-      `The link expires in 24 hours.`,
+    text,
+    html,
   });
 }

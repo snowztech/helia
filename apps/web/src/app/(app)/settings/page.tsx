@@ -42,6 +42,7 @@ export default function SettingsPage() {
     model: string;
   } | null>(null);
   const [copiedId, setCopiedId] = useState(false);
+  const [resending, setResending] = useState(false);
 
   useEffect(() => {
     Promise.all([api.getWorkspace(), api.getSystem(), api.me()])
@@ -77,6 +78,22 @@ export default function SettingsPage() {
       </div>
     );
   }
+
+  const resendVerification = async () => {
+    setResending(true);
+    try {
+      const res = await api.resendVerification();
+      if (res.alreadyVerified) {
+        toast.success("Already verified. Refresh to update.");
+      } else {
+        toast.success("Verification email sent. Check your inbox.");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "send failed");
+    } finally {
+      setResending(false);
+    }
+  };
 
   const copyId = async () => {
     try {
@@ -133,8 +150,23 @@ export default function SettingsPage() {
         <div className="space-y-4">
           <div className="space-y-1.5">
             <Label>email</Label>
-            <div className="rounded-md border border-border bg-muted px-3 py-1.5 text-sm">
-              {user.email}
+            <div className="flex items-center gap-2">
+              <div className="flex-1 rounded-md border border-border bg-muted px-3 py-1.5 text-sm">
+                {user.email}
+              </div>
+              {!user.emailVerifiedAt && (
+                <>
+                  <Badge variant="warning">unverified</Badge>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={resending}
+                    onClick={resendVerification}
+                  >
+                    {resending ? "sending…" : "resend"}
+                  </Button>
+                </>
+              )}
             </div>
           </div>
           {user.name && (

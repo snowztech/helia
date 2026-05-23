@@ -74,7 +74,7 @@ export function DeleteAccountDialog({
           <AlertDialogTitle>Delete your account?</AlertDialogTitle>
           <AlertDialogDescription>
             This wipes the workspace <strong>{workspaceName}</strong> and
-            everything in it — sources, chunks, tools, traces. The action
+            everything in it: sources, chunks, tools, traces. The action
             cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>

@@ -195,8 +195,50 @@ authRouter.get("/me", async (c) => {
   const user = currentUser(c);
   if (!user) return c.json({ user: null }, 200);
   return c.json({
-    user: { id: user.id, email: user.email, name: user.name },
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      emailVerifiedAt: user.emailVerifiedAt,
+    },
   });
+});
+
+/**
+ * POST /v1/auth/resend-verification
+ *
+ * Issues a fresh verification token for the current user and sends the
+ * email. Invalidates any prior unused tokens so only the latest link
+ * works. No-ops if the user is already verified.
+ */
+authRouter.post("/resend-verification", async (c) => {
+  const user = currentUser(c);
+  if (!user) return c.json({ error: "unauthorized" }, 401);
+  if (user.emailVerifiedAt) {
+    return c.json({ ok: true, alreadyVerified: true });
+  }
+
+  await db
+    .update(emailTokens)
+    .set({ usedAt: new Date() })
+    .where(
+      and(
+        eq(emailTokens.userId, user.id),
+        eq(emailTokens.purpose, "verify_email"),
+        isNull(emailTokens.usedAt),
+      ),
+    );
+
+  const token = generateToken();
+  await db.insert(emailTokens).values({
+    token,
+    userId: user.id,
+    purpose: "verify_email",
+    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+  });
+  await sendVerificationEmail({ to: user.email, token });
+
+  return c.json({ ok: true });
 });
 
 const VerifyBody = z.object({ token: z.string().min(8).max(200) });

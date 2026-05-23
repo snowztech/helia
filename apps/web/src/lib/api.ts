@@ -239,6 +239,12 @@ export const api = {
       body: JSON.stringify({ token }),
     }),
 
+  resendVerification: () =>
+    request<{ ok: true; alreadyVerified?: boolean }>(
+      "/v1/auth/resend-verification",
+      { method: "POST" },
+    ),
+
   deleteAccount: (password: string) =>
     request<{ ok: true }>("/v1/auth/me", {
       method: "DELETE",
