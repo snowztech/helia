@@ -1,0 +1,39 @@
+# Anything not needed inside the build context. Smaller context = faster
+# docker build and fewer cache busts.
+
+# Dependencies — installed by docker, never copied from host.
+**/node_modules
+**/.pnpm-store
+
+# Build outputs
+**/.next
+**/dist
+**/.turbo
+**/*.tsbuildinfo
+
+# Env / secrets
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Editor / OS
+.DS_Store
+.idea
+.vscode
+
+# VCS
+.git
+.gitignore
+.github
+
+# Local dev data
+apps/web/data
+data
+uploads
+
+# Docs (kept in image only if useful)
+internal/
+
+# Tests / CI artifacts
+coverage
+.nyc_output

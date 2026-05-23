@@ -1,13 +1,21 @@
+# Helia self-host stack.
+#
+# Quick start:
+#   1. cp .env.example .env  and fill OPENAI_API_KEY + MASTER_KEY
+#   2. docker compose up -d
+#   3. open http://localhost:3000
+
 services:
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: helia_postgres
+    restart: unless-stopped
     environment:
       POSTGRES_USER: helia
-      POSTGRES_PASSWORD: helia
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-helia}
       POSTGRES_DB: helia
+    # Bind to localhost only — internal services talk over the helia network.
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - helia_pgdata:/var/lib/postgresql/data
       - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
@@ -16,6 +24,37 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://helia:${POSTGRES_PASSWORD:-helia}@postgres:5432/helia
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?set OPENAI_API_KEY in .env}
+      MASTER_KEY: ${MASTER_KEY:?set MASTER_KEY in .env (openssl rand -hex 32)}
+      HELIA_CORS_ORIGIN: ${HELIA_CORS_ORIGIN:-}
+    ports:
+      - "${HELIA_API_PORT:-4000}:4000"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      # Browser-facing URL of the API. Behind a reverse proxy, set this to
+      # the same host users visit (e.g. https://helia.example.com).
+      NEXT_PUBLIC_API_URL: ${HELIA_PUBLIC_API_URL:-http://localhost:4000}
+    ports:
+      - "${HELIA_WEB_PORT:-3000}:3000"
 
 volumes:
   helia_pgdata:
