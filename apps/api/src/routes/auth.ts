@@ -4,7 +4,6 @@ import { z } from "zod";
 import { and, eq, isNull } from "drizzle-orm";
 import {
   emailTokens,
-  sessions,
   users,
   workspaceMembers,
   workspaces,
@@ -141,6 +140,54 @@ authRouter.post("/logout", async (c) => {
     if (match?.[1]) await destroySession(match[1]);
   }
   clearSessionCookie(c);
+  return c.json({ ok: true });
+});
+
+const DeleteBody = z.object({
+  password: z.string().min(1).max(120),
+});
+
+/**
+ * DELETE /v1/auth/me
+ *
+ * Permanently deletes the current user and every workspace they own.
+ * Cascades take care of sessions, members, sources, chunks, tools and
+ * traces.
+ *
+ * Memberships in other people's workspaces are also dropped (cascade on
+ * `workspace_members.user_id`), but those workspaces themselves stay.
+ */
+authRouter.delete("/me", zValidator("json", DeleteBody), async (c) => {
+  const user = currentUser(c);
+  if (!user || !user.passwordHash) {
+    return c.json({ error: "unauthorized" }, 401);
+  }
+
+  const { password } = c.req.valid("json");
+  const ok = await verifyPassword(password, user.passwordHash);
+  if (!ok) return c.json({ error: "invalid password" }, 401);
+
+  // Workspaces where this user is the owner. Each one is wiped entirely
+  // (sources, chunks, tools, traces) via FK cascade.
+  const ownedRows = await db
+    .select({ workspaceId: workspaceMembers.workspaceId })
+    .from(workspaceMembers)
+    .where(
+      and(
+        eq(workspaceMembers.userId, user.id),
+        eq(workspaceMembers.role, "owner"),
+      ),
+    );
+
+  for (const row of ownedRows) {
+    await db.delete(workspaces).where(eq(workspaces.id, row.workspaceId));
+  }
+
+  // Drops the user + cascades sessions, email tokens, remaining memberships.
+  await db.delete(users).where(eq(users.id, user.id));
+
+  clearSessionCookie(c);
+  log.info({ userId: user.id }, "account deleted");
   return c.json({ ok: true });
 });
 

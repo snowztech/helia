@@ -11,7 +11,7 @@ export const workspaceRouter = new Hono();
 /**
  * GET /v1/workspace
  *
- * Returns the current workspace (single-workspace MVP — auth lands later).
+ * Returns the workspace tied to the current session.
  */
 workspaceRouter.get("/", async (c) => {
   const ws = currentWorkspace(c);

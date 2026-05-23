@@ -238,6 +238,13 @@ export const api = {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ token }),
     }),
+
+  deleteAccount: (password: string) =>
+    request<{ ok: true }>("/v1/auth/me", {
+      method: "DELETE",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ password }),
+    }),
 };
 
 export type AuthUser = {

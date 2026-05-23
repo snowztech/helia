@@ -12,6 +12,7 @@ import { toast } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 import { api, type SystemInfo, type Workspace } from "@/lib/api";
 import { useWorkspace } from "../_components/workspace-provider";
+import { DeleteAccountDialog } from "../_components/delete-account-dialog";
 
 // Models we expose in the dropdown. The DB column accepts any string so
 // power-users can paste whatever they want, but typical usage picks one of
@@ -259,6 +260,22 @@ export default function SettingsPage() {
           </div>
         </dl>
       </Section>
+
+      <section className="space-y-3">
+        <h2 className="text-[11px] uppercase tracking-[0.18em] text-destructive">
+          Danger zone
+        </h2>
+        <div className="flex items-center justify-between gap-4 rounded-lg border border-destructive/40 bg-card p-5">
+          <div className="space-y-1">
+            <p className="text-sm font-medium">Delete account</p>
+            <p className="text-xs text-muted-foreground">
+              Removes the workspace, all sources, tools, and conversation
+              history. Cannot be undone.
+            </p>
+          </div>
+          <DeleteAccountDialog workspaceName={ws.name} />
+        </div>
+      </section>
     </div>
   );
 }

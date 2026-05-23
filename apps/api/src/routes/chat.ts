@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { runAgent } from "@helia/agent";
@@ -6,7 +6,6 @@ import { chatTraces, workspaces, type Workspace } from "@helia/db";
 import { eq } from "drizzle-orm";
 import { db, log } from "../lib/state";
 import { makeAgentTools } from "../agent/tools";
-import type { Context } from "hono";
 
 export const chatRouter = new Hono();
 
