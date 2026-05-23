@@ -3,8 +3,25 @@ import { chatTraces } from "@helia/db";
 import { and, eq, gte, sql } from "drizzle-orm";
 import { db } from "../lib/state";
 import { currentWorkspace } from "../lib/auth";
+import { monthResetAt, tokensUsedThisMonth } from "../lib/usage";
 
 export const metricsRouter = new Hono();
+
+/**
+ * GET /v1/metrics/usage
+ *
+ * Token usage this month + the workspace's quota. Renders the Settings →
+ * Limits card and any future "approaching limit" banner.
+ */
+metricsRouter.get("/usage", async (c) => {
+  const ws = currentWorkspace(c);
+  const used = await tokensUsedThisMonth(ws.id);
+  return c.json({
+    tokensUsedMonth: used,
+    tokenQuotaMonthly: ws.tokenQuotaMonthly,
+    monthResetsAt: monthResetAt().toISOString(),
+  });
+});
 
 /**
  * GET /v1/metrics

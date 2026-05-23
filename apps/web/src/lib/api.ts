@@ -74,6 +74,7 @@ export type Workspace = {
   widgetRadius: number;
   identityRequired: boolean;
   identityConfigured: boolean;
+  tokenQuotaMonthly: number;
   createdAt: string;
 };
 
@@ -93,6 +94,7 @@ export type WorkspacePatch = Partial<
     | "widgetTheme"
     | "widgetRadius"
     | "identityRequired"
+    | "tokenQuotaMonthly"
   >
 >;
 
@@ -214,6 +216,8 @@ export const api = {
 
   getMetrics: () => request<Metrics>("/v1/metrics"),
 
+  getUsage: () => request<Usage>("/v1/metrics/usage"),
+
   listConversations: (limit?: number) =>
     request<{ conversations: ConversationSummary[] }>(
       `/v1/conversations${limit ? `?limit=${limit}` : ""}`,
@@ -276,6 +280,12 @@ export type Metrics = {
   tokensWeek: number;
 };
 
+export type Usage = {
+  tokensUsedMonth: number;
+  tokenQuotaMonthly: number;
+  monthResetsAt: string;
+};
+
 export type ConversationSummary = {
   id: string;
   userId: string | null;
@@ -307,7 +317,8 @@ export type HeliaTool = {
   url: string;
   method: "GET" | "POST";
   paramsSchema: ToolParam[];
-  headers: Record<string, string>;
+  /** Masked: server returns { name: { set: true } }, never plaintext. */
+  headers: Record<string, { set: true }>;
   timeoutMs: number;
   maxResponseBytes: number;
   enabled: boolean;
@@ -315,12 +326,22 @@ export type HeliaTool = {
   updatedAt: string;
 };
 
+/**
+ * Sentinel value the tool form submits in place of a stored header value
+ * the user didn't touch. The API leaves the existing ciphertext alone.
+ */
+export const HEADER_KEEP = "__keep__";
+
 export type ToolInput = {
   name: string;
   description: string;
   url: string;
   method: "GET" | "POST";
   paramsSchema: ToolParam[];
+  /**
+   * Values being submitted. Use {@link HEADER_KEEP} to mean "leave the
+   * stored value alone"; anything else replaces.
+   */
   headers: Record<string, string>;
   timeoutMs?: number;
   maxResponseBytes?: number;

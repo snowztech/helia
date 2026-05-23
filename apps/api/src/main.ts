@@ -16,6 +16,7 @@ import { metricsRouter } from "./routes/metrics";
 import { conversationsRouter } from "./routes/conversations";
 import { authRouter } from "./routes/auth";
 import { authMiddleware } from "./lib/auth";
+import { rateLimit } from "./lib/rate-limit";
 
 const app = new Hono();
 
@@ -46,6 +47,8 @@ app.use(
 
 app.use("*", honoLogger((msg) => log.info(msg)));
 app.use("/v1/*", authMiddleware);
+// Public, agent-bound, expensive: protect against floods.
+app.use("/v1/chat", rateLimit({ windowMs: 60_000, max: 30 }));
 
 app.get("/", (c) => c.json({ name: "helia-api", version: "0.0.1" }));
 

@@ -23,7 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/sonner";
-import { api, type HeliaTool } from "@/lib/api";
+import { api, HEADER_KEEP, type HeliaTool } from "@/lib/api";
 import { ToolDialog, type ToolDraft } from "./_components/tool-dialog";
 
 const EMPTY_DRAFT: ToolDraft = {
@@ -210,7 +210,12 @@ export default function ToolsPage() {
                 url: editing.url,
                 method: editing.method,
                 paramsSchema: editing.paramsSchema,
-                headers: editing.headers,
+                // Stored headers come back masked. Translate to the
+                // "__keep__" sentinel so the form can render them as
+                // ●●●● [replace] and we don't touch the ciphertext on save.
+                headers: Object.fromEntries(
+                  Object.keys(editing.headers).map((k) => [k, HEADER_KEEP]),
+                ),
                 timeoutMs: editing.timeoutMs,
                 maxResponseBytes: editing.maxResponseBytes,
                 enabled: editing.enabled,

@@ -8,6 +8,7 @@ import { db, log } from "../lib/state";
 import { makeAgentTools } from "../agent/tools";
 import { decrypt } from "../lib/crypto";
 import { verifyIdentity } from "../lib/hmac";
+import { tokensUsedThisMonth } from "../lib/usage";
 
 export interface Identity {
   id: string;
@@ -50,6 +51,21 @@ chatRouter.post("/", zValidator("json", Body), async (c) => {
   }
   if (identity === null && ws.identityRequired) {
     return c.json({ error: "identity required" }, 401);
+  }
+
+  // Soft monthly cap. We charge by total tokens (input + output, all turns
+  // for this trace). Last request can go a few hundred tokens over the
+  // line, that's fine.
+  const used = await tokensUsedThisMonth(ws.id);
+  if (used >= ws.tokenQuotaMonthly) {
+    return c.json(
+      {
+        error: `Monthly token quota reached (${ws.tokenQuotaMonthly.toLocaleString()}). Raise it in Settings → Limits.`,
+        used,
+        quota: ws.tokenQuotaMonthly,
+      },
+      402,
+    );
   }
 
   const tools = await makeAgentTools(ws.id, identity);

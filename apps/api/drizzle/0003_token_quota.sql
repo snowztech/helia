@@ -1,0 +1,1 @@
+ALTER TABLE "workspaces" ADD COLUMN "token_quota_monthly" integer DEFAULT 1000000 NOT NULL;

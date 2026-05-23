@@ -3,6 +3,7 @@ import { z, type ZodTypeAny } from "zod";
 import type { Tool, ToolParam } from "@helia/db";
 import { log } from "../lib/state";
 import type { Identity } from "../routes/chat";
+import { decryptHeaders } from "../lib/tool-headers";
 
 /**
  * Build an AI SDK tool from a `tools` row.
@@ -103,7 +104,7 @@ async function callHttpEndpoint(
     const headers: Record<string, string> = {
       accept: "application/json",
       "user-agent": "helia/0.1 (+https://helia.snowztech.com)",
-      ...(t.headers ?? {}),
+      ...decryptHeaders(t.headers ?? {}),
     };
 
     let url = t.url;

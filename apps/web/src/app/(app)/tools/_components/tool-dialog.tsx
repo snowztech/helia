@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { ToolInput, ToolParam } from "@/lib/api";
+import { HEADER_KEEP, type ToolInput, type ToolParam } from "@/lib/api";
 
 export type ToolDraft = ToolInput;
 
@@ -367,35 +367,55 @@ function HeadersEditor({
 
       {entries.length === 0 ? null : (
         <ul className="space-y-2">
-          {entries.map(([key, value], i) => (
-            <li
-              key={`${i}-${key}`}
-              className="grid grid-cols-[1fr_2fr_auto] items-center gap-2"
-            >
-              <Input
-                placeholder="header name"
-                value={key}
-                onChange={(e) => onUpdate(i, e.target.value, value)}
-                className="h-8 font-mono"
-              />
-              <Input
-                placeholder="value"
-                value={value}
-                onChange={(e) => onUpdate(i, key, e.target.value)}
-                className="h-8 font-mono"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => onRemove(key)}
-                aria-label="Remove header"
-                className="h-8 w-8"
+          {entries.map(([key, value], i) => {
+            const kept = value === HEADER_KEEP;
+            return (
+              <li
+                key={`${i}-${key}`}
+                className="grid grid-cols-[1fr_2fr_auto] items-center gap-2"
               >
-                <HugeiconsIcon icon={Cancel01Icon} size={14} />
-              </Button>
-            </li>
-          ))}
+                <Input
+                  placeholder="header name"
+                  value={key}
+                  onChange={(e) => onUpdate(i, e.target.value, value)}
+                  className="h-8 font-mono"
+                  disabled={kept}
+                />
+                {kept ? (
+                  <div className="flex h-8 items-center gap-2 rounded-md border border-input bg-muted px-3 font-mono text-xs">
+                    <span className="flex-1 tracking-widest text-muted-foreground">
+                      ●●●●●●●●
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => onUpdate(i, key, "")}
+                      className="text-[11px] text-foreground underline underline-offset-2 hover:no-underline"
+                    >
+                      replace
+                    </button>
+                  </div>
+                ) : (
+                  <Input
+                    placeholder="value"
+                    value={value}
+                    onChange={(e) => onUpdate(i, key, e.target.value)}
+                    className="h-8 font-mono"
+                    autoFocus={key !== "" && value === ""}
+                  />
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onRemove(key)}
+                  aria-label="Remove header"
+                  className="h-8 w-8"
+                >
+                  <HugeiconsIcon icon={Cancel01Icon} size={14} />
+                </Button>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
