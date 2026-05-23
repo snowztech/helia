@@ -1,13 +1,22 @@
 /**
  * Thin client for the Helia API.
  *
- * The API base URL is configured via `NEXT_PUBLIC_API_URL`. We use the
- * `NEXT_PUBLIC_` prefix so the value is available client-side too (the
- * chat hook calls the API directly from the browser).
+ * The base URL differs by execution context:
+ *   - Browser: NEXT_PUBLIC_API_URL — must be reachable from the user's
+ *     network (host port locally, public hostname behind a reverse proxy).
+ *   - Server components / route handlers: HELIA_INTERNAL_API_URL — the
+ *     container-internal hostname (`http://api:4000` in docker compose).
+ *
+ * Both fall back to localhost:4000 when only one is set (local dev).
  */
 
-export const API_URL =
+const browserApiUrl =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+const serverApiUrl =
+  process.env.HELIA_INTERNAL_API_URL ?? browserApiUrl;
+
+export const API_URL =
+  typeof window === "undefined" ? serverApiUrl : browserApiUrl;
 
 export type Source = {
   id: string;
