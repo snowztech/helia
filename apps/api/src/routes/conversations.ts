@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { chatTraces } from "@helia/db";
 import { desc, eq } from "drizzle-orm";
 import { db } from "../lib/state";
-import { defaultWorkspace } from "../lib/workspace";
+import { currentWorkspace } from "../lib/auth";
 
 export const conversationsRouter = new Hono();
 
@@ -18,7 +18,7 @@ conversationsRouter.get("/", async (c) => {
     Math.max(Number(c.req.query("limit") ?? 20), 1),
     100,
   );
-  const ws = await defaultWorkspace();
+  const ws = currentWorkspace(c);
 
   const rows = await db
     .select({

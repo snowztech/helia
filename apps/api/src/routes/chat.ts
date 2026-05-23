@@ -2,10 +2,11 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { runAgent } from "@helia/agent";
-import { chatTraces, type Workspace } from "@helia/db";
-import { defaultWorkspace } from "../lib/workspace";
+import { chatTraces, workspaces, type Workspace } from "@helia/db";
+import { eq } from "drizzle-orm";
 import { db, log } from "../lib/state";
 import { makeAgentTools } from "../agent/tools";
+import type { Context } from "hono";
 
 export const chatRouter = new Hono();
 
@@ -34,7 +35,8 @@ chatRouter.post("/", zValidator("json", Body), async (c) => {
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
   if (!lastUser) return c.json({ error: "no user message" }, 400);
 
-  const ws = await defaultWorkspace();
+  const ws = await resolveChatWorkspace(c);
+  if (!ws) return c.json({ error: "workspace not found" }, 404);
   const tools = await makeAgentTools(ws.id);
   const startedAt = Date.now();
 
@@ -53,6 +55,30 @@ chatRouter.post("/", zValidator("json", Body), async (c) => {
 
   return result.toDataStreamResponse();
 });
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Pick the workspace for this chat request. The embedded widget passes
+ * `?ws=<uuid>` from its `data-workspace` attribute. As a convenience for
+ * the admin preview (same-origin, logged in), fall back to the session's
+ * workspace if no query param is provided.
+ */
+async function resolveChatWorkspace(c: Context): Promise<Workspace | null> {
+  const wsParam = c.req.query("ws");
+  if (wsParam && UUID_RE.test(wsParam)) {
+    const [row] = await db
+      .select()
+      .from(workspaces)
+      .where(eq(workspaces.id, wsParam))
+      .limit(1);
+    return row ?? null;
+  }
+
+  const fromCtx = c.get("workspace") as Workspace | null | undefined;
+  return fromCtx ?? null;
+}
 
 type AgentResult = ReturnType<typeof runAgent>;
 

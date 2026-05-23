@@ -121,6 +121,7 @@ export default function WidgetPage() {
   }
 
   const config: PreviewConfig = {
+    workspaceId: ws.id,
     primary: ws.brandPrimary,
     position: ws.widgetPosition,
     theme: ws.widgetTheme,

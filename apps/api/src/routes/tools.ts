@@ -4,7 +4,7 @@ import { z } from "zod";
 import { tools as toolsTable } from "@helia/db";
 import { and, asc, eq } from "drizzle-orm";
 import { db } from "../lib/state";
-import { defaultWorkspace } from "../lib/workspace";
+import { currentWorkspace } from "../lib/auth";
 
 export const toolsRouter = new Hono();
 
@@ -43,7 +43,7 @@ const Body = z.object({
 });
 
 toolsRouter.get("/", async (c) => {
-  const ws = await defaultWorkspace();
+  const ws = currentWorkspace(c);
   const rows = await db
     .select()
     .from(toolsTable)
@@ -53,7 +53,7 @@ toolsRouter.get("/", async (c) => {
 });
 
 toolsRouter.post("/", zValidator("json", Body), async (c) => {
-  const ws = await defaultWorkspace();
+  const ws = currentWorkspace(c);
   const body = c.req.valid("json");
   const [created] = await db
     .insert(toolsTable)
@@ -66,7 +66,7 @@ toolsRouter.patch(
   "/:id",
   zValidator("json", Body.partial()),
   async (c) => {
-    const ws = await defaultWorkspace();
+    const ws = currentWorkspace(c);
     const id = c.req.param("id");
     const patch = c.req.valid("json");
     const [updated] = await db
@@ -80,7 +80,7 @@ toolsRouter.patch(
 );
 
 toolsRouter.delete("/:id", async (c) => {
-  const ws = await defaultWorkspace();
+  const ws = currentWorkspace(c);
   const id = c.req.param("id");
   const [deleted] = await db
     .delete(toolsTable)

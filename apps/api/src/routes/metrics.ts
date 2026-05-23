@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { chatTraces } from "@helia/db";
 import { and, eq, gte, sql } from "drizzle-orm";
 import { db } from "../lib/state";
-import { defaultWorkspace } from "../lib/workspace";
+import { currentWorkspace } from "../lib/auth";
 
 export const metricsRouter = new Hono();
 
@@ -13,7 +13,7 @@ export const metricsRouter = new Hono();
  * window, no per-page joins.
  */
 metricsRouter.get("/", async (c) => {
-  const ws = await defaultWorkspace();
+  const ws = currentWorkspace(c);
   const now = Date.now();
   const dayAgo = new Date(now - 24 * 60 * 60 * 1000);
   const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);

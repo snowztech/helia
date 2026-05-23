@@ -248,6 +248,82 @@ export const chatTraces = pgTable(
 export type ChatTrace = typeof chatTraces.$inferSelect;
 export type NewChatTrace = typeof chatTraces.$inferInsert;
 
+/**
+ * Owner / member accounts. One row per real human. Email is the only
+ * unique identifier we know about a user.
+ */
+export const users = pgTable("users", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").notNull().unique(),
+  // bcrypt hash. Null only briefly between signup and first password set.
+  passwordHash: text("password_hash"),
+  name: text("name"),
+  emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+/**
+ * Who belongs to which workspace, with what role. A user can belong to
+ * multiple workspaces (post-v1, when team invites land). For v1 it's
+ * 1:1 — every signup creates a workspace and adds the user as owner.
+ */
+export const workspaceMembers = pgTable(
+  "workspace_members",
+  {
+    workspaceId: uuid("workspace_id")
+      .references(() => workspaces.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: uuid("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    role: text("role", { enum: ["owner", "admin", "member"] })
+      .default("owner")
+      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    pk: index("workspace_members_pk").on(t.workspaceId, t.userId),
+    byUser: index("workspace_members_user_idx").on(t.userId),
+  }),
+);
+
+/**
+ * Server-side sessions. The cookie holds only the id; everything else
+ * (user, expiry) lives here. Easy to revoke (`DELETE WHERE id = ?`).
+ */
+export const sessions = pgTable("sessions", {
+  id: text("id").primaryKey(),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+/**
+ * One-time tokens for email verification (signup confirmation) and, later,
+ * password reset. The `purpose` field separates the two — same plumbing.
+ */
+export const emailTokens = pgTable("email_tokens", {
+  token: text("token").primaryKey(),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+  purpose: text("purpose", { enum: ["verify_email", "reset_password"] })
+    .notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 export type Workspace = typeof workspaces.$inferSelect;
 export type Source = typeof sources.$inferSelect;
 export type NewSource = typeof sources.$inferInsert;
@@ -257,3 +333,10 @@ export type SourceEvent = typeof sourceEvents.$inferSelect;
 export type NewSourceEvent = typeof sourceEvents.$inferInsert;
 export type Tool = typeof tools.$inferSelect;
 export type NewTool = typeof tools.$inferInsert;
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+export type WorkspaceMember = typeof workspaceMembers.$inferSelect;
+export type Session = typeof sessions.$inferSelect;
+export type NewSession = typeof sessions.$inferInsert;
+export type EmailToken = typeof emailTokens.$inferSelect;
+export type NewEmailToken = typeof emailTokens.$inferInsert;

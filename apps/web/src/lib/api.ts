@@ -2,12 +2,13 @@
  * Thin client for the Helia API.
  *
  * The base URL differs by execution context:
- *   - Browser: NEXT_PUBLIC_API_URL — must be reachable from the user's
- *     network (host port locally, public hostname behind a reverse proxy).
- *   - Server components / route handlers: HELIA_INTERNAL_API_URL — the
- *     container-internal hostname (`http://api:4000` in docker compose).
+ *   - Browser: `NEXT_PUBLIC_API_URL`, populated from `HELIA_API_URL` via
+ *     `next.config.ts`. Must be reachable from the user's network.
+ *   - Server components: `HELIA_INTERNAL_API_URL`, the container-internal
+ *     hostname (`http://api:4000` in docker compose). Set by compose, not
+ *     by users.
  *
- * Both fall back to localhost:4000 when only one is set (local dev).
+ * Both fall back to localhost:4000 for local dev.
  */
 
 const browserApiUrl =
@@ -101,15 +102,35 @@ export type SystemInfo = {
   nodeEnv: string;
 };
 
+/**
+ * Forward the auth cookie when called from a server component. In the
+ * browser, the cookie rides automatically via `credentials: "include"`.
+ */
+async function authHeader(): Promise<Record<string, string>> {
+  if (typeof window !== "undefined") return {};
+  const { cookies } = await import("next/headers");
+  const store = await cookies();
+  const session = store.get("helia_session");
+  return session ? { cookie: `helia_session=${session.value}` } : {};
+}
+
+export class ApiError extends Error {
+  constructor(public status: number, public path: string, msg: string) {
+    super(msg);
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const auth = await authHeader();
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
     cache: "no-store",
-    headers: { ...(init?.headers ?? {}) },
+    credentials: "include",
+    headers: { ...auth, ...(init?.headers ?? {}) },
   });
   if (!res.ok) {
     const text = await res.text().catch(() => res.statusText);
-    throw new Error(`${res.status} ${path}: ${text}`);
+    throw new ApiError(res.status, path, `${res.status} ${path}: ${text}`);
   }
   return res.json() as Promise<T>;
 }
@@ -132,6 +153,7 @@ export const api = {
     fd.append("file", file);
     const res = await fetch(`${API_URL}/v1/sources/pdf`, {
       method: "POST",
+      credentials: "include",
       body: fd,
     });
     if (!res.ok) throw new Error(`upload pdf failed: ${res.status}`);
@@ -188,6 +210,41 @@ export const api = {
     request<{ conversations: ConversationSummary[] }>(
       `/v1/conversations${limit ? `?limit=${limit}` : ""}`,
     ),
+
+  signup: (input: { email: string; password: string; name?: string }) =>
+    request<{ user: AuthUser; workspace: { id: string; name: string } }>(
+      "/v1/auth/signup",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(input),
+      },
+    ),
+
+  login: (input: { email: string; password: string }) =>
+    request<{ user: AuthUser }>("/v1/auth/login", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+
+  logout: () => request<{ ok: true }>("/v1/auth/logout", { method: "POST" }),
+
+  me: () => request<{ user: AuthUser | null }>("/v1/auth/me"),
+
+  verifyEmail: (token: string) =>
+    request<{ ok: true }>("/v1/auth/verify", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ token }),
+    }),
+};
+
+export type AuthUser = {
+  id: string;
+  email: string;
+  name: string | null;
+  emailVerifiedAt: string | null;
 };
 
 export type Metrics = {

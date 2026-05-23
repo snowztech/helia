@@ -4,7 +4,7 @@ import { z } from "zod";
 import { workspaces } from "@helia/db";
 import { eq } from "drizzle-orm";
 import { db } from "../lib/state";
-import { defaultWorkspace } from "../lib/workspace";
+import { currentWorkspace } from "../lib/auth";
 
 export const workspaceRouter = new Hono();
 
@@ -14,7 +14,7 @@ export const workspaceRouter = new Hono();
  * Returns the current workspace (single-workspace MVP — auth lands later).
  */
 workspaceRouter.get("/", async (c) => {
-  const ws = await defaultWorkspace();
+  const ws = currentWorkspace(c);
   return c.json({ workspace: ws });
 });
 
@@ -43,7 +43,7 @@ const PatchBody = z.object({
  */
 workspaceRouter.patch("/", zValidator("json", PatchBody), async (c) => {
   const patch = c.req.valid("json");
-  const current = await defaultWorkspace();
+  const current = currentWorkspace(c);
 
   const [updated] = await db
     .update(workspaces)
