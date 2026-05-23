@@ -14,6 +14,8 @@ import { toolsRouter } from "./routes/tools";
 import { systemRouter } from "./routes/system";
 import { metricsRouter } from "./routes/metrics";
 import { conversationsRouter } from "./routes/conversations";
+import { authRouter } from "./routes/auth";
+import { authMiddleware } from "./lib/auth";
 
 const app = new Hono();
 
@@ -33,14 +35,17 @@ app.use(
     allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allowHeaders: ["content-type", "authorization"],
     exposeHeaders: ["x-helia-sources"],
+    credentials: true,
   }),
 );
 
 app.use("*", honoLogger((msg) => log.info(msg)));
+app.use("/v1/*", authMiddleware);
 
 app.get("/", (c) => c.json({ name: "helia-api", version: "0.0.1" }));
 
 app.route("/v1/health", healthRouter);
+app.route("/v1/auth", authRouter);
 app.route("/v1/sources", sourcesRouter);
 app.route("/v1/chunks", chunksRouter);
 app.route("/v1/chat", chatRouter);

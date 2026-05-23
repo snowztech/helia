@@ -77,7 +77,8 @@ production deploy with a domain and TLS, you typically add a reverse
 proxy (Caddy / nginx / Traefik). Set the public URL in `.env`:
 
 ```bash
-HELIA_PUBLIC_API_URL=https://helia.yourdomain.com
+HELIA_WEB_URL=https://helia.yourdomain.com
+HELIA_API_URL=https://helia.yourdomain.com
 HELIA_CORS_ORIGIN=https://helia.yourdomain.com,https://app.yourdomain.com
 ```
 

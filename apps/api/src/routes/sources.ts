@@ -5,14 +5,14 @@ import { z } from "zod";
 import { sourceEvents, sources } from "@helia/db";
 import { runIngestPdf, runIngestText, runIngestUrl } from "@helia/rag";
 import { db, log } from "../lib/state";
-import { defaultWorkspaceId } from "../lib/workspace";
+import { currentWorkspace } from "../lib/auth";
 
 export const sourcesRouter = new Hono();
 
 // ─── list ────────────────────────────────────────────────────────────────
 
 sourcesRouter.get("/", async (c) => {
-  const ws = await defaultWorkspaceId();
+  const ws = currentWorkspace(c).id;
   const rows = await db
     .select()
     .from(sources)
@@ -61,7 +61,7 @@ sourcesRouter.post("/pdf", async (c) => {
   if (file.size > 50 * 1024 * 1024)
     return c.json({ error: "file too large (max 50 MB)" }, 400);
 
-  const workspaceId = await defaultWorkspaceId();
+  const workspaceId = currentWorkspace(c).id;
   const [source] = await db
     .insert(sources)
     .values({ workspaceId, name: file.name, type: "pdf", status: "queued" })
@@ -87,7 +87,7 @@ const TextBody = z.object({
 
 sourcesRouter.post("/text", zValidator("json", TextBody), async (c) => {
   const { name, text } = c.req.valid("json");
-  const workspaceId = await defaultWorkspaceId();
+  const workspaceId = currentWorkspace(c).id;
   const [source] = await db
     .insert(sources)
     .values({ workspaceId, name, type: "text", status: "queued" })
@@ -118,7 +118,7 @@ sourcesRouter.post("/url", zValidator("json", UrlBody), async (c) => {
     return c.json({ error: "only http(s) URLs supported" }, 400);
   }
 
-  const workspaceId = await defaultWorkspaceId();
+  const workspaceId = currentWorkspace(c).id;
   const [source] = await db
     .insert(sources)
     .values({

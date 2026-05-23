@@ -263,7 +263,7 @@ export function mount(config: WidgetConfig): WidgetHandle {
     let activeToolPill: HTMLElement | null = null;
     let sources: Array<{ title: string; url: string | null }> = [];
 
-    await streamChat(apiUrl, state.messages, {
+    await streamChat(apiUrl, config.workspace, state.messages, {
       onDelta: (delta) => {
         if (!assistantEl) {
           if (typingEl.isConnected) typingEl.remove();

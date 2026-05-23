@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { CORS_POLICY } from "../lib/state";
-import { defaultWorkspace } from "../lib/workspace";
+import { currentWorkspace } from "../lib/auth";
 
 export const systemRouter = new Hono();
 
@@ -11,7 +11,7 @@ export const systemRouter = new Hono();
  * only their presence and which provider is in use.
  */
 systemRouter.get("/", async (c) => {
-  const ws = await defaultWorkspace();
+  const ws = currentWorkspace(c);
   const provider = "openai" as const;
   const keyConfigured = (process.env.OPENAI_API_KEY ?? "").length > 0;
 

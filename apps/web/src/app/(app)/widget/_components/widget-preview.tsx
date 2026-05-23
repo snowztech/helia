@@ -12,6 +12,7 @@ import { API_URL } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 export interface PreviewConfig {
+  workspaceId: string;
   primary: string;
   position: "bottom-right" | "bottom-left";
   theme: "light" | "dark" | "auto";
@@ -133,7 +134,7 @@ function Panel({
 
   const { messages, input, handleInputChange, handleSubmit, status, append } =
     useChat({
-      api: `${API_URL}/v1/chat`,
+      api: `${API_URL}/v1/chat?ws=${encodeURIComponent(config.workspaceId)}`,
     });
 
   const waiting = status === "submitted";

@@ -10,8 +10,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
-import { api, type SystemInfo, type Workspace } from "@/lib/api";
+import { api, type AuthUser, type SystemInfo, type Workspace } from "@/lib/api";
 import { useWorkspace } from "../_components/workspace-provider";
+import { DeleteAccountDialog } from "../_components/delete-account-dialog";
 
 // Models we expose in the dropdown. The DB column accepts any string so
 // power-users can paste whatever they want, but typical usage picks one of
@@ -31,6 +32,7 @@ const LOCALES = [
 export default function SettingsPage() {
   const { refresh: refreshGlobalWorkspace } = useWorkspace();
   const [ws, setWs] = useState<Workspace | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [system, setSystem] = useState<SystemInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -40,12 +42,14 @@ export default function SettingsPage() {
     model: string;
   } | null>(null);
   const [copiedId, setCopiedId] = useState(false);
+  const [resending, setResending] = useState(false);
 
   useEffect(() => {
-    Promise.all([api.getWorkspace(), api.getSystem()])
-      .then(([w, s]) => {
+    Promise.all([api.getWorkspace(), api.getSystem(), api.me()])
+      .then(([w, s, m]) => {
         setWs(w.workspace);
         setSystem(s);
+        setUser(m.user);
         setSavedSnapshot({
           name: w.workspace.name,
           locale: w.workspace.locale,
@@ -65,7 +69,7 @@ export default function SettingsPage() {
     );
   }, [ws, savedSnapshot]);
 
-  if (loading || !ws || !system) {
+  if (loading || !ws || !system || !user) {
     return (
       <div className="space-y-8">
         <Skeleton className="h-8 w-32" />
@@ -74,6 +78,22 @@ export default function SettingsPage() {
       </div>
     );
   }
+
+  const resendVerification = async () => {
+    setResending(true);
+    try {
+      const res = await api.resendVerification();
+      if (res.alreadyVerified) {
+        toast.success("Already verified. Refresh to update.");
+      } else {
+        toast.success("Verification email sent. Check your inbox.");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "send failed");
+    } finally {
+      setResending(false);
+    }
+  };
 
   const copyId = async () => {
     try {
@@ -118,13 +138,47 @@ export default function SettingsPage() {
         <div className="space-y-1">
           <h1 className="text-2xl">settings.</h1>
           <p className="text-xs text-muted-foreground">
-            Configure your workspace, AI model, and inspect system state.
+            Manage your account, workspace, and AI configuration.
           </p>
         </div>
         <Button onClick={save} disabled={!dirty || saving}>
           {saving ? "saving…" : dirty ? "save" : "saved"}
         </Button>
       </header>
+
+      <Section title="Account">
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label>email</Label>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 rounded-md border border-border bg-muted px-3 py-1.5 text-sm">
+                {user.email}
+              </div>
+              {!user.emailVerifiedAt && (
+                <>
+                  <Badge variant="warning">unverified</Badge>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={resending}
+                    onClick={resendVerification}
+                  >
+                    {resending ? "sending…" : "resend"}
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+          {user.name && (
+            <div className="space-y-1.5">
+              <Label>name</Label>
+              <div className="rounded-md border border-border bg-muted px-3 py-1.5 text-sm">
+                {user.name}
+              </div>
+            </div>
+          )}
+        </div>
+      </Section>
 
       <Section title="Workspace">
         <div className="space-y-4">
@@ -247,18 +301,21 @@ export default function SettingsPage() {
         </div>
       </Section>
 
-      <Section title="System">
-        <dl className="grid grid-cols-2 gap-4 text-sm">
-          <div className="space-y-0.5">
-            <dt className="text-xs text-muted-foreground">version</dt>
-            <dd>v{system.version}</dd>
+      <section className="space-y-3">
+        <h2 className="text-[11px] uppercase tracking-[0.18em] text-destructive">
+          Danger zone
+        </h2>
+        <div className="flex items-center justify-between gap-4 rounded-lg border border-destructive/40 bg-card p-5">
+          <div className="space-y-1">
+            <p className="text-sm font-medium">Delete account</p>
+            <p className="text-xs text-muted-foreground">
+              Removes the workspace, all sources, tools, and conversation
+              history. Cannot be undone.
+            </p>
           </div>
-          <div className="space-y-0.5">
-            <dt className="text-xs text-muted-foreground">environment</dt>
-            <dd className="capitalize">{system.nodeEnv}</dd>
-          </div>
-        </dl>
-      </Section>
+          <DeleteAccountDialog workspaceName={ws.name} />
+        </div>
+      </section>
     </div>
   );
 }

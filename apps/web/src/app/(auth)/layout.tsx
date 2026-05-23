@@ -1,0 +1,18 @@
+export default function AuthLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-h-dvh flex flex-col">
+      <header className="px-6 py-5">
+        <a href="/" className="text-sm font-semibold text-primary">
+          helia
+        </a>
+      </header>
+      <main className="flex flex-1 items-center justify-center px-6 pb-12">
+        <div className="w-full max-w-sm">{children}</div>
+      </main>
+    </div>
+  );
+}

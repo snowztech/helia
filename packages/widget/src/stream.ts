@@ -20,12 +20,15 @@ export interface StreamCallbacks {
  */
 export async function streamChat(
   apiUrl: string,
+  workspace: string,
   messages: ChatMessage[],
   cb: StreamCallbacks,
 ): Promise<void> {
   let res: Response;
   try {
-    res = await fetch(`${apiUrl.replace(/\/$/, "")}/v1/chat`, {
+    const base = apiUrl.replace(/\/$/, "");
+    const url = `${base}/v1/chat?ws=${encodeURIComponent(workspace)}`;
+    res = await fetch(url, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ messages }),

@@ -68,10 +68,9 @@ The snippet shown in `/widget` looks like:
 <script src="http://your-helia-host/w.js" data-workspace="<uuid>" async></script>
 ```
 
-The widget calls back to `NEXT_PUBLIC_API_URL` (set in `.env`) for both
-its config and the chat stream. For local testing this is
-`http://localhost:4000` — for production set `HELIA_PUBLIC_API_URL` to
-your real host.
+The widget calls back to `HELIA_API_URL` (set in `.env`) for both its
+config and the chat stream. For local testing this is
+`http://localhost:4000` — for production set it to your real host.
 
 ## Production deploy
 
@@ -92,7 +91,8 @@ helia.example.com {
 Then in `.env`:
 
 ```bash
-HELIA_PUBLIC_API_URL=https://helia.example.com
+HELIA_WEB_URL=https://helia.example.com
+HELIA_API_URL=https://helia.example.com
 HELIA_CORS_ORIGIN=https://helia.example.com,https://app.yourdomain.com
 ```
 
@@ -147,7 +147,7 @@ extensions automatically; if you're using a custom Postgres image you
 need to install them yourself.
 
 **widget shows "API unreachable" on a customer's site** — verify
-`HELIA_CORS_ORIGIN` includes their domain, and that `NEXT_PUBLIC_API_URL`
+`HELIA_CORS_ORIGIN` includes their domain, and that `HELIA_API_URL`
 points to a host their browser can reach.
 
 **OpenAI errors in the agent** — confirm `OPENAI_API_KEY` is set in
