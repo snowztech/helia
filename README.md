@@ -50,7 +50,7 @@ The admin has five pages:
 | `/sources` | Add knowledge: PDFs, plain text, or crawl a URL |
 | `/tools` | Register HTTP endpoints the agent can call mid-conversation |
 | `/widget` | Brand the widget, see it live, copy the install snippet |
-| `/settings` | Workspace name, locale, model, API key status, allowed origins |
+| `/settings` | Workspace name, locale, model, API key status, allowed origins, user identity for logged-in users |
 
 Gear icon (top right) → `/settings`. Theme toggle (top right) → dark/light.
 
@@ -66,6 +66,10 @@ Paste it before `</body>` on any page of your site. The widget reads
 brand + persona from `/v1/widget/config` on mount, streams chat from
 `/v1/chat`, and renders inside a shadow DOM so host page styles cannot
 leak in or out.
+
+Showing the widget to logged-in users? Open `/settings` → User identity
+to set up a signing secret, add a backend route, and scope tool calls
+to the verified user.
 
 For embedding while developing Helia itself (port 5173 widget dev
 server), see [Develop](#develop).
