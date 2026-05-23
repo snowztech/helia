@@ -106,7 +106,9 @@ export function IdentitySection({
 
       <div className="flex items-center justify-between gap-4 pt-1">
         <div className="space-y-1">
-          <Label className="text-xs">Reject anonymous chats</Label>
+          <Label className="text-sm font-normal normal-case tracking-normal text-foreground">
+            Reject anonymous chats
+          </Label>
           <p className="text-[11px] text-muted-foreground">
             Turn on once your widget is sending signed identities.
           </p>
