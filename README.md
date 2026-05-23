@@ -7,53 +7,81 @@
 ![Helia upload](docs/images/upload.png)
 ![Helia chat](docs/images/chat.png)
 
-## Self-host (recommended)
+## Quick start
 
-The fast path: docker compose. No Node or pnpm needed on the host.
+The same three commands work on your laptop or on any Linux server with
+Docker installed. No Node or pnpm needed on the host.
 
 ```bash
 git clone https://github.com/snowztech/helia
 cd helia
 cp .env.example .env
-# fill OPENAI_API_KEY and MASTER_KEY (openssl rand -hex 32)
+```
+
+Open `.env` and fill the two required values:
+
+```bash
+OPENAI_API_KEY=sk-...
+MASTER_KEY=$(openssl rand -hex 32)
+```
+
+Then bring up the stack:
+
+```bash
 docker compose up -d
 ```
 
-Open **http://localhost:3000**. The schema applies and the default
-workspace is created on first boot. Full guide: [`SELF_HOST.md`](./SELF_HOST.md).
+First boot takes ~30 seconds. When the api logs say `helia-api listening`,
+open **http://localhost:3000** in your browser.
 
-## Admin pages
+```bash
+docker compose logs -f api    # watch boot
+docker compose down           # stop, keep data
+docker compose down -v        # stop and wipe the database
+```
 
-- `/` — dashboard: messages this week, today, avg response, recent activity, getting-started checklist
-- `/sources` — list + add (PDF / text / URL crawl)
-- `/sources/[id]` — per-source ingest timeline
-- `/tools` — HTTP endpoints the agent can call mid-conversation
-- `/widget` — brand the widget, live preview, copy the install snippet
-- `/settings` — workspace name, locale, model, API key status, allowed origins
-- Settings gear icon top-right of every page
+## What you can do
 
-## Widget
+The admin has five pages:
 
-Snippet (paste into any page on your site, before `</body>`):
+| Page | What it does |
+|------|--------------|
+| `/` | Dashboard: messages this week, today, avg response, recent activity, getting-started checklist |
+| `/sources` | Add knowledge: PDFs, plain text, or crawl a URL |
+| `/tools` | Register HTTP endpoints the agent can call mid-conversation |
+| `/widget` | Brand the widget, see it live, copy the install snippet |
+| `/settings` | Workspace name, locale, model, API key status, allowed origins |
+
+Gear icon (top right) → `/settings`. Theme toggle (top right) → dark/light.
+
+## Embed the widget on your site
+
+Once you've configured the bot, `/widget` shows your install snippet:
 
 ```html
 <script src="https://your-helia-host/w.js" data-workspace="<uuid>" async></script>
 ```
 
-The widget reads brand + persona from `/v1/widget/config` on mount, streams
-chat from `/v1/chat`, and renders inside a shadow DOM so host page styles
-cannot leak in or out.
+Paste it before `</body>` on any page of your site. The widget reads
+brand + persona from `/v1/widget/config` on mount, streams chat from
+`/v1/chat`, and renders inside a shadow DOM so host page styles cannot
+leak in or out.
 
-Local dev points it at the widget dev server instead:
+For embedding while developing Helia itself (port 5173 widget dev
+server), see [Develop](#develop).
 
-```html
-<script
-  src="http://localhost:5173/dist/w.js"
-  data-workspace="<your-workspace-uuid>"
-  data-api-url="http://localhost:4000"
-  async
-></script>
+## Deploy on a server
+
+The `docker compose up -d` above works the same on a VPS. For a real
+production deploy with a domain and TLS, you typically add a reverse
+proxy (Caddy / nginx / Traefik). Set the public URL in `.env`:
+
+```bash
+HELIA_PUBLIC_API_URL=https://helia.yourdomain.com
+HELIA_CORS_ORIGIN=https://helia.yourdomain.com,https://app.yourdomain.com
 ```
+
+Step-by-step deploy + reverse proxy + backups: [`SELF_HOST.md`](./SELF_HOST.md).
 
 ## API
 
@@ -98,34 +126,45 @@ top of that, any HTTP tools the workspace owner registered (via the
 `/tools` admin page) are loaded at chat time. The generic loop in
 `@helia/agent` stays app-agnostic.
 
-Full design choices in [`ARCHITECTURE.md`](./ARCHITECTURE.md). The
-current sprint plan to v1 in [`V1.md`](./V1.md). Long-arc roadmap in
-[`ROADMAP.md`](./ROADMAP.md).
+Full design in [`ARCHITECTURE.md`](./ARCHITECTURE.md). Current sprint
+plan in [`V1.md`](./V1.md). Long-arc roadmap in [`ROADMAP.md`](./ROADMAP.md).
 
 **Stack** — Next.js 15 · TypeScript · pnpm workspaces · Hono · Postgres +
 pgvector · Drizzle · Vercel AI SDK · OpenAI · shadcn/ui · hugeicons.
 
 ## Develop
 
-Local dev runs Node directly. Prerequisites: **Node 22+**, **pnpm 9+**,
-**Docker** (for postgres only), an **OpenAI API key**.
+Hacking on the Helia codebase needs **Node 22+** and **pnpm 9+**. The
+database still runs in Docker.
 
 ```bash
-make setup    # docker postgres + env + install + schema + bootstrap
-make dev      # api (4000) + admin (3000) + widget dev server (5173) in parallel
+cp .env.example .env       # if not done yet
+make setup                 # postgres + install + schema + bootstrap
+make dev                   # api (4000) + admin (3000) + widget (5173) in parallel
 ```
 
-Helpful targets — full list with `make help`:
+Useful targets — full list with `make help`:
 
 ```
 make dev          api + web + widget in parallel
 make dev-api      API only
 make dev-web      admin only
-make dev-widget   widget dev server only
-make schema      apply Drizzle migrations
-make typecheck   strict TS across the workspace
-make docker-up   build + start the self-host stack
-make docker-logs tail logs from all containers
+make dev-widget   widget bundle dev server only
+make schema       apply Drizzle migrations
+make typecheck    strict TS across the workspace
+make docker-up    build + start the full Docker stack (same as Quick start above)
+make docker-logs  tail logs from all containers
+```
+
+Widget snippet pointing at the local dev bundle + API:
+
+```html
+<script
+  src="http://localhost:5173/dist/w.js"
+  data-workspace="<your-workspace-uuid>"
+  data-api-url="http://localhost:4000"
+  async
+></script>
 ```
 
 ## Contributing

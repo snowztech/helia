@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx --env-file=../../.env --watch src/main.ts",
-    "start": "tsx --env-file=../../.env src/main.ts",
+    "dev": "tsx --watch src/main.ts",
+    "start": "tsx src/main.ts",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
@@ -16,6 +16,7 @@
   "dependencies": {
     "@ai-sdk/openai": "^1.3.0",
     "@helia/agent": "workspace:*",
+    "@helia/config": "workspace:*",
     "@helia/db": "workspace:*",
     "@helia/rag": "workspace:*",
     "@hono/node-server": "^1.13.7",
@@ -30,7 +31,6 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
-    "dotenv": "^16.4.5",
     "drizzle-kit": "^0.30.0",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0"

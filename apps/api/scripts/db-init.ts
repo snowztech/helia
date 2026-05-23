@@ -1,10 +1,6 @@
-import { config as loadEnv } from "dotenv";
+import "@helia/config"; // loads .env
 import postgres from "postgres";
 import { makeDb, workspaces } from "@helia/db";
-
-// Single source of truth for env is the repo-root `.env`. Inside docker
-// the file doesn't exist (env comes from compose); dotenv silently skips.
-loadEnv({ path: "../../.env" });
 
 /**
  * Bootstrap script.

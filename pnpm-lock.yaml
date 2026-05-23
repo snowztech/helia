@@ -16,6 +16,9 @@ importers:
       '@helia/agent':
         specifier: workspace:*
         version: link:../../packages/agent
+      '@helia/config':
+        specifier: workspace:*
+        version: link:../../packages/config
       '@helia/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -53,9 +56,6 @@ importers:
       '@types/node':
         specifier: ^22.10.0
         version: 22.19.19
-      dotenv:
-        specifier: ^16.4.5
-        version: 16.6.1
       drizzle-kit:
         specifier: ^0.30.0
         version: 0.30.6
@@ -157,6 +157,19 @@ importers:
         specifier: ^3.24.0
         version: 3.25.76
     devDependencies:
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  packages/config:
+    dependencies:
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.6.1
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.19.19
       typescript:
         specifier: ^5.7.0
         version: 5.9.3

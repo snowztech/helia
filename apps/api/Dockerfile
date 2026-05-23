@@ -19,6 +19,7 @@ COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
 COPY packages/agent/package.json packages/agent/
+COPY packages/config/package.json packages/config/
 COPY packages/db/package.json packages/db/
 COPY packages/rag/package.json packages/rag/
 COPY packages/widget/package.json packages/widget/
@@ -43,6 +44,7 @@ WORKDIR /repo
 COPY --from=deps --chown=helia:helia /repo/node_modules ./node_modules
 COPY --from=deps --chown=helia:helia /repo/apps/api/node_modules ./apps/api/node_modules
 COPY --from=deps --chown=helia:helia /repo/packages/agent/node_modules ./packages/agent/node_modules
+COPY --from=deps --chown=helia:helia /repo/packages/config/node_modules ./packages/config/node_modules
 COPY --from=deps --chown=helia:helia /repo/packages/db/node_modules ./packages/db/node_modules
 COPY --from=deps --chown=helia:helia /repo/packages/rag/node_modules ./packages/rag/node_modules
 
@@ -50,6 +52,7 @@ COPY --from=deps --chown=helia:helia /repo/packages/rag/node_modules ./packages/
 COPY --chown=helia:helia pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY --chown=helia:helia apps/api ./apps/api
 COPY --chown=helia:helia packages/agent ./packages/agent
+COPY --chown=helia:helia packages/config ./packages/config
 COPY --chown=helia:helia packages/db ./packages/db
 COPY --chown=helia:helia packages/rag ./packages/rag
 

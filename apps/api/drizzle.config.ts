@@ -1,9 +1,5 @@
-import { config as loadEnv } from "dotenv";
+import "@helia/config"; // loads .env
 import type { Config } from "drizzle-kit";
-
-// Single source of truth for env is the repo-root `.env`. Inside docker
-// the file doesn't exist (env comes from compose); dotenv silently skips.
-loadEnv({ path: "../../.env" });
 
 export default {
   // Schema lives in the shared @helia/db package.
