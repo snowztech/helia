@@ -97,6 +97,11 @@ export default function HomePage() {
                 <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
                   <HugeiconsIcon icon={BubbleChatIcon} size={12} />
                 </span>
+                {c.userName && (
+                  <span className="flex-shrink-0 text-[11px] font-medium text-muted-foreground">
+                    {c.userName}
+                  </span>
+                )}
                 <span className="min-w-0 flex-1 truncate">
                   {c.userMessage}
                 </span>

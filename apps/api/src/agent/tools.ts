@@ -6,6 +6,7 @@ import { tools as toolsTable } from "@helia/db";
 import { retrieve } from "@helia/rag";
 import { db, log } from "../lib/state";
 import { buildHttpTool } from "./http-tool";
+import type { Identity } from "../routes/chat";
 
 /**
  * Concrete tool implementations for a workspace.
@@ -19,6 +20,7 @@ import { buildHttpTool } from "./http-tool";
  */
 export async function makeAgentTools(
   workspaceId: string,
+  identity: Identity | null,
 ): Promise<AgentToolSet> {
   const result: AgentToolSet = {
     search_knowledge: tool({
@@ -74,7 +76,7 @@ export async function makeAgentTools(
       );
       continue;
     }
-    result[t.name] = buildHttpTool(t);
+    result[t.name] = buildHttpTool(t, identity);
   }
 
   return result;

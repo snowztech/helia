@@ -2,22 +2,71 @@ import { tool } from "ai";
 import { z, type ZodTypeAny } from "zod";
 import type { Tool, ToolParam } from "@helia/db";
 import { log } from "../lib/state";
+import type { Identity } from "../routes/chat";
 
 /**
  * Build an AI SDK tool from a `tools` row.
  *
- * The execute step POSTs the LLM-supplied args (filtered to "llm"-sourced
- * params) to the configured URL. Context-sourced params are reserved for
- * the JWT phase and ignored here.
+ * LLM-sourced params are exposed to the model and validated by Zod.
+ * Context-sourced params are injected server-side from the verified
+ * `identity` (HMAC-signed by the customer's backend). The model never
+ * sees them and can't override them.
  */
-export function buildHttpTool(t: Tool) {
+export function buildHttpTool(t: Tool, identity: Identity | null) {
   return tool({
     description: t.description,
     parameters: buildZodSchema(t.paramsSchema),
     execute: async (args: Record<string, unknown>) => {
-      return callHttpEndpoint(t, args);
+      const merged = withContextParams(t.paramsSchema, args, identity);
+      if ("error" in merged) return merged;
+      return callHttpEndpoint(t, merged.args);
     },
   });
+}
+
+/**
+ * Server-side context source: pulls values from the verified identity.
+ * Supported paths: `user.id`, `user.name`.
+ *
+ * If a tool declares a required context param and the identity is missing
+ * or the path is unset, we refuse to call the endpoint (returns a
+ * tool-visible error so the agent can recover gracefully).
+ */
+function withContextParams(
+  params: ToolParam[],
+  llmArgs: Record<string, unknown>,
+  identity: Identity | null,
+): { args: Record<string, unknown> } | { error: string } {
+  const out: Record<string, unknown> = { ...llmArgs };
+  for (const p of params) {
+    if (p.source !== "context") continue;
+    const value = lookupContext(p.contextPath, identity);
+    if (value == null) {
+      if (p.required) {
+        return {
+          error: `missing context value for "${p.name}" (needs ${p.contextPath ?? "?"})`,
+        };
+      }
+      continue;
+    }
+    out[p.name] = value;
+  }
+  return { args: out };
+}
+
+function lookupContext(
+  path: string | undefined,
+  identity: Identity | null,
+): string | null {
+  if (!identity || !path) return null;
+  switch (path) {
+    case "user.id":
+      return identity.id;
+    case "user.name":
+      return identity.name;
+    default:
+      return null;
+  }
 }
 
 function buildZodSchema(params: ToolParam[]): z.ZodObject<Record<string, ZodTypeAny>> {

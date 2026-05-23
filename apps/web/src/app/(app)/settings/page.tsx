@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { api, type AuthUser, type SystemInfo, type Workspace } from "@/lib/api";
 import { useWorkspace } from "../_components/workspace-provider";
 import { DeleteAccountDialog } from "../_components/delete-account-dialog";
+import { IdentitySection } from "./_components/identity-section";
 
 // Models we expose in the dropdown. The DB column accepts any string so
 // power-users can paste whatever they want, but typical usage picks one of
@@ -273,6 +274,15 @@ export default function SettingsPage() {
             </p>
           </div>
         </div>
+      </Section>
+
+      <Section title="User identity">
+        <IdentitySection
+          workspaceId={ws.id}
+          identityRequired={ws.identityRequired}
+          identityConfigured={ws.identityConfigured}
+          onWorkspace={setWs}
+        />
       </Section>
 
       <Section title="Embed allowlist">

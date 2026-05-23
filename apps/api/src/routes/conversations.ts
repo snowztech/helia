@@ -23,6 +23,8 @@ conversationsRouter.get("/", async (c) => {
   const rows = await db
     .select({
       id: chatTraces.id,
+      userId: chatTraces.userId,
+      userName: chatTraces.userName,
       userMessage: chatTraces.userMessage,
       finalAnswer: chatTraces.finalAnswer,
       totalTokens: chatTraces.totalTokens,
@@ -40,6 +42,8 @@ conversationsRouter.get("/", async (c) => {
   return c.json({
     conversations: rows.map((r) => ({
       id: r.id,
+      userId: r.userId,
+      userName: r.userName,
       userMessage: r.userMessage,
       finalAnswer: r.finalAnswer,
       totalTokens: r.totalTokens,

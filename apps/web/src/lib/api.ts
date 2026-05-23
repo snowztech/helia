@@ -72,6 +72,8 @@ export type Workspace = {
   widgetPosition: WidgetPosition;
   widgetTheme: WidgetTheme;
   widgetRadius: number;
+  identityRequired: boolean;
+  identityConfigured: boolean;
   createdAt: string;
 };
 
@@ -90,6 +92,7 @@ export type WorkspacePatch = Partial<
     | "widgetPosition"
     | "widgetTheme"
     | "widgetRadius"
+    | "identityRequired"
   >
 >;
 
@@ -183,6 +186,11 @@ export const api = {
       body: JSON.stringify(patch),
     }),
 
+  rotateIdentitySecret: () =>
+    request<{ secret: string }>("/v1/workspace/identity-secret/rotate", {
+      method: "POST",
+    }),
+
   listTools: () => request<{ tools: HeliaTool[] }>("/v1/tools"),
 
   createTool: (input: ToolInput) =>
@@ -270,6 +278,8 @@ export type Metrics = {
 
 export type ConversationSummary = {
   id: string;
+  userId: string | null;
+  userName: string | null;
   userMessage: string;
   finalAnswer: string | null;
   totalTokens: number;
