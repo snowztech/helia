@@ -5,6 +5,8 @@ import { workspaces } from "@helia/db";
 import { eq } from "drizzle-orm";
 import { db } from "../lib/state";
 import { currentWorkspace } from "../lib/auth";
+import { encrypt } from "../lib/crypto";
+import { generateIdentitySecret } from "../lib/hmac";
 
 export const workspaceRouter = new Hono();
 
@@ -15,7 +17,7 @@ export const workspaceRouter = new Hono();
  */
 workspaceRouter.get("/", async (c) => {
   const ws = currentWorkspace(c);
-  return c.json({ workspace: ws });
+  return c.json({ workspace: redact(ws) });
 });
 
 const PatchBody = z.object({
@@ -34,6 +36,7 @@ const PatchBody = z.object({
   widgetTheme: z.enum(["light", "dark", "auto"]).optional(),
   widgetRadius: z.number().int().min(0).max(24).optional(),
   botSuggestions: z.array(z.string().min(1).max(120)).max(6).optional(),
+  identityRequired: z.boolean().optional(),
 });
 
 /**
@@ -45,11 +48,52 @@ workspaceRouter.patch("/", zValidator("json", PatchBody), async (c) => {
   const patch = c.req.valid("json");
   const current = currentWorkspace(c);
 
+  // Refuse to flip identityRequired on if no secret exists. We let it flip
+  // off freely (so a stuck customer can recover by disabling and rotating).
+  if (patch.identityRequired === true && !current.identitySecret) {
+    return c.json(
+      { error: "generate an identity secret before requiring it" },
+      400,
+    );
+  }
+
   const [updated] = await db
     .update(workspaces)
     .set(patch)
     .where(eq(workspaces.id, current.id))
     .returning();
 
-  return c.json({ workspace: updated });
+  return c.json({ workspace: redact(updated) });
 });
+
+/**
+ * POST /v1/workspace/identity-secret/rotate
+ *
+ * Generates a fresh signing secret, encrypts it at rest, and returns the
+ * plaintext exactly once. Anything signed by the previous secret stops
+ * verifying immediately.
+ */
+workspaceRouter.post("/identity-secret/rotate", async (c) => {
+  const current = currentWorkspace(c);
+  const plaintext = generateIdentitySecret();
+  const ciphertext = encrypt(plaintext);
+
+  await db
+    .update(workspaces)
+    .set({ identitySecret: ciphertext })
+    .where(eq(workspaces.id, current.id));
+
+  return c.json({ secret: plaintext });
+});
+
+/**
+ * Strip server-side ciphertext fields before responding. The settings UI
+ * needs to know whether a secret EXISTS, not the encrypted blob.
+ */
+function redact<T extends { identitySecret?: string | null }>(
+  ws: T | undefined,
+): (Omit<T, "identitySecret"> & { identityConfigured: boolean }) | undefined {
+  if (!ws) return undefined;
+  const { identitySecret, ...rest } = ws;
+  return { ...rest, identityConfigured: Boolean(identitySecret) };
+}

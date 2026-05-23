@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { api, type AuthUser, type SystemInfo, type Workspace } from "@/lib/api";
 import { useWorkspace } from "../_components/workspace-provider";
 import { DeleteAccountDialog } from "../_components/delete-account-dialog";
+import { IdentitySection } from "./_components/identity-section";
 
 // Models we expose in the dropdown. The DB column accepts any string so
 // power-users can paste whatever they want, but typical usage picks one of
@@ -59,6 +60,16 @@ export default function SettingsPage() {
       .catch((err: Error) => toast.error(err.message ?? "load failed"))
       .finally(() => setLoading(false));
   }, []);
+
+  // Hash anchors don't work on this page because the sections render after
+  // the data fetch. Scroll manually once the content is in the DOM.
+  useEffect(() => {
+    if (loading) return;
+    const hash = window.location.hash.slice(1);
+    if (!hash) return;
+    const el = document.getElementById(hash);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [loading]);
 
   const dirty = useMemo(() => {
     if (!ws || !savedSnapshot) return false;
@@ -275,6 +286,15 @@ export default function SettingsPage() {
         </div>
       </Section>
 
+      <Section title="User identity" id="user-identity">
+        <IdentitySection
+          workspaceId={ws.id}
+          identityRequired={ws.identityRequired}
+          identityConfigured={ws.identityConfigured}
+          onWorkspace={setWs}
+        />
+      </Section>
+
       <Section title="Embed allowlist">
         <div className="space-y-2">
           {system.allowedOrigins === "wildcard" ? (
@@ -322,13 +342,15 @@ export default function SettingsPage() {
 
 function Section({
   title,
+  id,
   children,
 }: {
   title: string;
+  id?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="space-y-3">
+    <section id={id} className="scroll-mt-24 space-y-3">
       <h2 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
         {title}
       </h2>

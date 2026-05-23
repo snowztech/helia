@@ -33,7 +33,12 @@ app.use(
       return LOCALHOST_RE.test(origin) ? origin : null;
     },
     allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    allowHeaders: ["content-type", "authorization"],
+    allowHeaders: [
+      "content-type",
+      "authorization",
+      "x-helia-user",
+      "x-helia-signature",
+    ],
     exposeHeaders: ["x-helia-sources"],
     credentials: true,
   }),

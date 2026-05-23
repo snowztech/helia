@@ -6,6 +6,13 @@ import { chatTraces, workspaces, type Workspace } from "@helia/db";
 import { eq } from "drizzle-orm";
 import { db, log } from "../lib/state";
 import { makeAgentTools } from "../agent/tools";
+import { decrypt } from "../lib/crypto";
+import { verifyIdentity } from "../lib/hmac";
+
+export interface Identity {
+  id: string;
+  name: string | null;
+}
 
 export const chatRouter = new Hono();
 
@@ -36,7 +43,16 @@ chatRouter.post("/", zValidator("json", Body), async (c) => {
 
   const ws = await resolveChatWorkspace(c);
   if (!ws) return c.json({ error: "workspace not found" }, 404);
-  const tools = await makeAgentTools(ws.id);
+
+  const identity = resolveIdentity(c, ws);
+  if (identity === "invalid") {
+    return c.json({ error: "invalid identity signature" }, 401);
+  }
+  if (identity === null && ws.identityRequired) {
+    return c.json({ error: "identity required" }, 401);
+  }
+
+  const tools = await makeAgentTools(ws.id, identity);
   const startedAt = Date.now();
 
   const result = runAgent({
@@ -47,13 +63,52 @@ chatRouter.post("/", zValidator("json", Body), async (c) => {
     onError: (err) => log.error({ err }, "agent error"),
   });
 
-  // Persist a trace once the stream is consumed by the client. Fire-and-
-  // forget: the response itself is what drives the stream, and the result
-  // promises only resolve as the client reads. We don't await here.
-  void persistTrace(result, ws, lastUser.content, startedAt);
+  void persistTrace(result, ws, identity, lastUser.content, startedAt);
 
   return result.toDataStreamResponse();
 });
+
+/**
+ * Verify the user identity headers if present.
+ *  - Returns null if the headers are absent (anonymous flow).
+ *  - Returns "invalid" if headers are present but don't verify, or if the
+ *    workspace has no secret to verify against.
+ *  - Returns the user identity object on success.
+ */
+function resolveIdentity(
+  c: Context,
+  ws: Workspace,
+): Identity | null | "invalid" {
+  const userHeader = c.req.header("x-helia-user");
+  const signature = c.req.header("x-helia-signature");
+  if (!userHeader && !signature) return null;
+  if (!userHeader || !signature) return "invalid";
+
+  let parsed: { id?: unknown; name?: unknown };
+  try {
+    parsed = JSON.parse(userHeader);
+  } catch {
+    return "invalid";
+  }
+  if (!parsed || typeof parsed.id !== "string" || parsed.id.length === 0) {
+    return "invalid";
+  }
+  const name = typeof parsed.name === "string" ? parsed.name : null;
+
+  if (!ws.identitySecret) return "invalid";
+
+  let secret: string;
+  try {
+    secret = decrypt(ws.identitySecret);
+  } catch (err) {
+    log.error({ err, workspaceId: ws.id }, "identity secret decrypt failed");
+    return "invalid";
+  }
+
+  const ok = verifyIdentity({ id: parsed.id, name }, signature, secret);
+  if (!ok) return "invalid";
+  return { id: parsed.id, name };
+}
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -84,6 +139,7 @@ type AgentResult = ReturnType<typeof runAgent>;
 async function persistTrace(
   result: AgentResult,
   ws: Workspace,
+  identity: Identity | null,
   userMessage: string,
   startedAt: number,
 ): Promise<void> {
@@ -99,6 +155,8 @@ async function persistTrace(
 
     await db.insert(chatTraces).values({
       workspaceId: ws.id,
+      userId: identity?.id ?? null,
+      userName: identity?.name ?? null,
       userMessage,
       finalAnswer: finalText,
       totalTokens: usage?.totalTokens ?? 0,

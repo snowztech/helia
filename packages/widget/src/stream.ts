@@ -1,4 +1,4 @@
-import type { ChatMessage } from "./types";
+import type { ChatMessage, Identity } from "./types";
 
 export interface StreamCallbacks {
   onDelta: (text: string) => void;
@@ -22,15 +22,25 @@ export async function streamChat(
   apiUrl: string,
   workspace: string,
   messages: ChatMessage[],
+  identity: Identity | null,
   cb: StreamCallbacks,
 ): Promise<void> {
   let res: Response;
   try {
     const base = apiUrl.replace(/\/$/, "");
     const url = `${base}/v1/chat?ws=${encodeURIComponent(workspace)}`;
+    const headers: Record<string, string> = {
+      "content-type": "application/json",
+    };
+    if (identity) {
+      const user: { id: string; name?: string } = { id: identity.id };
+      if (identity.name) user.name = identity.name;
+      headers["x-helia-user"] = JSON.stringify(user);
+      headers["x-helia-signature"] = identity.signature;
+    }
     res = await fetch(url, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers,
       body: JSON.stringify({ messages }),
     });
   } catch (err) {

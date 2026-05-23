@@ -50,6 +50,14 @@ export const workspaces = pgTable("workspaces", {
     .$type<string[]>()
     .default(sql`'[]'::jsonb`)
     .notNull(),
+  // HMAC secret for identifying end-users. Stored as the output of
+  // crypto.encrypt() (AES-256-GCM with MASTER_KEY). Null until the customer
+  // generates one from /settings. The plaintext is shown to the customer
+  // exactly once on rotate, never persisted clear.
+  identitySecret: text("identity_secret"),
+  // When true, /v1/chat rejects unsigned requests with 401. Customers turn
+  // this on once their widget is sending signed identities reliably.
+  identityRequired: boolean("identity_required").default(false).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -215,6 +223,10 @@ export const chatTraces = pgTable(
     // generates a random id in sessionStorage on mount. Nullable so direct
     // /v1/chat calls (e.g. admin preview) still record cleanly.
     conversationId: uuid("conversation_id"),
+    // Verified end-user identity (HMAC-signed by the customer's backend).
+    // Null when the workspace runs in anonymous mode.
+    userId: text("user_id"),
+    userName: text("user_name"),
     userMessage: text("user_message").notNull(),
     finalAnswer: text("final_answer"),
     totalTokens: integer("total_tokens").default(0).notNull(),
