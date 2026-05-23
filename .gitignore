@@ -6,6 +6,13 @@ node_modules/
 .next/
 out/
 
+# build artifacts
+dist/
+
+# widget bundle copied by apps/web prebuild
+apps/web/public/w.js
+apps/web/public/w.js.map
+
 # env
 .env
 .env.local

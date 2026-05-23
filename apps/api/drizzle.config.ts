@@ -1,7 +1,5 @@
-import { config as loadEnv } from "dotenv";
+import "@helia/config"; // loads .env
 import type { Config } from "drizzle-kit";
-
-loadEnv({ path: ".env" });
 
 export default {
   // Schema lives in the shared @helia/db package.

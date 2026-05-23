@@ -1,24 +1,26 @@
 import { tool } from "ai";
 import { z } from "zod";
+import { and, eq } from "drizzle-orm";
 import type { AgentToolSet } from "@helia/agent";
+import { tools as toolsTable } from "@helia/db";
 import { retrieve } from "@helia/rag";
-import { db } from "../lib/state";
+import { db, log } from "../lib/state";
+import { buildHttpTool } from "./http-tool";
 
 /**
- * Concrete tool implementations for the Helia support agent.
+ * Concrete tool implementations for a workspace.
  *
- * Tools are bound to a workspace at construction time — every call is
- * automatically tenant-scoped. The generic agent loop in @helia/agent
- * stays workspace-agnostic; here is where the app-specific knowledge
- * (Postgres, RAG retrieval) plugs in.
+ * The built-in `search_knowledge` is always available. On top of that we
+ * load any HTTP tools the workspace owner registered, build an AI SDK tool
+ * for each, and merge them into the set the agent sees this turn.
  *
- * To add a new capability (book_appointment, escalate, create_ticket, …):
- *  1. Define it here with a `tool({ description, parameters, execute })`.
- *  2. The description is auto-surfaced to the LLM via the persona prompt
- *     — no other wiring required.
+ * Tools are tenant-scoped at construction time; nothing leaks across
+ * workspaces because we filter `tools.workspaceId` before building.
  */
-export function makeAgentTools(workspaceId: string): AgentToolSet {
-  return {
+export async function makeAgentTools(
+  workspaceId: string,
+): Promise<AgentToolSet> {
+  const result: AgentToolSet = {
     search_knowledge: tool({
       description:
         "Search the business's knowledge base (uploaded documents, FAQs, and crawled website pages). Returns the most relevant text chunks with their source title and a relevance score. Call this for any factual question that might be answered by the docs.",
@@ -56,4 +58,24 @@ export function makeAgentTools(workspaceId: string): AgentToolSet {
       },
     }),
   };
+
+  const httpTools = await db
+    .select()
+    .from(toolsTable)
+    .where(
+      and(eq(toolsTable.workspaceId, workspaceId), eq(toolsTable.enabled, true)),
+    );
+
+  for (const t of httpTools) {
+    if (result[t.name]) {
+      log.warn(
+        { tool: t.name },
+        "skipping HTTP tool with reserved name",
+      );
+      continue;
+    }
+    result[t.name] = buildHttpTool(t);
+  }
+
+  return result;
 }

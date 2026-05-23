@@ -1,3 +1,4 @@
+import "@helia/config"; // loads .env
 import postgres from "postgres";
 import { makeDb, workspaces } from "@helia/db";
 

@@ -1,13 +1,22 @@
 /**
  * Thin client for the Helia API.
  *
- * The API base URL is configured via `NEXT_PUBLIC_API_URL`. We use the
- * `NEXT_PUBLIC_` prefix so the value is available client-side too (the
- * chat hook calls the API directly from the browser).
+ * The base URL differs by execution context:
+ *   - Browser: NEXT_PUBLIC_API_URL — must be reachable from the user's
+ *     network (host port locally, public hostname behind a reverse proxy).
+ *   - Server components / route handlers: HELIA_INTERNAL_API_URL — the
+ *     container-internal hostname (`http://api:4000` in docker compose).
+ *
+ * Both fall back to localhost:4000 when only one is set (local dev).
  */
 
-export const API_URL =
+const browserApiUrl =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+const serverApiUrl =
+  process.env.HELIA_INTERNAL_API_URL ?? browserApiUrl;
+
+export const API_URL =
+  typeof window === "undefined" ? serverApiUrl : browserApiUrl;
 
 export type Source = {
   id: string;
@@ -43,6 +52,53 @@ export type Chunk = {
     page?: number;
     url?: string;
   } | null;
+};
+
+export type WidgetPosition = "bottom-right" | "bottom-left";
+export type WidgetTheme = "light" | "dark" | "auto";
+
+export type Workspace = {
+  id: string;
+  name: string;
+  locale: string;
+  model: string;
+  brandPrimary: string;
+  botName: string;
+  botSubtitle: string;
+  botGreeting: string;
+  botPlaceholder: string;
+  botSuggestions: string[];
+  widgetPosition: WidgetPosition;
+  widgetTheme: WidgetTheme;
+  widgetRadius: number;
+  createdAt: string;
+};
+
+export type WorkspacePatch = Partial<
+  Pick<
+    Workspace,
+    | "name"
+    | "locale"
+    | "model"
+    | "brandPrimary"
+    | "botName"
+    | "botSubtitle"
+    | "botGreeting"
+    | "botPlaceholder"
+    | "botSuggestions"
+    | "widgetPosition"
+    | "widgetTheme"
+    | "widgetRadius"
+  >
+>;
+
+export type SystemInfo = {
+  version: string;
+  provider: "openai";
+  model: string;
+  keyConfigured: boolean;
+  allowedOrigins: string[] | "wildcard" | "dev-localhost";
+  nodeEnv: string;
 };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -95,4 +151,98 @@ export const api = {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ url, maxPages }),
     }),
+
+  getWorkspace: () => request<{ workspace: Workspace }>("/v1/workspace"),
+
+  patchWorkspace: (patch: WorkspacePatch) =>
+    request<{ workspace: Workspace }>("/v1/workspace", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(patch),
+    }),
+
+  listTools: () => request<{ tools: HeliaTool[] }>("/v1/tools"),
+
+  createTool: (input: ToolInput) =>
+    request<{ tool: HeliaTool }>("/v1/tools", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+
+  updateTool: (id: string, patch: Partial<ToolInput>) =>
+    request<{ tool: HeliaTool }>(`/v1/tools/${id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(patch),
+    }),
+
+  deleteTool: (id: string) =>
+    request<{ ok: true }>(`/v1/tools/${id}`, { method: "DELETE" }),
+
+  getSystem: () => request<SystemInfo>("/v1/system"),
+
+  getMetrics: () => request<Metrics>("/v1/metrics"),
+
+  listConversations: (limit?: number) =>
+    request<{ conversations: ConversationSummary[] }>(
+      `/v1/conversations${limit ? `?limit=${limit}` : ""}`,
+    ),
+};
+
+export type Metrics = {
+  messagesToday: number;
+  messagesWeek: number;
+  messagesTotal: number;
+  avgLatencyMs: number;
+  tokensWeek: number;
+};
+
+export type ConversationSummary = {
+  id: string;
+  userMessage: string;
+  finalAnswer: string | null;
+  totalTokens: number;
+  totalLatencyMs: number;
+  model: string;
+  sourceCount: number;
+  error: string | null;
+  createdAt: string;
+};
+
+export type ToolParam = {
+  name: string;
+  type: "string" | "number" | "boolean";
+  description: string;
+  required: boolean;
+  source: "llm" | "context";
+  contextPath?: string;
+};
+
+export type HeliaTool = {
+  id: string;
+  workspaceId: string;
+  name: string;
+  description: string;
+  url: string;
+  method: "GET" | "POST";
+  paramsSchema: ToolParam[];
+  headers: Record<string, string>;
+  timeoutMs: number;
+  maxResponseBytes: number;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ToolInput = {
+  name: string;
+  description: string;
+  url: string;
+  method: "GET" | "POST";
+  paramsSchema: ToolParam[];
+  headers: Record<string, string>;
+  timeoutMs?: number;
+  maxResponseBytes?: number;
+  enabled?: boolean;
 };

@@ -1,20 +1,36 @@
+import "@helia/config"; // loads .env
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger as honoLogger } from "hono/logger";
-import { CORS_ORIGIN, log } from "./lib/state";
+import { CORS_POLICY, log } from "./lib/state";
 import { sourcesRouter } from "./routes/sources";
 import { chunksRouter } from "./routes/chunks";
 import { chatRouter } from "./routes/chat";
 import { healthRouter } from "./routes/health";
+import { widgetRouter } from "./routes/widget";
+import { workspaceRouter } from "./routes/workspace";
+import { toolsRouter } from "./routes/tools";
+import { systemRouter } from "./routes/system";
+import { metricsRouter } from "./routes/metrics";
+import { conversationsRouter } from "./routes/conversations";
 
 const app = new Hono();
+
+const LOCALHOST_RE = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
 
 app.use(
   "*",
   cors({
-    origin: CORS_ORIGIN,
-    allowMethods: ["GET", "POST", "DELETE", "OPTIONS"],
+    origin: (origin) => {
+      if (CORS_POLICY.kind === "wildcard") return origin ?? "*";
+      if (!origin) return null;
+      if (CORS_POLICY.kind === "list") {
+        return CORS_POLICY.origins.includes(origin) ? origin : null;
+      }
+      return LOCALHOST_RE.test(origin) ? origin : null;
+    },
+    allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allowHeaders: ["content-type", "authorization"],
     exposeHeaders: ["x-helia-sources"],
   }),
@@ -28,6 +44,12 @@ app.route("/v1/health", healthRouter);
 app.route("/v1/sources", sourcesRouter);
 app.route("/v1/chunks", chunksRouter);
 app.route("/v1/chat", chatRouter);
+app.route("/v1/widget", widgetRouter);
+app.route("/v1/workspace", workspaceRouter);
+app.route("/v1/tools", toolsRouter);
+app.route("/v1/system", systemRouter);
+app.route("/v1/metrics", metricsRouter);
+app.route("/v1/conversations", conversationsRouter);
 
 app.onError((err, c) => {
   log.error({ err }, "unhandled error");

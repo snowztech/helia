@@ -1,16 +1,25 @@
 import type { Metadata } from "next";
-import "@snowztech/ui/styles.css";
 import "./globals.css";
-import { ThemeToggle } from "@snowztech/ui/client";
+import Link from "next/link";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Settings02Icon } from "@hugeicons/core-free-icons";
+import { Button } from "@/components/ui/button";
+import { Toaster } from "@/components/ui/sonner";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { Nav } from "./_components/nav";
+import { WorkspaceChip } from "./_components/workspace-chip";
+import { WorkspaceProvider } from "./_components/workspace-provider";
 
 export const metadata: Metadata = {
   title: "Helia",
-  description: "Turn your docs into an AI support agent.",
+  description:
+    "Your own AI assistant. Upload your docs, plug in your APIs, drop one script tag.",
 };
 
-// Inline FOUC guard: applies the persisted theme before React hydrates, so
-// the page paints in the right palette on first paint. Matches the
-// `data-theme` convention used by @snowztech/ui's ThemeToggle.
+const VERSION = "0.0.1";
+
+// Inline FOUC guard: applies the persisted theme before React hydrates,
+// so the page paints in the right palette on first paint.
 const themeBootstrap = `
 try {
   var t = localStorage.getItem('theme');
@@ -18,41 +27,51 @@ try {
 } catch (e) {}
 `;
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
       </head>
       <body>
-        <div className="mx-auto max-w-3xl px-6 py-10">
-          <header className="mb-12 flex items-center justify-between">
-            <a href="/" className="accent text-sm font-medium">
-              helia
-            </a>
-            <nav className="flex items-center gap-5 text-sm">
-              <a href="/upload" className="muted hover:opacity-80">
-                upload
+        <WorkspaceProvider>
+        <div className="mx-auto max-w-5xl px-6 py-8">
+          <header className="mb-10 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <a href="/" className="text-sm font-semibold text-primary">
+                helia
               </a>
-              <a href="/chat" className="muted hover:opacity-80">
-                chat
-              </a>
-              <ThemeToggle size={16} defaultTheme="dark" storageKey="theme" />
-            </nav>
+              <WorkspaceChip />
+            </div>
+            <div className="flex items-center gap-2">
+              <Nav />
+              <Button asChild variant="ghost" size="icon" aria-label="Settings">
+                <Link href="/settings">
+                  <HugeiconsIcon icon={Settings02Icon} size={16} />
+                </Link>
+              </Button>
+              <ThemeToggle />
+            </div>
           </header>
           {children}
-          <footer className="subtle mt-20 text-xs">
-            v0.0.1 · open source ·{" "}
+          <footer className="mt-20 flex items-center justify-between border-t border-border-subtle pt-4 text-xs text-muted-foreground">
+            <span>v{VERSION} · open source</span>
             <a
               href="https://github.com/snowztech/helia"
               target="_blank"
               rel="noreferrer"
-              className="accent"
+              className="hover:text-foreground"
             >
-              github
+              github ↗
             </a>
           </footer>
         </div>
+        </WorkspaceProvider>
+        <Toaster />
       </body>
     </html>
   );

@@ -1,66 +1,135 @@
 @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap");
 
-/* @snowztech/ui v0.3 ships styles separately — imported in layout.tsx via
-   `import "@snowztech/ui/styles.css"`. We only keep app-level overrides here. */
-
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Terminal feel — mono everywhere. */
-html, body, button, input, textarea, select {
-  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono",
-    Menlo, Monaco, Consolas, monospace;
-}
+/* Theme — self-contained. Dark by default, light when `[data-theme="light"]`
+   is set on <html>. Values intentionally minimal and terminal-leaning. */
 
-html, body {
-  height: 100%;
-  background: var(--sn-bg);
-  color: var(--sn-fg);
-}
+@layer base {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #e8e8e8;
 
-a:not(.sn-btn) {
-  color: inherit;
-  text-decoration: none;
-}
-a:not(.sn-btn):hover {
-  opacity: 0.85;
-}
+    --card: #111111;
+    --card-foreground: #e8e8e8;
 
-/* We disabled Tailwind preflight in favour of snowztech's reset, but bare
-   <button> elements still get the OS default (light grey). Normalise them
-   so any unstyled button blends with the dark/light page. .sn-btn variants
-   keep their own styling. */
-button:not(.sn-btn) {
-  background: transparent;
-  border: 0;
-  color: inherit;
-  font: inherit;
-  padding: 0;
-  cursor: pointer;
-}
-button:not(.sn-btn):disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
+    --popover: #181818;
+    --popover-foreground: #e8e8e8;
 
-.muted { color: var(--sn-fg-muted); }
-.subtle { color: var(--sn-fg-subtle); }
-.accent { color: var(--sn-accent); }
+    --primary: #8ab4f8;
+    --primary-foreground: #0a0a0a;
 
-/* @snowztech/ui v0.3 currently loses the accent button's text color on
-   hover when applied to an <a>. Force a stable foreground in both states.
-   The accent palette is a light lavender in both themes — dark text reads
-   well on it regardless of theme. */
-.sn-btn--accent,
-.sn-btn--accent:hover,
-.sn-btn--accent:focus,
-.sn-btn--accent:active {
-  color: #161616;
-  text-decoration: none;
-}
-.sn-btn--secondary,
-.sn-btn--secondary:hover,
-.sn-btn--secondary:focus,
-.sn-btn--secondary:active {
-  text-decoration: none;
+    --secondary: #181818;
+    --secondary-foreground: #e8e8e8;
+
+    --muted: #161616;
+    --muted-foreground: #888888;
+
+    --accent: #1a1a1a;
+    --accent-foreground: #e8e8e8;
+
+    --destructive: #d77070;
+    --destructive-foreground: #ffffff;
+
+    --success: #7fc77f;
+    --success-foreground: #0a0a0a;
+
+    --warning: #d4a857;
+    --warning-foreground: #0a0a0a;
+
+    --warning-soft: rgba(212, 168, 87, 0.12);
+    --success-soft: rgba(127, 199, 127, 0.12);
+    --destructive-soft: rgba(215, 112, 112, 0.12);
+
+    --border: #1f1f1f;
+    --border-subtle: #141414;
+    --input: #1f1f1f;
+    --ring: rgba(138, 180, 248, 0.4);
+
+    --radius: 0.5rem;
+
+    --font-sans:
+      "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+      Consolas, monospace;
+    --font-mono: var(--font-sans);
+  }
+
+  [data-theme="light"] {
+    --background: #f7f7f5;
+    --foreground: #161616;
+
+    --card: #ffffff;
+    --card-foreground: #161616;
+
+    --popover: #ffffff;
+    --popover-foreground: #161616;
+
+    --primary: #2a64d6;
+    --primary-foreground: #ffffff;
+
+    --secondary: #efefec;
+    --secondary-foreground: #161616;
+
+    --muted: #efefec;
+    --muted-foreground: #6a6a6a;
+
+    --accent: #ececea;
+    --accent-foreground: #161616;
+
+    --destructive: #c25b5b;
+    --destructive-foreground: #ffffff;
+
+    --success: #2e7d32;
+    --success-foreground: #ffffff;
+
+    --warning: #b07a1a;
+    --warning-foreground: #ffffff;
+
+    --warning-soft: rgba(176, 122, 26, 0.12);
+    --success-soft: rgba(46, 125, 50, 0.12);
+    --destructive-soft: rgba(194, 91, 91, 0.12);
+
+    --border: #e2e2dd;
+    --border-subtle: #ececea;
+    --input: #e2e2dd;
+    --ring: rgba(42, 100, 214, 0.35);
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
+
+  body {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* Tailwind preflight zeroes link colour; we keep underline off by default
+     and inherit the surrounding text so a sentence with a link reads well. */
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+  a:hover {
+    opacity: 0.85;
+  }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.92em;
+  }
+
+  ::selection {
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
 }

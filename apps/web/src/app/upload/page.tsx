@@ -2,7 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Field, Input, Textarea } from "@snowztech/ui";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { toast } from "@/components/ui/sonner";
 import { api } from "@/lib/api";
 
 type Tab = "pdf" | "text" | "url";
@@ -12,12 +19,6 @@ type Status =
   | { kind: "loading" }
   | { kind: "ok"; id: string }
   | { kind: "error"; msg: string };
-
-const TABS: Array<{ id: Tab; label: string }> = [
-  { id: "pdf", label: "pdf" },
-  { id: "text", label: "text" },
-  { id: "url", label: "website" },
-];
 
 export default function UploadPage() {
   const router = useRouter();
@@ -30,13 +31,18 @@ export default function UploadPage() {
     setStatus({ kind: "loading" });
     try {
       const res = await run();
-      if (res.error) setStatus({ kind: "error", msg: res.error });
-      else {
+      if (res.error) {
+        setStatus({ kind: "error", msg: res.error });
+        toast.error(res.error);
+      } else {
         setStatus({ kind: "ok", id: res.source.id });
-        router.refresh();
+        toast.success("source created");
+        // Take the user straight to the timeline so they see ingest progress.
+        router.push(`/sources/${res.source.id}`);
       }
     } catch (err) {
       setStatus({ kind: "error", msg: String(err) });
+      toast.error(String(err));
     }
   };
 
@@ -44,87 +50,84 @@ export default function UploadPage() {
 
   return (
     <div className="space-y-6">
-      <header className="space-y-1">
+      <a
+        href="/"
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:opacity-80"
+      >
+        <HugeiconsIcon icon={ArrowLeft01Icon} size={14} /> back
+      </a>
+
+      <header>
         <h1 className="text-2xl">add a source.</h1>
-        <p className="muted text-xs">
-          PDF and text ingest synchronously · URL crawls run in the background.
-        </p>
       </header>
 
-      <nav
-        className="flex gap-5 border-b text-sm"
-        style={{ borderColor: "var(--sn-border-subtle)" }}
-      >
-        {TABS.map((t) => {
-          const active = tab === t.id;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => {
-                setTab(t.id);
-                setStatus({ kind: "idle" });
-              }}
-              className="pb-2 pt-1 transition-opacity"
-              style={{
-                background: "transparent",
-                border: "none",
-                borderBottom: active
-                  ? "1px solid var(--sn-accent)"
-                  : "1px solid transparent",
-                color: active ? "var(--sn-fg)" : "var(--sn-fg-muted)",
-                marginBottom: "-1px",
-                cursor: "pointer",
-                padding: "0.25rem 0 0.5rem",
-                fontFamily: "inherit",
-                fontSize: "inherit",
-              }}
-            >
-              {t.label}
-            </button>
-          );
-        })}
-      </nav>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
+        <TabsList>
+          <TabsTrigger value="pdf">pdf</TabsTrigger>
+          <TabsTrigger value="text">text</TabsTrigger>
+          <TabsTrigger value="url">website</TabsTrigger>
+        </TabsList>
 
-      {tab === "pdf" && <PdfForm wrap={wrap} busy={busy} onError={(msg) => setStatus({ kind: "error", msg })} />}
-      {tab === "text" && <TextForm wrap={wrap} busy={busy} />}
-      {tab === "url" && <UrlForm wrap={wrap} busy={busy} />}
+        <TabsContent value="pdf">
+          <PdfForm wrap={wrap} busy={busy} />
+        </TabsContent>
+        <TabsContent value="text">
+          <TextForm wrap={wrap} busy={busy} />
+        </TabsContent>
+        <TabsContent value="url">
+          <UrlForm wrap={wrap} busy={busy} />
+        </TabsContent>
+      </Tabs>
 
-      <StatusLine status={status} />
+      {status.kind === "ok" && (
+        <p className="text-sm text-success" aria-live="polite">
+          ✓ source created ·{" "}
+          <a
+            href={`/sources/${status.id}`}
+            className="underline hover:opacity-80"
+          >
+            view timeline →
+          </a>
+        </p>
+      )}
     </div>
   );
 }
 
-// ─── forms ────────────────────────────────────────────────────────────────
-
 type FormProps = {
-  wrap: (run: () => Promise<{ source: { id: string }; error?: string }>) => Promise<void>;
+  wrap: (
+    run: () => Promise<{ source: { id: string }; error?: string }>,
+  ) => Promise<void>;
   busy: boolean;
 };
 
-function PdfForm({ wrap, busy, onError }: FormProps & { onError: (msg: string) => void }) {
+function PdfForm({ wrap, busy }: FormProps) {
   return (
     <form
-      className="space-y-3"
+      className="space-y-4"
       onSubmit={(e) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
         const file = fd.get("file");
         if (!(file instanceof File) || file.size === 0) {
-          onError("Choose a PDF");
+          toast.error("Choose a PDF");
           return;
         }
         void wrap(() => api.uploadPdf(file));
       }}
     >
-      <input
-        type="file"
-        name="file"
-        accept="application/pdf"
-        required
-        className="sn-file"
-      />
-      <SubmitButton busy={busy} idle="upload pdf →" busyLabel="ingesting…" />
+      <div className="space-y-2">
+        <Label htmlFor="pdf-file">file</Label>
+        <Input
+          id="pdf-file"
+          type="file"
+          name="file"
+          accept="application/pdf"
+          required
+          className="file:mr-3 file:cursor-pointer file:rounded file:border-0 file:bg-muted file:px-3 file:py-1 file:text-xs file:font-medium"
+        />
+      </div>
+      <SubmitButton busy={busy} idle="upload pdf" busyLabel="ingesting…" />
     </form>
   );
 }
@@ -132,7 +135,7 @@ function PdfForm({ wrap, busy, onError }: FormProps & { onError: (msg: string) =
 function TextForm({ wrap, busy }: FormProps) {
   return (
     <form
-      className="space-y-3"
+      className="space-y-4"
       onSubmit={(e) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
@@ -141,19 +144,26 @@ function TextForm({ wrap, busy }: FormProps) {
         void wrap(() => api.uploadText(name, text));
       }}
     >
-      <Field label="name" htmlFor="text-name" required>
-        <Input id="text-name" name="name" placeholder="source name" required />
-      </Field>
-      <Field label="content" htmlFor="text-body" required>
+      <div className="space-y-2">
+        <Label htmlFor="text-name">name</Label>
+        <Input
+          id="text-name"
+          name="name"
+          placeholder="source name"
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="text-body">content</Label>
         <Textarea
           id="text-body"
           name="text"
-          rows={4}
+          rows={6}
           placeholder="paste your text…"
           required
         />
-      </Field>
-      <SubmitButton busy={busy} idle="upload text →" busyLabel="ingesting…" />
+      </div>
+      <SubmitButton busy={busy} idle="upload text" busyLabel="ingesting…" />
     </form>
   );
 }
@@ -161,7 +171,7 @@ function TextForm({ wrap, busy }: FormProps) {
 function UrlForm({ wrap, busy }: FormProps) {
   return (
     <form
-      className="space-y-3"
+      className="space-y-4"
       onSubmit={(e) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
@@ -170,11 +180,12 @@ function UrlForm({ wrap, busy }: FormProps) {
         void wrap(() => api.uploadUrl(url, maxPages));
       }}
     >
-      <p className="subtle text-xs leading-relaxed">
+      <p className="text-xs text-muted-foreground">
         Same host only · respects robots.txt · Mozilla Readability extraction.
       </p>
-      <div className="flex gap-3">
-        <Field label="seed url" htmlFor="url-input" required>
+      <div className="grid grid-cols-[1fr_auto] gap-3">
+        <div className="space-y-2">
+          <Label htmlFor="url-input">seed url</Label>
           <Input
             id="url-input"
             type="url"
@@ -182,8 +193,9 @@ function UrlForm({ wrap, busy }: FormProps) {
             placeholder="https://example.com"
             required
           />
-        </Field>
-        <Field label="max pages" htmlFor="url-max">
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="url-max">max pages</Label>
           <Input
             id="url-max"
             type="number"
@@ -191,36 +203,13 @@ function UrlForm({ wrap, busy }: FormProps) {
             defaultValue={50}
             min={1}
             max={200}
-            style={{ width: "5rem" }}
+            className="w-24"
           />
-        </Field>
+        </div>
       </div>
-      <SubmitButton busy={busy} idle="crawl website →" busyLabel="queuing…" />
+      <SubmitButton busy={busy} idle="crawl website" busyLabel="queuing…" />
     </form>
   );
-}
-
-// ─── feedback line ────────────────────────────────────────────────────────
-
-function StatusLine({ status }: { status: Status }) {
-  if (status.kind === "ok") {
-    return (
-      <p className="text-sm" style={{ color: "var(--sn-success)" }} aria-live="polite">
-        ✓ source created ·{" "}
-        <a href={`/sources/${status.id}`} className="underline">
-          view timeline →
-        </a>
-      </p>
-    );
-  }
-  if (status.kind === "error") {
-    return (
-      <p className="text-sm" style={{ color: "var(--sn-danger)" }} aria-live="polite">
-        error · {status.msg}
-      </p>
-    );
-  }
-  return null;
 }
 
 function SubmitButton({
@@ -233,8 +222,8 @@ function SubmitButton({
   busyLabel: string;
 }) {
   return (
-    <button type="submit" disabled={busy} className="sn-btn sn-btn--accent">
+    <Button type="submit" disabled={busy}>
       {busy ? busyLabel : idle}
-    </button>
+    </Button>
   );
 }

@@ -1,0 +1,16 @@
+{
+  "name": "@helia/widget",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "files": ["dist"],
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --format=iife --global-name=Helia --outfile=dist/w.js --minify --target=es2020 --sourcemap",
+    "dev": "esbuild src/index.ts --bundle --format=iife --global-name=Helia --outfile=dist/w.js --target=es2020 --sourcemap --servedir=. --serve=localhost:5173",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "typescript": "^5.7.0"
+  }
+}

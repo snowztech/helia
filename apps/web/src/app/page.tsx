@@ -1,115 +1,115 @@
-import { api } from "@/lib/api";
-import { AutoRefresh } from "./_components/auto-refresh";
-import { StatusBadge } from "./_components/status-badge";
-import { DeleteSourceButton } from "./_components/delete-source-button";
-import { QuickAsk } from "./_components/quick-ask";
+"use client";
 
-export const dynamic = "force-dynamic";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { BubbleChatIcon } from "@hugeicons/core-free-icons";
+import { GettingStarted } from "./_components/getting-started";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "@/components/ui/sonner";
+import {
+  api,
+  type ConversationSummary,
+  type Metrics,
+} from "@/lib/api";
 
-export default async function Home() {
-  let sources: Awaited<ReturnType<typeof api.listSources>>["sources"] = [];
-  let apiError: string | null = null;
-  try {
-    const res = await api.listSources();
-    sources = res.sources;
-  } catch (err) {
-    apiError = String(err);
-  }
+export default function HomePage() {
+  const [metrics, setMetrics] = useState<Metrics | null>(null);
+  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [apiOk, setApiOk] = useState(true);
 
-  const counts = {
-    queued: sources.filter((s) => s.status === "queued").length,
-    processing: sources.filter((s) => s.status === "processing").length,
-    ready: sources.filter((s) => s.status === "ready").length,
-    failed: sources.filter((s) => s.status === "failed").length,
-  };
-  const hasInFlight = counts.queued > 0 || counts.processing > 0;
+  useEffect(() => {
+    Promise.all([api.getMetrics(), api.listConversations(8)])
+      .then(([m, c]) => {
+        setMetrics(m);
+        setConversations(c.conversations);
+        setApiOk(true);
+      })
+      .catch((err: Error) => {
+        setApiOk(false);
+        toast.error(err.message ?? "API unreachable");
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
-    <div className="space-y-12">
-      <AutoRefresh enabled={hasInFlight} intervalMs={2000} />
-
-      <section className="space-y-3">
-        <h1 className="text-3xl">
-          turn your <span className="accent">docs</span> into an{" "}
-          <span className="accent">ai assistant</span>.
-        </h1>
-        <p className="muted text-sm leading-relaxed">
-          Upload PDFs, paste text, or crawl a website. Then chat with them.
+    <div className="space-y-8">
+      <header className="space-y-1">
+        <h1 className="text-2xl">overview.</h1>
+        <p className="text-xs text-muted-foreground">
+          How your assistant is doing.
         </p>
-        <div className="flex gap-2 pt-2">
-          <a href="/upload" className="sn-btn sn-btn--accent sn-btn--sm">
-            add source →
-          </a>
-          <a href="/chat" className="sn-btn sn-btn--ghost sn-btn--sm">
-            open chat →
-          </a>
-        </div>
+      </header>
 
-        <div className="pt-4">
-          <QuickAsk />
-        </div>
-      </section>
-
-      {apiError && (
-        <section className="sn-card p-4 text-sm">
-          <span style={{ color: "var(--sn-danger)" }}>api unreachable</span>{" "}
-          <span className="muted">— run </span>
-          <code>make dev-api</code>
-        </section>
+      {!apiOk && (
+        <Card>
+          <CardContent className="py-4 text-sm">
+            <span className="text-destructive">API unreachable</span>{" "}
+            <span className="text-muted-foreground">— run</span>{" "}
+            <code className="rounded bg-muted px-1.5 py-0.5">make dev-api</code>
+          </CardContent>
+        </Card>
       )}
 
-      <section>
-        <h2 className="subtle mb-3 text-[11px] uppercase tracking-[0.18em]">
-          state
-        </h2>
-        <div className="grid grid-cols-4 gap-2">
-          <StateCell label="queued" value={counts.queued} active={counts.queued > 0} />
-          <StateCell
-            label="processing"
-            value={counts.processing}
-            active={counts.processing > 0}
-          />
-          <StateCell label="ready" value={counts.ready} />
-          <StateCell label="failed" value={counts.failed} danger={counts.failed > 0} />
-        </div>
-      </section>
+      <MetricGrid loading={loading} metrics={metrics} />
 
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="subtle text-[11px] uppercase tracking-[0.18em]">
-            sources
+      <GettingStarted hasSources={(metrics?.messagesTotal ?? 0) > 0} />
+
+      <section className="space-y-3">
+        <div className="flex items-end justify-between">
+          <h2 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            recent messages
           </h2>
-          {hasInFlight && (
-            <span className="subtle text-[11px]">· live</span>
-          )}
         </div>
 
-        {sources.length === 0 ? (
-          <p className="subtle text-sm">
-            no sources yet ·{" "}
-            <a href="/upload" className="accent">
-              add one
-            </a>
-          </p>
+        {loading ? (
+          <ul className="divide-y divide-border rounded-md border border-border">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <li key={i} className="flex items-center gap-3 px-4 py-3">
+                <Skeleton className="h-4 w-4 rounded-full" />
+                <Skeleton className="h-4 flex-1" />
+                <Skeleton className="h-4 w-12" />
+              </li>
+            ))}
+          </ul>
+        ) : conversations.length === 0 ? (
+          <Card>
+            <CardContent className="py-10 text-center">
+              <p className="text-sm text-muted-foreground">
+                No messages yet.{" "}
+                <Link href="/widget" className="text-primary hover:underline">
+                  Install the widget
+                </Link>{" "}
+                or test in the live preview.
+              </p>
+            </CardContent>
+          </Card>
         ) : (
-          <ul className="space-y-px">
-            {sources.map((s) => (
+          <ul className="divide-y divide-border rounded-md border border-border">
+            {conversations.map((c) => (
               <li
-                key={s.id}
-                className="flex items-center gap-3 border-b py-3 text-sm"
-                style={{ borderColor: "var(--sn-border-subtle)" }}
+                key={c.id}
+                className="flex items-center gap-3 px-4 py-3 text-sm"
               >
-                <a
-                  href={`/sources/${s.id}`}
-                  className="min-w-0 flex-1 truncate hover:opacity-80"
-                >
-                  <span>{s.name}</span>
-                  <span className="subtle ml-2 text-xs">
-                    {s.type} · {s.id.slice(0, 7)}
-                  </span>
-                </a>
-                <StatusBadge status={s.status} progress={s.progress} />
-                <DeleteSourceButton id={s.id} name={s.name} />
+                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                  <HugeiconsIcon icon={BubbleChatIcon} size={12} />
+                </span>
+                <span className="min-w-0 flex-1 truncate">
+                  {c.userMessage}
+                </span>
+                {c.error ? (
+                  <Badge variant="destructive">error</Badge>
+                ) : c.sourceCount > 0 ? (
+                  <Badge variant="primary">
+                    {c.sourceCount} {c.sourceCount === 1 ? "source" : "sources"}
+                  </Badge>
+                ) : null}
+                <span className="w-12 flex-shrink-0 text-right text-[11px] text-muted-foreground">
+                  {timeAgo(c.createdAt)}
+                </span>
               </li>
             ))}
           </ul>
@@ -119,28 +119,82 @@ export default async function Home() {
   );
 }
 
-function StateCell({
-  label,
-  value,
-  active,
-  danger,
+function MetricGrid({
+  loading,
+  metrics,
 }: {
-  label: string;
-  value: number;
-  active?: boolean;
-  danger?: boolean;
+  loading: boolean;
+  metrics: Metrics | null;
 }) {
-  const color = danger
-    ? "var(--sn-danger)"
-    : active
-      ? "var(--sn-accent)"
-      : "var(--sn-fg)";
-  return (
-    <div className="border py-3 px-3" style={{ borderColor: "var(--sn-border-subtle)" }}>
-      <div className="subtle text-[10px] uppercase tracking-wider">{label}</div>
-      <div className="mt-0.5 text-xl" style={{ color }}>
-        {value}
+  if (loading || !metrics) {
+    return (
+      <div className="grid gap-3 sm:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-[88px] w-full" />
+        ))}
       </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-3">
+      <Metric
+        label="Messages this week"
+        value={metrics.messagesWeek.toLocaleString()}
+        hint={`${metrics.messagesTotal.toLocaleString()} total`}
+      />
+      <Metric
+        label="Today"
+        value={metrics.messagesToday.toLocaleString()}
+        hint={
+          metrics.tokensWeek > 0
+            ? `${metrics.tokensWeek.toLocaleString()} tokens / week`
+            : "—"
+        }
+      />
+      <Metric
+        label="Avg response"
+        value={
+          metrics.avgLatencyMs > 0
+            ? `${(metrics.avgLatencyMs / 1000).toFixed(1)}s`
+            : "—"
+        }
+        hint="last 7 days"
+      />
     </div>
   );
+}
+
+function Metric({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-card px-4 py-3">
+      <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+        {label}
+      </div>
+      <div className="mt-1 text-2xl">{value}</div>
+      {hint && (
+        <div className="mt-0.5 text-[11px] text-muted-foreground">{hint}</div>
+      )}
+    </div>
+  );
+}
+
+function timeAgo(iso: string): string {
+  const t = new Date(iso).getTime();
+  const diff = Math.max(0, Date.now() - t);
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "now";
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  const d = Math.floor(h / 24);
+  return `${d}d`;
 }
