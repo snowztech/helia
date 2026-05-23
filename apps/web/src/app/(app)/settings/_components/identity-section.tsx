@@ -91,8 +91,8 @@ export function IdentitySection({
         <div className="space-y-1">
           <p className="text-sm font-medium">Signing secret</p>
           <p className="text-xs text-muted-foreground">
-            HMAC key your backend uses to sign each end-user identity. Shown
-            once when generated. Lost it? Generate a new one to replace it.
+            Used by your backend to sign each end-user identity. Shown once
+            when generated.
           </p>
         </div>
         {identityConfigured ? (
@@ -104,12 +104,13 @@ export function IdentitySection({
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-muted/40 p-4">
+      <div className="flex items-center justify-between gap-4 pt-1">
         <div className="space-y-1">
-          <Label className="text-xs">Reject anonymous chats</Label>
+          <Label className="text-sm font-normal normal-case tracking-normal text-foreground">
+            Reject anonymous chats
+          </Label>
           <p className="text-[11px] text-muted-foreground">
-            Turn on once your widget is sending signed identities. Anonymous
-            chats will start getting rejected.
+            Turn on once your widget is sending signed identities.
           </p>
         </div>
         <Switch

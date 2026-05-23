@@ -58,6 +58,12 @@ export const workspaces = pgTable("workspaces", {
   // When true, /v1/chat rejects unsigned requests with 401. Customers turn
   // this on once their widget is sending signed identities reliably.
   identityRequired: boolean("identity_required").default(false).notNull(),
+  // Soft cap to prevent runaway costs. Reached → /v1/chat returns 402.
+  // Counts against the sum of chat_traces.totalTokens since the 1st of the
+  // current month. Owners raise it from /settings.
+  tokenQuotaMonthly: integer("token_quota_monthly")
+    .default(1_000_000)
+    .notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

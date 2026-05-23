@@ -14,6 +14,7 @@ import { api, type AuthUser, type SystemInfo, type Workspace } from "@/lib/api";
 import { useWorkspace } from "../_components/workspace-provider";
 import { DeleteAccountDialog } from "../_components/delete-account-dialog";
 import { IdentitySection } from "./_components/identity-section";
+import { LimitsSection } from "./_components/limits-section";
 
 // Models we expose in the dropdown. The DB column accepts any string so
 // power-users can paste whatever they want, but typical usage picks one of
@@ -272,18 +273,21 @@ export default function SettingsPage() {
             <p className="text-[11px] text-muted-foreground">
               {system.keyConfigured ? (
                 <>
-                  Set in <code>apps/api/.env</code>. UI-managed keys land in
-                  the next release.
+                  Set in <code>.env</code>.
                 </>
               ) : (
                 <>
-                  Set <code>OPENAI_API_KEY</code> in <code>apps/api/.env</code>{" "}
-                  and restart the API. Chat will not work until configured.
+                  Set <code>OPENAI_API_KEY</code> in <code>.env</code> and
+                  restart the API. Chat won't work until configured.
                 </>
               )}
             </p>
           </div>
         </div>
+      </Section>
+
+      <Section title="Limits" id="limits">
+        <LimitsSection workspace={ws} onWorkspace={setWs} />
       </Section>
 
       <Section title="User identity" id="user-identity">
@@ -315,8 +319,8 @@ export default function SettingsPage() {
             </ul>
           )}
           <p className="text-[11px] text-muted-foreground">
-            Set with <code>HELIA_CORS_ORIGIN</code> in <code>apps/api/.env</code>{" "}
-            — comma-separated origins for production.
+            Set <code>HELIA_CORS_ORIGIN</code> in <code>.env</code> with a
+            comma-separated list for production.
           </p>
         </div>
       </Section>

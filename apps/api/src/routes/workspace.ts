@@ -37,6 +37,7 @@ const PatchBody = z.object({
   widgetRadius: z.number().int().min(0).max(24).optional(),
   botSuggestions: z.array(z.string().min(1).max(120)).max(6).optional(),
   identityRequired: z.boolean().optional(),
+  tokenQuotaMonthly: z.number().int().min(10_000).max(100_000_000).optional(),
 });
 
 /**
