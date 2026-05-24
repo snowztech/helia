@@ -253,18 +253,18 @@ function QuotaBar({ usage }: { usage: Usage }) {
           <span className="text-muted-foreground">
             / {formatCompact(usage.tokenQuotaMonthly)}
           </span>
-          <span
-            className={
-              "rounded px-1.5 py-0.5 text-[10px] font-medium " +
-              (overEighty
-                ? "bg-destructive/15 text-destructive"
-                : overHalf
-                  ? "bg-warning/15 text-warning"
-                  : "bg-muted text-muted-foreground")
-            }
-          >
-            {pctLabel}
-          </span>
+          {overHalf && (
+            <span
+              className={
+                "rounded px-1.5 py-0.5 text-[10px] font-medium " +
+                (overEighty
+                  ? "bg-destructive/15 text-destructive"
+                  : "bg-warning/15 text-warning")
+              }
+            >
+              {pctLabel}
+            </span>
+          )}
         </div>
       </div>
       <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
