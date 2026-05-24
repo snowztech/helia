@@ -5,9 +5,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowUp02Icon,
+  AtIcon,
+  BubbleChatIcon,
   Cancel01Icon,
+  HelpCircleIcon,
   SparklesIcon,
 } from "@hugeicons/core-free-icons";
+import { renderMarkdown } from "@/lib/markdown";
 import { API_URL } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +26,8 @@ export interface PreviewConfig {
   botGreeting: string;
   botPlaceholder: string;
   suggestions: string[];
+  botAvatar: string | null;
+  launcherIcon: "sparkles" | "chat" | "question" | "mention";
 }
 
 /**
@@ -114,9 +120,54 @@ function Launcher({
       )}
       style={{ background: config.primary }}
     >
-      <HugeiconsIcon icon={SparklesIcon} size={22} className="mx-auto" />
+      <AvatarMark
+        avatar={config.botAvatar}
+        fallbackIcon={config.launcherIcon}
+        size={22}
+      />
     </button>
   );
+}
+
+/**
+ * Header / launcher mark, mirroring the bundle's logic so the admin sees
+ * what end-users will see.
+ */
+function AvatarMark({
+  avatar,
+  fallbackIcon,
+  size,
+}: {
+  avatar: string | null;
+  fallbackIcon: PreviewConfig["launcherIcon"];
+  size: number;
+}) {
+  if (avatar) {
+    if (/^https?:\/\//i.test(avatar)) {
+      // eslint-disable-next-line @next/next/no-img-element
+      return (
+        <img
+          src={avatar}
+          alt=""
+          className="mx-auto h-full w-full rounded-full object-cover"
+        />
+      );
+    }
+    return (
+      <span className="block text-center font-semibold" style={{ fontSize: size }}>
+        {[...avatar.trim()][0] ?? ""}
+      </span>
+    );
+  }
+  const icon =
+    fallbackIcon === "chat"
+      ? BubbleChatIcon
+      : fallbackIcon === "question"
+        ? HelpCircleIcon
+        : fallbackIcon === "mention"
+          ? AtIcon
+          : SparklesIcon;
+  return <HugeiconsIcon icon={icon} size={size} className="mx-auto" />;
 }
 
 function Panel({
@@ -146,7 +197,12 @@ function Panel({
   const messagesEnd = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    messagesEnd.current?.scrollIntoView({ behavior: "smooth" });
+    // `block: "nearest"` keeps the scroll inside the preview's own
+    // overflow-container instead of jumping the whole settings page.
+    messagesEnd.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+    });
   }, [messages, status]);
 
   return (
@@ -162,8 +218,12 @@ function Panel({
         className="flex items-start gap-3 px-4 py-3.5 text-white"
         style={{ background: config.primary }}
       >
-        <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/20">
-          <HugeiconsIcon icon={SparklesIcon} size={16} />
+        <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/20">
+          <AvatarMark
+            avatar={config.botAvatar}
+            fallbackIcon={config.launcherIcon}
+            size={16}
+          />
         </div>
         <div className="min-w-0 flex-1">
           <div className="truncate text-[15px] font-semibold leading-tight">
@@ -293,17 +353,16 @@ function AssistantBubble({
   children,
 }: {
   dark: boolean;
-  children: React.ReactNode;
+  children: string;
 }) {
   return (
     <div
       className={cn(
-        "mr-auto max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-bl-sm px-3 py-2 text-[13px] leading-snug",
+        "preview-md mr-auto max-w-[85%] rounded-2xl rounded-bl-sm px-3 py-2 text-[13px] leading-snug",
         dark ? "bg-zinc-800" : "bg-zinc-100",
       )}
-    >
-      {children}
-    </div>
+      dangerouslySetInnerHTML={{ __html: renderMarkdown(children) }}
+    />
   );
 }
 

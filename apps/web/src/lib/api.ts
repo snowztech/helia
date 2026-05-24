@@ -57,6 +57,7 @@ export type Chunk = {
 
 export type WidgetPosition = "bottom-right" | "bottom-left";
 export type WidgetTheme = "light" | "dark" | "auto";
+export type LauncherIcon = "sparkles" | "chat" | "question" | "mention";
 
 export type Workspace = {
   id: string;
@@ -69,6 +70,8 @@ export type Workspace = {
   botGreeting: string;
   botPlaceholder: string;
   botSuggestions: string[];
+  botAvatar: string | null;
+  launcherIcon: LauncherIcon;
   widgetPosition: WidgetPosition;
   widgetTheme: WidgetTheme;
   widgetRadius: number;
@@ -93,6 +96,8 @@ export type WorkspacePatch = Partial<
     | "widgetPosition"
     | "widgetTheme"
     | "widgetRadius"
+    | "botAvatar"
+    | "launcherIcon"
     | "identityRequired"
     | "tokenQuotaMonthly"
   >

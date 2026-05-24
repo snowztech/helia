@@ -46,6 +46,15 @@ export const workspaces = pgTable("workspaces", {
     .default("auto")
     .notNull(),
   widgetRadius: integer("widget_radius").default(14).notNull(),
+  // Either a URL (rendered as <img>) or a short string (rendered as text:
+  // initial letter or emoji). Null falls back to the launcherIcon glyph.
+  botAvatar: text("bot_avatar"),
+  // Picks the floating launcher glyph. Ignored when botAvatar is set.
+  launcherIcon: text("launcher_icon", {
+    enum: ["sparkles", "chat", "question", "mention"],
+  })
+    .default("sparkles")
+    .notNull(),
   botSuggestions: jsonb("bot_suggestions")
     .$type<string[]>()
     .default(sql`'[]'::jsonb`)

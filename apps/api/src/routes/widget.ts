@@ -45,6 +45,8 @@ widgetRouter.get("/config", async (c) => {
       greeting: workspace.botGreeting,
       placeholder: workspace.botPlaceholder,
       suggestions: workspace.botSuggestions,
+      avatar: workspace.botAvatar,
+      launcherIcon: workspace.launcherIcon,
     },
   });
 });

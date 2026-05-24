@@ -14,8 +14,12 @@ export interface RemoteConfig {
     greeting: string;
     placeholder?: string;
     suggestions?: string[];
+    avatar?: string | null;
+    launcherIcon?: LauncherIcon;
   };
 }
+
+export type LauncherIcon = "sparkles" | "chat" | "question" | "mention";
 
 export async function loadRemoteConfig(
   apiUrl: string,

@@ -30,6 +30,7 @@ import {
   type ConversationDetail,
   type ConversationTurn,
 } from "@/lib/api";
+import { renderMarkdown } from "@/lib/markdown";
 
 export default function ConversationDetailPage({
   params,
@@ -185,9 +186,12 @@ function Turn({ turn }: { turn: ConversationTurn }) {
               <span className="whitespace-pre-wrap">{turn.error}</span>
             </div>
           ) : turn.finalAnswer ? (
-            <div className="rounded-2xl rounded-bl-md bg-muted px-4 py-2.5 text-sm">
-              <p className="whitespace-pre-wrap">{turn.finalAnswer}</p>
-            </div>
+            <div
+              className="preview-md rounded-2xl rounded-bl-md bg-muted px-4 py-2.5 text-sm"
+              dangerouslySetInnerHTML={{
+                __html: renderMarkdown(turn.finalAnswer),
+              }}
+            />
           ) : (
             <div className="rounded-2xl rounded-bl-md bg-muted px-4 py-2.5 text-sm text-muted-foreground">
               No answer recorded.
