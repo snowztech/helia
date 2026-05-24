@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { CORS_POLICY } from "../lib/state";
 import { currentWorkspace } from "../lib/auth";
+import rootPkg from "../../../../package.json";
 
 export const systemRouter = new Hono();
 
@@ -22,7 +23,7 @@ systemRouter.get("/", async (c) => {
   else allowedOrigins = CORS_POLICY.origins;
 
   return c.json({
-    version: process.env.HELIA_VERSION ?? "0.0.1",
+    version: rootPkg.version,
     provider,
     model: ws.model,
     keyConfigured,

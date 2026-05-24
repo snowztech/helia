@@ -10,7 +10,7 @@ import { WorkspaceChip } from "./_components/workspace-chip";
 import { WorkspaceProvider } from "./_components/workspace-provider";
 import { LogoutButton } from "./_components/logout-button";
 
-const VERSION = "0.0.1";
+const VERSION = process.env.NEXT_PUBLIC_HELIA_VERSION ?? "dev";
 
 export default async function AppLayout({
   children,

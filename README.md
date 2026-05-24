@@ -3,10 +3,6 @@
 > Open-source AI assistant for small businesses. Upload your docs, plug in
 > your APIs, drop one script tag.
 
-![Helia home](docs/images/home.png)
-![Helia upload](docs/images/upload.png)
-![Helia chat](docs/images/chat.png)
-
 ## Quick start
 
 The same three commands work on your laptop or on any Linux server with
@@ -44,12 +40,12 @@ docker compose down -v        # stop and wipe the database
 
 The admin has five pages:
 
-| Page | What it does |
-|------|--------------|
-| `/` | Dashboard: messages this week, today, avg response, recent activity, getting-started checklist |
-| `/sources` | Add knowledge: PDFs, plain text, or crawl a URL |
-| `/tools` | Register HTTP endpoints the agent can call mid-conversation |
-| `/widget` | Brand the widget, see it live, copy the install snippet |
+| Page        | What it does                                                                                      |
+| ----------- | ------------------------------------------------------------------------------------------------- |
+| `/`         | Dashboard: messages this week, today, avg response, recent activity, getting-started checklist    |
+| `/sources`  | Add knowledge: PDFs, plain text, or crawl a URL                                                   |
+| `/tools`    | Register HTTP endpoints the agent can call mid-conversation                                       |
+| `/widget`   | Brand the widget, see it live, copy the install snippet                                           |
 | `/settings` | Workspace name, locale, model, API key status, allowed origins, user identity for logged-in users |
 
 Gear icon (top right) → `/settings`. Theme toggle (top right) → dark/light.
@@ -59,7 +55,11 @@ Gear icon (top right) → `/settings`. Theme toggle (top right) → dark/light.
 Once you've configured the bot, `/widget` shows your install snippet:
 
 ```html
-<script src="https://your-helia-host/w.js" data-workspace="<uuid>" async></script>
+<script
+  src="https://your-helia-host/w.js"
+  data-workspace="<uuid>"
+  async
+></script>
 ```
 
 Paste it before `</body>` on any page of your site. The widget reads
@@ -90,27 +90,27 @@ Step-by-step deploy + reverse proxy + backups: [`SELF_HOST.md`](./SELF_HOST.md).
 
 ## API
 
-| Method | Path | Purpose |
-|--------|------|---------|
-| `GET` | `/v1/health` | Liveness + DB check |
-| `GET` | `/v1/system` | Read-only system info (model, key status, version) |
-| `GET` | `/v1/workspace` | Current workspace |
-| `PATCH` | `/v1/workspace` | Update name, locale, model, brand, layout |
-| `GET` | `/v1/widget/config?ws=…` | Public widget config |
-| `POST` | `/v1/chat` | AI SDK data stream (text + tool calls) |
-| `GET` | `/v1/metrics` | Counts (today, week, total) + avg latency + tokens |
-| `GET` | `/v1/conversations` | Recent chat traces |
-| `GET` | `/v1/sources` | List all sources |
-| `GET` | `/v1/sources/:id` | Source detail |
-| `GET` | `/v1/sources/:id/events` | Ingest timeline |
-| `POST` | `/v1/sources/pdf` | Multipart upload, sync ingest |
-| `POST` | `/v1/sources/text` | `{ name, text }`, sync ingest |
-| `POST` | `/v1/sources/url` | `{ url, maxPages? }`, background crawl |
-| `DELETE` | `/v1/sources/:id` | Cascade delete chunks + events |
-| `GET` | `/v1/tools` | List workspace HTTP tools |
-| `POST` | `/v1/tools` | Create an HTTP tool |
-| `PATCH` | `/v1/tools/:id` | Update an HTTP tool |
-| `DELETE` | `/v1/tools/:id` | Delete an HTTP tool |
+| Method   | Path                     | Purpose                                            |
+| -------- | ------------------------ | -------------------------------------------------- |
+| `GET`    | `/v1/health`             | Liveness + DB check                                |
+| `GET`    | `/v1/system`             | Read-only system info (model, key status, version) |
+| `GET`    | `/v1/workspace`          | Current workspace                                  |
+| `PATCH`  | `/v1/workspace`          | Update name, locale, model, brand, layout          |
+| `GET`    | `/v1/widget/config?ws=…` | Public widget config                               |
+| `POST`   | `/v1/chat`               | AI SDK data stream (text + tool calls)             |
+| `GET`    | `/v1/metrics`            | Counts (today, week, total) + avg latency + tokens |
+| `GET`    | `/v1/conversations`      | Recent chat traces                                 |
+| `GET`    | `/v1/sources`            | List all sources                                   |
+| `GET`    | `/v1/sources/:id`        | Source detail                                      |
+| `GET`    | `/v1/sources/:id/events` | Ingest timeline                                    |
+| `POST`   | `/v1/sources/pdf`        | Multipart upload, sync ingest                      |
+| `POST`   | `/v1/sources/text`       | `{ name, text }`, sync ingest                      |
+| `POST`   | `/v1/sources/url`        | `{ url, maxPages? }`, background crawl             |
+| `DELETE` | `/v1/sources/:id`        | Cascade delete chunks + events                     |
+| `GET`    | `/v1/tools`              | List workspace HTTP tools                          |
+| `POST`   | `/v1/tools`              | Create an HTTP tool                                |
+| `PATCH`  | `/v1/tools/:id`          | Update an HTTP tool                                |
+| `DELETE` | `/v1/tools/:id`          | Delete an HTTP tool                                |
 
 ## Architecture
 
