@@ -318,11 +318,16 @@ export type AuthUser = {
 };
 
 export type Metrics = {
+  // Anchored to the billing cycle (calendar month, UTC) so monthly
+  // numbers on the dashboard roll over with the token quota.
+  conversationsToday: number;
+  conversationsMonth: number;
+  conversationsTotal: number;
   messagesToday: number;
-  messagesWeek: number;
+  messagesMonth: number;
   messagesTotal: number;
   avgLatencyMs: number;
-  tokensWeek: number;
+  tokensMonth: number;
 };
 
 export type Usage = {

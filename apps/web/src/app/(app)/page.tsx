@@ -13,18 +13,25 @@ import {
   api,
   type ConversationSummary,
   type Metrics,
+  type Usage,
 } from "@/lib/api";
 
 export default function HomePage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
+  const [usage, setUsage] = useState<Usage | null>(null);
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [apiOk, setApiOk] = useState(true);
 
   useEffect(() => {
-    Promise.all([api.getMetrics(), api.listConversations({ limit: 8 })])
-      .then(([m, c]) => {
+    Promise.all([
+      api.getMetrics(),
+      api.getUsage(),
+      api.listConversations({ limit: 8 }),
+    ])
+      .then(([m, u, c]) => {
         setMetrics(m);
+        setUsage(u);
         setConversations(c.conversations);
         setApiOk(true);
       })
@@ -56,7 +63,9 @@ export default function HomePage() {
 
       <MetricGrid loading={loading} metrics={metrics} />
 
-      <GettingStarted hasSources={(metrics?.messagesTotal ?? 0) > 0} />
+      {usage && <QuotaBar usage={usage} />}
+
+      <GettingStarted hasSources={(metrics?.conversationsTotal ?? 0) > 0} />
 
       <section className="space-y-3">
         <div className="flex items-end justify-between">
@@ -143,14 +152,14 @@ function MetricGrid({
   return (
     <div className="grid gap-3 sm:grid-cols-3">
       <Metric
-        label="Messages today"
-        value={metrics.messagesToday.toLocaleString()}
-        hint={`${metrics.messagesWeek.toLocaleString()} this week · ${metrics.messagesTotal.toLocaleString()} total`}
+        label="Conversations this month"
+        value={metrics.conversationsMonth.toLocaleString()}
+        hint={`${metrics.conversationsToday.toLocaleString()} today`}
       />
       <Metric
-        label="Tokens this week"
-        value={metrics.tokensWeek.toLocaleString()}
-        hint={metrics.tokensWeek > 0 ? "input + output" : "no chats yet"}
+        label="Messages this month"
+        value={metrics.messagesMonth.toLocaleString()}
+        hint={`${metrics.messagesToday.toLocaleString()} today`}
       />
       <Metric
         label="Avg response"
@@ -159,7 +168,7 @@ function MetricGrid({
             ? `${(metrics.avgLatencyMs / 1000).toFixed(1)}s`
             : "—"
         }
-        hint="last 7 days"
+        hint="this month"
       />
     </div>
   );
@@ -184,6 +193,55 @@ function Metric({
         <div className="mt-0.5 text-[11px] text-muted-foreground">{hint}</div>
       )}
     </div>
+  );
+}
+
+/**
+ * Slim quota strip below the metric grid. Glanceable signal so the
+ * customer sees they're approaching the cap before /chat starts returning
+ * 402s in production. Clicking jumps to Settings → Limits.
+ */
+function QuotaBar({ usage }: { usage: Usage }) {
+  const pct =
+    usage.tokenQuotaMonthly > 0
+      ? Math.min(100, (usage.tokensUsedMonth / usage.tokenQuotaMonthly) * 100)
+      : 0;
+  const overHalf = pct >= 50;
+  const overEighty = pct >= 80;
+
+  return (
+    <Link
+      href="/settings#limits"
+      className="block rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:bg-muted/40"
+    >
+      <div className="flex items-baseline justify-between gap-4">
+        <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          Tokens this month
+        </span>
+        <span className="font-mono text-xs">
+          <span className="text-foreground">
+            {usage.tokensUsedMonth.toLocaleString()}
+          </span>
+          <span className="text-muted-foreground">
+            {" "}
+            / {usage.tokenQuotaMonthly.toLocaleString()}
+          </span>
+        </span>
+      </div>
+      <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted">
+        <div
+          className={
+            "h-full rounded-full transition-all " +
+            (overEighty
+              ? "bg-destructive"
+              : overHalf
+                ? "bg-warning"
+                : "bg-primary")
+          }
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </Link>
   );
 }
 
