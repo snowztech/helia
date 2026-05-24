@@ -30,7 +30,11 @@ widgetRouter.get("/config", async (c) => {
   c.header("Cache-Control", "public, max-age=60, stale-while-revalidate=600");
 
   return c.json({
-    workspace: { id: workspace.id, name: workspace.name },
+    workspace: {
+      id: workspace.id,
+      name: workspace.name,
+      locale: workspace.locale,
+    },
     theme: {
       primary: workspace.brandPrimary,
       mode: workspace.widgetTheme,
@@ -46,7 +50,6 @@ widgetRouter.get("/config", async (c) => {
       placeholder: workspace.botPlaceholder,
       suggestions: workspace.botSuggestions,
       avatar: workspace.botAvatar,
-      launcherIcon: workspace.launcherIcon,
     },
   });
 });

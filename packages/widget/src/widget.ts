@@ -4,6 +4,7 @@ import { loadRemoteConfig, type RemoteConfig } from "./config";
 import { getIdentity } from "./identity";
 import { getOrCreateConversationId } from "./conversation";
 import { renderMarkdown } from "./markdown";
+import { strings, type Locale } from "./i18n";
 import type { ChatMessage, WidgetConfig, WidgetHandle } from "./types";
 
 const HOST_ID = "helia-widget";
@@ -27,7 +28,8 @@ export function mount(config: WidgetConfig): WidgetHandle {
   let greeting = config.greeting ?? "Hi, how can I help?";
   let placeholder = "Ask a question...";
   let botAvatar: string | null = null;
-  let launcherIcon: LauncherIconName = "sparkles";
+  let locale: Locale | undefined = undefined;
+  let t = strings(locale);
 
   const host = document.createElement("div");
   host.id = HOST_ID;
@@ -46,8 +48,8 @@ export function mount(config: WidgetConfig): WidgetHandle {
   const launcher = document.createElement("button");
   launcher.className = "launcher right";
   launcher.type = "button";
-  launcher.setAttribute("aria-label", "Open chat");
-  launcher.innerHTML = launcherMarkup(botAvatar, launcherIcon);
+  launcher.setAttribute("aria-label", t.openChat);
+  launcher.innerHTML = avatarMarkup(botAvatar);
   root.appendChild(launcher);
 
   // --- Panel
@@ -57,17 +59,17 @@ export function mount(config: WidgetConfig): WidgetHandle {
   panel.setAttribute("aria-label", `${botName} chat`);
   panel.innerHTML = `
     <div class="header">
-      <div class="avatar" aria-hidden="true">${avatarMarkup(botAvatar, launcherIcon)}</div>
+      <div class="avatar" aria-hidden="true">${avatarMarkup(botAvatar)}</div>
       <div class="header-text">
         <div class="header-title">${escapeHtml(botName)}</div>
         <div class="header-subtitle"></div>
       </div>
-      <button class="close" type="button" aria-label="Close chat">${closeIcon()}</button>
+      <button class="close" type="button" aria-label="${escapeHtml(t.closeChat)}">${closeIcon()}</button>
     </div>
     <div class="messages" role="log" aria-live="polite"></div>
     <form class="input">
-      <input type="text" placeholder="${escapeHtml(placeholder)}" aria-label="Message input" autocomplete="off" />
-      <button type="submit" aria-label="Send" disabled>${sendIcon()}</button>
+      <input type="text" placeholder="${escapeHtml(placeholder)}" aria-label="${escapeHtml(t.messageInput)}" autocomplete="off" />
+      <button type="submit" aria-label="${escapeHtml(t.send)}" disabled>${sendIcon()}</button>
     </form>
     <div class="footer">powered by <a href="https://helia.snowztech.com" target="_blank" rel="noopener">helia</a></div>
   `;
@@ -111,17 +113,23 @@ export function mount(config: WidgetConfig): WidgetHandle {
     greeting = remote.bot.greeting;
     placeholder = remote.bot.placeholder ?? placeholder;
     botAvatar = remote.bot.avatar ?? null;
-    launcherIcon = remote.bot.launcherIcon ?? "sparkles";
+    locale = remote.workspace.locale;
+    t = strings(locale);
+    launcher.setAttribute("aria-label", t.openChat);
+    const closeBtn = panel.querySelector(".close");
+    if (closeBtn) closeBtn.setAttribute("aria-label", t.closeChat);
+    input.setAttribute("aria-label", t.messageInput);
+    sendBtn.setAttribute("aria-label", t.send);
     titleEl.textContent = botName;
     subtitleEl.textContent = remote.bot.subtitle ?? "";
     input.placeholder = placeholder;
     panel.setAttribute("aria-label", `${botName} chat`);
 
     // Refresh the icons now that we know what the customer chose.
-    launcher.innerHTML = launcherMarkup(botAvatar, launcherIcon);
+    launcher.innerHTML = avatarMarkup(botAvatar);
     const avatarSlot = panel.querySelector(".avatar");
     if (avatarSlot) {
-      avatarSlot.innerHTML = avatarMarkup(botAvatar, launcherIcon);
+      avatarSlot.innerHTML = avatarMarkup(botAvatar);
     }
 
     if (state.messages.length === 0) {
@@ -204,7 +212,7 @@ export function mount(config: WidgetConfig): WidgetHandle {
   function appendToolPill(toolName: string): HTMLElement {
     const el = document.createElement("div");
     el.className = "tool-pill";
-    el.innerHTML = `<span class="dot"></span><span class="label">${escapeHtml(toolLabel(toolName))}</span>`;
+    el.innerHTML = `<span class="dot"></span><span class="label">${escapeHtml(toolLabel(toolName, t))}</span>`;
     messagesEl.appendChild(el);
     scrollToBottom();
     return el;
@@ -330,7 +338,7 @@ export function mount(config: WidgetConfig): WidgetHandle {
         if (activeToolPill?.isConnected) activeToolPill.remove();
         const errEl = document.createElement("div");
         errEl.className = "message assistant";
-        errEl.textContent = `Sorry, something went wrong: ${err.message}`;
+        errEl.textContent = t.somethingWentWrong(err.message);
         messagesEl.appendChild(errEl);
         state.streaming = false;
         sendBtn.disabled = input.value.trim().length === 0;
@@ -354,9 +362,9 @@ function resolveTheme(mode: RemoteConfig["theme"]["mode"]): "light" | "dark" {
 // (pure TS, no React) renders the same marks as the admin preview.
 // Source: SparklesIcon, Cancel01Icon, ArrowUp02Icon. Strokes use currentColor.
 
-function toolLabel(name: string): string {
-  if (name === "search_knowledge") return "Searching your knowledge…";
-  return `Calling ${name}…`;
+function toolLabel(name: string, t: ReturnType<typeof strings>): string {
+  if (name === "search_knowledge") return t.searchingKnowledge;
+  return t.callingTool(name);
 }
 
 function extractSources(
@@ -392,15 +400,11 @@ function dedupeSources(
 }
 
 /**
- * Header avatar. If the customer set `bot.avatar`, prefer it:
- *  - URL → render as <img>
- *  - anything else → first character (handles emoji and initials)
- * Otherwise fall back to the launcher glyph.
+ * Header and launcher mark. URL → <img>, single character → text mark,
+ * otherwise the Helia logo (three nested arcs). Strokes inherit
+ * currentColor so the brand primary tints them.
  */
-function avatarMarkup(
-  avatar: string | null | undefined,
-  fallback: LauncherIconName,
-): string {
+function avatarMarkup(avatar: string | null | undefined): string {
   if (avatar) {
     if (isHttpUrl(avatar)) {
       return /* html */ `<img src="${escapeAttr(avatar)}" alt="" />`;
@@ -408,62 +412,15 @@ function avatarMarkup(
     const ch = [...avatar.trim()][0] ?? "";
     return /* html */ `<span class="avatar-text">${escapeHtml(ch)}</span>`;
   }
-  return iconSvg(fallback);
-}
-
-/**
- * Launcher button content. Same rules as the header avatar — the customer's
- * image/initial wins, otherwise we draw the picked icon.
- */
-function launcherMarkup(
-  avatar: string | null | undefined,
-  icon: LauncherIconName,
-): string {
-  return avatarMarkup(avatar, icon);
-}
-
-type LauncherIconName = "sparkles" | "chat" | "question" | "mention";
-
-function iconSvg(name: LauncherIconName): string {
-  switch (name) {
-    case "chat":
-      return /* html */ `
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
-             aria-hidden="true">
-          <path d="M21 12a8 8 0 1 1-3.2-6.4L21 4l-1 4a8 8 0 0 1 1 4Z" />
-          <path d="M8 12h.01M12 12h.01M16 12h.01" />
-        </svg>
-      `;
-    case "question":
-      return /* html */ `
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
-             aria-hidden="true">
-          <circle cx="12" cy="12" r="9" />
-          <path d="M9.5 9a2.5 2.5 0 1 1 4 2c-.8.5-1.5 1-1.5 2" />
-          <path d="M12 17h.01" />
-        </svg>
-      `;
-    case "mention":
-      return /* html */ `
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
-             aria-hidden="true">
-          <circle cx="12" cy="12" r="4" />
-          <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.8 7.8" />
-        </svg>
-      `;
-    case "sparkles":
-    default:
-      return /* html */ `
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="1.6" stroke-linejoin="round" aria-hidden="true">
-          <path d="M15 2L15.5387 4.39157C15.9957 6.42015 17.5798 8.00431 19.6084 8.46127L22 9L19.6084 9.53873C17.5798 9.99569 15.9957 11.5798 15.5387 13.6084L15 16L14.4613 13.6084C14.0043 11.5798 12.4202 9.99569 10.3916 9.53873L8 9L10.3916 8.46127C12.4201 8.00431 14.0043 6.42015 14.4613 4.39158L15 2Z" />
-          <path d="M7 12L7.38481 13.7083C7.71121 15.1572 8.84275 16.2888 10.2917 16.6152L12 17L10.2917 17.3848C8.84275 17.7112 7.71121 18.8427 7.38481 20.2917L7 22L6.61519 20.2917C6.28879 18.8427 5.15725 17.7112 3.70827 17.3848L2 17L3.70827 16.6152C5.15725 16.2888 6.28879 15.1573 6.61519 13.7083L7 12Z" />
-        </svg>
-      `;
-  }
+  return /* html */ `
+    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor"
+         stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"
+         aria-hidden="true">
+      <path d="M 4 22 A 12 12 0 0 1 28 22" opacity="1" />
+      <path d="M 9 22 A 7 7 0 0 1 23 22" opacity="0.65" />
+      <path d="M 13.5 22 A 2.5 2.5 0 0 1 18.5 22" opacity="0.35" />
+    </svg>
+  `;
 }
 
 function isHttpUrl(s: string): boolean {

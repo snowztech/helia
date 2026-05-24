@@ -58,6 +58,43 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+export async function sendPasswordResetEmail(args: {
+  to: string;
+  token: string;
+}): Promise<void> {
+  const url = `${WEB_URL}/reset?token=${args.token}`;
+  const safeUrl = escapeHtml(url);
+
+  const text =
+    `Someone (probably you) asked to reset your Helia password.\n\n` +
+    `Reset it here:\n${url}\n\n` +
+    `The link expires in 1 hour. If you didn't ask for this, ignore this email.`;
+
+  const html = `<!doctype html>
+<html>
+  <body style="font-family: -apple-system, system-ui, sans-serif; font-size: 14px; line-height: 1.5; color: #0f172a;">
+    <p>Someone (probably you) asked to reset your Helia password.</p>
+    <p>
+      <a href="${safeUrl}" style="display: inline-block; padding: 10px 16px; background: #0ea5e9; color: #fff; text-decoration: none; border-radius: 8px;">
+        Reset password
+      </a>
+    </p>
+    <p style="color: #475569;">Or paste this into your browser:</p>
+    <p><a href="${safeUrl}">${safeUrl}</a></p>
+    <p style="color: #475569; font-size: 12px;">
+      The link expires in 1 hour. If you didn't ask for this, ignore this email.
+    </p>
+  </body>
+</html>`;
+
+  await send({
+    to: args.to,
+    subject: "Reset your Helia password",
+    text,
+    html,
+  });
+}
+
 export async function sendVerificationEmail(args: {
   to: string;
   token: string;

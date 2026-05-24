@@ -27,7 +27,7 @@ export const workspaces = pgTable("workspaces", {
   // LLM model the agent uses. Provider is implied (OpenAI only for now).
   model: text("model").default("gpt-4o-mini").notNull(),
   // Branding rendered by the widget. Owner-editable from the admin.
-  brandPrimary: text("brand_primary").default("#0ea5e9").notNull(),
+  brandPrimary: text("brand_primary").default("#3a55e0").notNull(),
   botName: text("bot_name").default("Assistant").notNull(),
   botSubtitle: text("bot_subtitle")
     .default("Ask me anything.")
@@ -48,14 +48,8 @@ export const workspaces = pgTable("workspaces", {
     .notNull(),
   widgetRadius: integer("widget_radius").default(14).notNull(),
   // Either a URL (rendered as <img>) or a short string (rendered as text:
-  // initial letter or emoji). Null falls back to the launcherIcon glyph.
+  // initial letter or emoji). Null falls back to the Helia mark.
   botAvatar: text("bot_avatar"),
-  // Picks the floating launcher glyph. Ignored when botAvatar is set.
-  launcherIcon: text("launcher_icon", {
-    enum: ["sparkles", "chat", "question", "mention"],
-  })
-    .default("sparkles")
-    .notNull(),
   botSuggestions: jsonb("bot_suggestions")
     .$type<string[]>()
     .default(sql`'[]'::jsonb`)

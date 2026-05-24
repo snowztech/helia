@@ -57,7 +57,6 @@ export type Chunk = {
 
 export type WidgetPosition = "bottom-right" | "bottom-left";
 export type WidgetTheme = "light" | "dark" | "auto";
-export type LauncherIcon = "sparkles" | "chat" | "question" | "mention";
 
 export type Workspace = {
   id: string;
@@ -71,7 +70,6 @@ export type Workspace = {
   botPlaceholder: string;
   botSuggestions: string[];
   botAvatar: string | null;
-  launcherIcon: LauncherIcon;
   widgetPosition: WidgetPosition;
   widgetTheme: WidgetTheme;
   widgetRadius: number;
@@ -97,7 +95,6 @@ export type WorkspacePatch = Partial<
     | "widgetTheme"
     | "widgetRadius"
     | "botAvatar"
-    | "launcherIcon"
     | "identityRequired"
     | "tokenQuotaMonthly"
   >
@@ -286,6 +283,20 @@ export const api = {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ token }),
+    }),
+
+  forgotPassword: (email: string) =>
+    request<{ ok: true }>("/v1/auth/forgot-password", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email }),
+    }),
+
+  resetPassword: (input: { token: string; password: string }) =>
+    request<{ ok: true }>("/v1/auth/reset-password", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(input),
     }),
 
   resendVerification: () =>

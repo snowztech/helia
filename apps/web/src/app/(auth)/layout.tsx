@@ -1,3 +1,5 @@
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+
 export default function AuthLayout({
   children,
 }: {
@@ -5,10 +7,11 @@ export default function AuthLayout({
 }) {
   return (
     <div className="min-h-dvh flex flex-col">
-      <header className="px-6 py-5">
+      <header className="flex items-center justify-between px-6 py-5">
         <a href="/" className="text-sm font-semibold text-primary">
           helia
         </a>
+        <ThemeToggle />
       </header>
       <main className="flex flex-1 items-center justify-center px-6 pb-12">
         <div className="w-full max-w-sm">{children}</div>

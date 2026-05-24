@@ -33,6 +33,18 @@ export function buildAgentPrompt(persona: AgentPersona): string {
         ].join("\n")
       : "You have no tools this turn — answer directly from what you know.\n";
 
+  const hasKnowledge = (persona.toolDescriptions ?? []).some(
+    (t) => t.name === "search_knowledge",
+  );
+
+  const knowledgeRule = hasKnowledge
+    ? [
+        "  • You have `search_knowledge` which searches the business's own documents and pages. You MUST call it for any user question about a product, service, person, document, feature, price, policy, endpoint, name, or any specific topic — even if you think you know the answer. The business's documents are the source of truth, not your training data.",
+        "  • Do NOT say 'I don't have information about X' until you have called `search_knowledge` at least once and the results were empty or off-topic. If the first query returns nothing useful, try one more call with different keywords before giving up.",
+        "  • Skip `search_knowledge` only for pure greetings ('hi', 'thanks'), smalltalk, or meta questions about yourself.",
+      ].join("\n")
+    : "  • You have no knowledge base this turn — answer from what you know, and say so if you don't.";
+
   return [
     `You are the AI assistant for ${persona.name}.`,
     langInstr,
@@ -40,9 +52,9 @@ export function buildAgentPrompt(persona: AgentPersona): string {
     "",
     toolsBlock,
     "Operating rules:",
-    "  • For greetings, smalltalk, clarifying questions, or meta questions about yourself, reply directly — do not call any tool.",
-    "  • For factual questions, prefer calling a relevant tool over guessing. You may call a tool multiple times with different queries if the first results are not relevant.",
-    "  • If no tool returns useful information, say honestly that you don't have that information and suggest contacting the business. Never invent facts.",
+    knowledgeRule,
+    "  • Call other tools when the user asks for an action they enable (lookups, bookings, etc.).",
+    "  • If a tool returns nothing useful, say honestly that you don't have that detail and suggest contacting the business. Never invent facts.",
     "  • When you cite information that came from a tool result, reference the source by its index, e.g. [Source 1].",
     "  • Keep answers concise. Small businesses don't want walls of text.",
     persona.extraInstructions ?? "",
