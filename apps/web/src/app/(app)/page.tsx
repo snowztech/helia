@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { BubbleChatIcon } from "@hugeicons/core-free-icons";
+import {
+  ArrowRight02Icon,
+  BubbleChatIcon,
+} from "@hugeicons/core-free-icons";
 import { GettingStarted } from "./_components/getting-started";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -127,6 +130,21 @@ export default function HomePage() {
             ))}
           </ul>
         )}
+        {!loading && conversations.length > 0 && (
+          <div className="flex justify-end">
+            <Link
+              href="/conversations"
+              className="group inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+            >
+              view all
+              <HugeiconsIcon
+                icon={ArrowRight02Icon}
+                size={11}
+                className="transition-transform group-hover:translate-x-0.5"
+              />
+            </Link>
+          </div>
+        )}
       </section>
     </div>
   );
@@ -208,27 +226,48 @@ function QuotaBar({ usage }: { usage: Usage }) {
       : 0;
   const overHalf = pct >= 50;
   const overEighty = pct >= 80;
+  // Show ≥0.1% so the percentage doesn't read "0%" the moment any usage
+  // exists; full zeros are honest only when nothing's been spent.
+  const pctLabel =
+    pct === 0 ? "0%" : pct < 0.1 ? "<0.1%" : `${pct.toFixed(1)}%`;
+  const daysLeft = daysUntil(usage.monthResetsAt);
 
   return (
     <Link
       href="/settings#limits"
-      className="block rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:bg-muted/40"
+      className="group block rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:bg-muted/40"
     >
       <div className="flex items-baseline justify-between gap-4">
-        <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-          Tokens this month
-        </span>
-        <span className="font-mono text-xs">
+        <div className="flex items-baseline gap-3">
+          <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            Tokens this month
+          </span>
+          <span className="font-mono text-[11px] text-muted-foreground">
+            resets in {daysLeft}d
+          </span>
+        </div>
+        <div className="flex items-center gap-2 font-mono text-xs">
           <span className="text-foreground">
-            {usage.tokensUsedMonth.toLocaleString()}
+            {formatCompact(usage.tokensUsedMonth)}
           </span>
           <span className="text-muted-foreground">
-            {" "}
-            / {usage.tokenQuotaMonthly.toLocaleString()}
+            / {formatCompact(usage.tokenQuotaMonthly)}
           </span>
-        </span>
+          <span
+            className={
+              "rounded px-1.5 py-0.5 text-[10px] font-medium " +
+              (overEighty
+                ? "bg-destructive/15 text-destructive"
+                : overHalf
+                  ? "bg-warning/15 text-warning"
+                  : "bg-muted text-muted-foreground")
+            }
+          >
+            {pctLabel}
+          </span>
+        </div>
       </div>
-      <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted">
+      <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
         <div
           className={
             "h-full rounded-full transition-all " +
@@ -238,11 +277,28 @@ function QuotaBar({ usage }: { usage: Usage }) {
                 ? "bg-warning"
                 : "bg-primary")
           }
-          style={{ width: `${pct}%` }}
+          style={{ width: `${Math.max(pct, pct > 0 ? 1 : 0)}%` }}
         />
       </div>
     </Link>
   );
+}
+
+/**
+ * Compact number formatting. 1936 → "1.9K", 2000000 → "2M". Easier to
+ * scan than "2,000,000" when paired with another number of similar shape.
+ */
+function formatCompact(n: number): string {
+  if (n < 1000) return String(n);
+  if (n < 10_000) return `${(n / 1000).toFixed(1)}K`;
+  if (n < 1_000_000) return `${Math.round(n / 1000)}K`;
+  if (n < 10_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  return `${Math.round(n / 1_000_000)}M`;
+}
+
+function daysUntil(iso: string): number {
+  const ms = new Date(iso).getTime() - Date.now();
+  return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)));
 }
 
 function timeAgo(iso: string): string {
