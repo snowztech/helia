@@ -15,6 +15,7 @@ import { systemRouter } from "./routes/system";
 import { metricsRouter } from "./routes/metrics";
 import { conversationsRouter } from "./routes/conversations";
 import { authRouter } from "./routes/auth";
+import { bansRouter } from "./routes/bans";
 import { authMiddleware } from "./lib/auth";
 import { rateLimit } from "./lib/rate-limit";
 
@@ -63,6 +64,7 @@ app.route("/v1/tools", toolsRouter);
 app.route("/v1/system", systemRouter);
 app.route("/v1/metrics", metricsRouter);
 app.route("/v1/conversations", conversationsRouter);
+app.route("/v1/banned-users", bansRouter);
 
 app.onError((err, c) => {
   log.error({ err }, "unhandled error");

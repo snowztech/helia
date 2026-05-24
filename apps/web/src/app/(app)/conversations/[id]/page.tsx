@@ -31,6 +31,7 @@ import {
   type ConversationTurn,
 } from "@/lib/api";
 import { renderMarkdown } from "@/lib/markdown";
+import { BanUserDialog } from "../_components/ban-user-dialog";
 
 export default function ConversationDetailPage({
   params,
@@ -110,13 +111,17 @@ export default function ConversationDetailPage({
           </div>
         </div>
 
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button size="sm" variant="ghost" aria-label="Delete conversation">
-              <HugeiconsIcon icon={Delete02Icon} size={14} />
-              delete
-            </Button>
-          </AlertDialogTrigger>
+        <div className="flex items-center gap-1">
+          {data.userId && (
+            <BanUserDialog userId={data.userId} userName={data.userName} />
+          )}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button size="sm" variant="ghost" aria-label="Delete conversation">
+                <HugeiconsIcon icon={Delete02Icon} size={14} />
+                delete
+              </Button>
+            </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Delete this conversation?</AlertDialogTitle>
@@ -137,8 +142,9 @@ export default function ConversationDetailPage({
                 Delete
               </AlertDialogAction>
             </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </header>
 
       <div className="space-y-4">

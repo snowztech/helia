@@ -151,7 +151,7 @@ export default function ConversationsPage() {
                 <Badge variant="outline">
                   {r.turns} {r.turns === 1 ? "turn" : "turns"}
                 </Badge>
-                <span className="w-12 flex-shrink-0 text-right text-[11px] text-muted-foreground">
+                <span className="w-12 flex-shrink-0 text-right text-[11px] text-muted-foreground group-hover:invisible">
                   {timeAgo(r.lastActiveAt)}
                 </span>
               </Link>
@@ -162,7 +162,7 @@ export default function ConversationsPage() {
                   e.stopPropagation();
                   void deleteOne(r.id);
                 }}
-                className="absolute right-1 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive group-hover:flex"
+                className="absolute right-2 top-1/2 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive group-hover:flex"
                 aria-label="Delete conversation"
               >
                 <HugeiconsIcon icon={Delete02Icon} size={14} />

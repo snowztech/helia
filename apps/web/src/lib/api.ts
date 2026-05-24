@@ -246,6 +246,20 @@ export const api = {
       method: "DELETE",
     }),
 
+  listBans: () => request<{ bans: BannedUser[] }>("/v1/banned-users"),
+
+  banUser: (input: { userId: string; reason?: string | null }) =>
+    request<{ ban: BannedUser }>("/v1/banned-users", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+
+  unbanUser: (userId: string) =>
+    request<{ ok: true }>(`/v1/banned-users/${encodeURIComponent(userId)}`, {
+      method: "DELETE",
+    }),
+
   signup: (input: { email: string; password: string; name?: string }) =>
     request<{ user: AuthUser; workspace: { id: string; name: string } }>(
       "/v1/auth/signup",
@@ -286,6 +300,14 @@ export const api = {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ password }),
     }),
+};
+
+export type BannedUser = {
+  workspaceId: string;
+  userId: string;
+  reason: string | null;
+  bannedAt: string;
+  bannedBy: string | null;
 };
 
 export type AuthUser = {
