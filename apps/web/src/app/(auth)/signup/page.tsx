@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api, ApiError } from "@/lib/api";
+import { PasswordInput } from "../_components/password-input";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -46,10 +47,8 @@ export default function SignupPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold">Create your workspace</h1>
-        <p className="text-sm text-muted-foreground">
-          One account, one workspace. Invite teammates later.
-        </p>
+        <h1 className="text-xl font-semibold">Create your account</h1>
+        <p className="text-sm text-muted-foreground">Takes 10 seconds.</p>
       </div>
 
       <form onSubmit={submit} className="space-y-4">
@@ -77,9 +76,8 @@ export default function SignupPage() {
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="password">Password</Label>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             autoComplete="new-password"
             required
             minLength={8}

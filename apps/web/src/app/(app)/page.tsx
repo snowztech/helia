@@ -61,7 +61,7 @@ export default function HomePage() {
       <section className="space-y-3">
         <div className="flex items-end justify-between">
           <h2 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-            recent messages
+            recent conversations
           </h2>
         </div>
 
@@ -143,18 +143,14 @@ function MetricGrid({
   return (
     <div className="grid gap-3 sm:grid-cols-3">
       <Metric
-        label="Messages this week"
-        value={metrics.messagesWeek.toLocaleString()}
-        hint={`${metrics.messagesTotal.toLocaleString()} total`}
+        label="Messages today"
+        value={metrics.messagesToday.toLocaleString()}
+        hint={`${metrics.messagesWeek.toLocaleString()} this week · ${metrics.messagesTotal.toLocaleString()} total`}
       />
       <Metric
-        label="Today"
-        value={metrics.messagesToday.toLocaleString()}
-        hint={
-          metrics.tokensWeek > 0
-            ? `${metrics.tokensWeek.toLocaleString()} tokens / week`
-            : "—"
-        }
+        label="Tokens this week"
+        value={metrics.tokensWeek.toLocaleString()}
+        hint={metrics.tokensWeek > 0 ? "input + output" : "no chats yet"}
       />
       <Metric
         label="Avg response"

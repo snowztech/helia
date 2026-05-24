@@ -9,6 +9,7 @@ import {
   ArrowLeft02Icon,
   Delete02Icon,
   SparklesIcon,
+  UserBlock01Icon,
 } from "@hugeicons/core-free-icons";
 import {
   AlertDialog,
@@ -112,8 +113,20 @@ export default function ConversationDetailPage({
         </div>
 
         <div className="flex items-center gap-1">
-          {data.userId && (
+          {data.userId ? (
             <BanUserDialog userId={data.userId} userName={data.userName} />
+          ) : (
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled
+              title="Anonymous chat. Set up user identity in /settings to enable bans."
+              aria-label="Ban unavailable for anonymous users"
+              className="cursor-not-allowed"
+            >
+              <HugeiconsIcon icon={UserBlock01Icon} size={14} />
+              ban
+            </Button>
           )}
           <AlertDialog>
             <AlertDialogTrigger asChild>
