@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api, ApiError } from "@/lib/api";
+import { PasswordInput } from "../_components/password-input";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -38,9 +39,7 @@ export default function LoginPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-semibold">Sign in</h1>
-        <p className="text-sm text-muted-foreground">
-          Welcome back to Helia.
-        </p>
+        <p className="text-sm text-muted-foreground">Welcome back.</p>
       </div>
 
       <form onSubmit={submit} className="space-y-4">
@@ -57,9 +56,8 @@ export default function LoginPage() {
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="password">Password</Label>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             autoComplete="current-password"
             required
             value={password}

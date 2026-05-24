@@ -57,6 +57,7 @@ export type Chunk = {
 
 export type WidgetPosition = "bottom-right" | "bottom-left";
 export type WidgetTheme = "light" | "dark" | "auto";
+export type LauncherIcon = "sparkles" | "chat" | "question" | "mention";
 
 export type Workspace = {
   id: string;
@@ -69,6 +70,8 @@ export type Workspace = {
   botGreeting: string;
   botPlaceholder: string;
   botSuggestions: string[];
+  botAvatar: string | null;
+  launcherIcon: LauncherIcon;
   widgetPosition: WidgetPosition;
   widgetTheme: WidgetTheme;
   widgetRadius: number;
@@ -93,6 +96,8 @@ export type WorkspacePatch = Partial<
     | "widgetPosition"
     | "widgetTheme"
     | "widgetRadius"
+    | "botAvatar"
+    | "launcherIcon"
     | "identityRequired"
     | "tokenQuotaMonthly"
   >
@@ -218,10 +223,42 @@ export const api = {
 
   getUsage: () => request<Usage>("/v1/metrics/usage"),
 
-  listConversations: (limit?: number) =>
-    request<{ conversations: ConversationSummary[] }>(
-      `/v1/conversations${limit ? `?limit=${limit}` : ""}`,
-    ),
+  listConversations: (opts?: { limit?: number; errors?: boolean }) => {
+    const q = new URLSearchParams();
+    if (opts?.limit) q.set("limit", String(opts.limit));
+    if (opts?.errors) q.set("errors", "true");
+    const qs = q.toString();
+    return request<{ conversations: ConversationSummary[] }>(
+      `/v1/conversations${qs ? `?${qs}` : ""}`,
+    );
+  },
+
+  getConversation: (id: string) =>
+    request<{ conversation: ConversationDetail }>(`/v1/conversations/${id}`),
+
+  deleteConversation: (id: string) =>
+    request<{ ok: true; deleted: number }>(`/v1/conversations/${id}`, {
+      method: "DELETE",
+    }),
+
+  deleteAllConversations: () =>
+    request<{ ok: true; deleted: number }>(`/v1/conversations`, {
+      method: "DELETE",
+    }),
+
+  listBans: () => request<{ bans: BannedUser[] }>("/v1/banned-users"),
+
+  banUser: (input: { userId: string; reason?: string | null }) =>
+    request<{ ban: BannedUser }>("/v1/banned-users", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+
+  unbanUser: (userId: string) =>
+    request<{ ok: true }>(`/v1/banned-users/${encodeURIComponent(userId)}`, {
+      method: "DELETE",
+    }),
 
   signup: (input: { email: string; password: string; name?: string }) =>
     request<{ user: AuthUser; workspace: { id: string; name: string } }>(
@@ -265,6 +302,14 @@ export const api = {
     }),
 };
 
+export type BannedUser = {
+  workspaceId: string;
+  userId: string;
+  reason: string | null;
+  bannedAt: string;
+  bannedBy: string | null;
+};
+
 export type AuthUser = {
   id: string;
   email: string;
@@ -273,11 +318,16 @@ export type AuthUser = {
 };
 
 export type Metrics = {
+  // Anchored to the billing cycle (calendar month, UTC) so monthly
+  // numbers on the dashboard roll over with the token quota.
+  conversationsToday: number;
+  conversationsMonth: number;
+  conversationsTotal: number;
   messagesToday: number;
-  messagesWeek: number;
+  messagesMonth: number;
   messagesTotal: number;
   avgLatencyMs: number;
-  tokensWeek: number;
+  tokensMonth: number;
 };
 
 export type Usage = {
@@ -290,14 +340,58 @@ export type ConversationSummary = {
   id: string;
   userId: string | null;
   userName: string | null;
+  lastUserMessage: string;
+  turns: number;
+  hasError: boolean;
+  lastActiveAt: string;
+};
+
+export type RetrievalChunk = {
+  title: string;
+  url: string | null;
+  score: number;
+};
+
+/**
+ * Agent step as recorded by the Vercel AI SDK. We don't model every shape
+ * here; the detail UI walks the fields it knows about and skips the rest.
+ */
+export type ConversationStep = {
+  text?: string;
+  toolCalls?: Array<{
+    toolCallId?: string;
+    toolName?: string;
+    args?: unknown;
+  }>;
+  toolResults?: Array<{
+    toolCallId?: string;
+    toolName?: string;
+    result?: unknown;
+  }>;
+};
+
+export type ConversationTurn = {
+  id: string;
   userMessage: string;
   finalAnswer: string | null;
   totalTokens: number;
   totalLatencyMs: number;
   model: string;
-  sourceCount: number;
+  retrieval: RetrievalChunk[];
+  steps: ConversationStep[];
   error: string | null;
   createdAt: string;
+};
+
+export type ConversationDetail = {
+  id: string;
+  userId: string | null;
+  userName: string | null;
+  model: string;
+  startedAt: string;
+  lastActiveAt: string;
+  totalTokens: number;
+  turns: ConversationTurn[];
 };
 
 export type ToolParam = {

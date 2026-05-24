@@ -7,6 +7,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   vector,
 } from "drizzle-orm/pg-core";
@@ -46,6 +47,15 @@ export const workspaces = pgTable("workspaces", {
     .default("auto")
     .notNull(),
   widgetRadius: integer("widget_radius").default(14).notNull(),
+  // Either a URL (rendered as <img>) or a short string (rendered as text:
+  // initial letter or emoji). Null falls back to the launcherIcon glyph.
+  botAvatar: text("bot_avatar"),
+  // Picks the floating launcher glyph. Ignored when botAvatar is set.
+  launcherIcon: text("launcher_icon", {
+    enum: ["sparkles", "chat", "question", "mention"],
+  })
+    .default("sparkles")
+    .notNull(),
   botSuggestions: jsonb("bot_suggestions")
     .$type<string[]>()
     .default(sql`'[]'::jsonb`)
@@ -265,6 +275,39 @@ export const chatTraces = pgTable(
 
 export type ChatTrace = typeof chatTraces.$inferSelect;
 export type NewChatTrace = typeof chatTraces.$inferInsert;
+
+/**
+ * End-users the workspace owner has banned from the widget. Identified
+ * users only (anonymous traffic is governed by rate limits, not bans).
+ * Banned users still see the widget; the agent replies with a canned
+ * message and we don't invoke the LLM.
+ */
+export const bannedUsers = pgTable(
+  "banned_users",
+  {
+    workspaceId: uuid("workspace_id")
+      .references(() => workspaces.id, { onDelete: "cascade" })
+      .notNull(),
+    // `chat_traces.user_id` is text (whatever the customer signs with),
+    // so this matches that shape.
+    userId: text("user_id").notNull(),
+    reason: text("reason"),
+    bannedAt: timestamp("banned_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    // Workspace member who issued the ban. Nullable so the row survives
+    // if that admin later deletes their account.
+    bannedBy: uuid("banned_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+  },
+  (t) => ({
+    pk: uniqueIndex("banned_users_unique").on(t.workspaceId, t.userId),
+  }),
+);
+
+export type BannedUser = typeof bannedUsers.$inferSelect;
+export type NewBannedUser = typeof bannedUsers.$inferInsert;
 
 /**
  * Owner / member accounts. One row per real human. Email is the only

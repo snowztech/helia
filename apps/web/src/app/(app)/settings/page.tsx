@@ -15,6 +15,7 @@ import { useWorkspace } from "../_components/workspace-provider";
 import { DeleteAccountDialog } from "../_components/delete-account-dialog";
 import { IdentitySection } from "./_components/identity-section";
 import { LimitsSection } from "./_components/limits-section";
+import { BansSection } from "./_components/bans-section";
 
 // Models we expose in the dropdown. The DB column accepts any string so
 // power-users can paste whatever they want, but typical usage picks one of
@@ -297,6 +298,10 @@ export default function SettingsPage() {
           identityConfigured={ws.identityConfigured}
           onWorkspace={setWs}
         />
+      </Section>
+
+      <Section title="Banned users">
+        <BansSection />
       </Section>
 
       <Section title="Embed allowlist">

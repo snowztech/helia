@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { BubbleChatIcon } from "@hugeicons/core-free-icons";
+import {
+  ArrowRight02Icon,
+  BubbleChatIcon,
+} from "@hugeicons/core-free-icons";
 import { GettingStarted } from "./_components/getting-started";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,18 +16,25 @@ import {
   api,
   type ConversationSummary,
   type Metrics,
+  type Usage,
 } from "@/lib/api";
 
 export default function HomePage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
+  const [usage, setUsage] = useState<Usage | null>(null);
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [apiOk, setApiOk] = useState(true);
 
   useEffect(() => {
-    Promise.all([api.getMetrics(), api.listConversations(8)])
-      .then(([m, c]) => {
+    Promise.all([
+      api.getMetrics(),
+      api.getUsage(),
+      api.listConversations({ limit: 8 }),
+    ])
+      .then(([m, u, c]) => {
         setMetrics(m);
+        setUsage(u);
         setConversations(c.conversations);
         setApiOk(true);
       })
@@ -56,12 +66,14 @@ export default function HomePage() {
 
       <MetricGrid loading={loading} metrics={metrics} />
 
-      <GettingStarted hasSources={(metrics?.messagesTotal ?? 0) > 0} />
+      {usage && <QuotaBar usage={usage} />}
+
+      <GettingStarted hasSources={(metrics?.conversationsTotal ?? 0) > 0} />
 
       <section className="space-y-3">
         <div className="flex items-end justify-between">
           <h2 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-            recent messages
+            recent conversations
           </h2>
         </div>
 
@@ -90,34 +102,48 @@ export default function HomePage() {
         ) : (
           <ul className="divide-y divide-border rounded-md border border-border">
             {conversations.map((c) => (
-              <li
-                key={c.id}
-                className="flex items-center gap-3 px-4 py-3 text-sm"
-              >
-                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                  <HugeiconsIcon icon={BubbleChatIcon} size={12} />
-                </span>
-                {c.userName && (
-                  <span className="flex-shrink-0 text-[11px] font-medium text-muted-foreground">
-                    {c.userName}
+              <li key={c.id}>
+                <Link
+                  href={`/conversations/${c.id}`}
+                  className="flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-muted/40"
+                >
+                  <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                    <HugeiconsIcon icon={BubbleChatIcon} size={12} />
                   </span>
-                )}
-                <span className="min-w-0 flex-1 truncate">
-                  {c.userMessage}
-                </span>
-                {c.error ? (
-                  <Badge variant="destructive">error</Badge>
-                ) : c.sourceCount > 0 ? (
-                  <Badge variant="primary">
-                    {c.sourceCount} {c.sourceCount === 1 ? "source" : "sources"}
+                  {c.userName && (
+                    <span className="flex-shrink-0 text-[11px] font-medium text-muted-foreground">
+                      {c.userName}
+                    </span>
+                  )}
+                  <span className="min-w-0 flex-1 truncate">
+                    {c.lastUserMessage}
+                  </span>
+                  {c.hasError && <Badge variant="destructive">error</Badge>}
+                  <Badge variant="outline">
+                    {c.turns} {c.turns === 1 ? "turn" : "turns"}
                   </Badge>
-                ) : null}
-                <span className="w-12 flex-shrink-0 text-right text-[11px] text-muted-foreground">
-                  {timeAgo(c.createdAt)}
-                </span>
+                  <span className="w-12 flex-shrink-0 text-right text-[11px] text-muted-foreground">
+                    {timeAgo(c.lastActiveAt)}
+                  </span>
+                </Link>
               </li>
             ))}
           </ul>
+        )}
+        {!loading && conversations.length > 0 && (
+          <div className="flex justify-end">
+            <Link
+              href="/conversations"
+              className="group inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+            >
+              view all
+              <HugeiconsIcon
+                icon={ArrowRight02Icon}
+                size={11}
+                className="transition-transform group-hover:translate-x-0.5"
+              />
+            </Link>
+          </div>
         )}
       </section>
     </div>
@@ -144,18 +170,14 @@ function MetricGrid({
   return (
     <div className="grid gap-3 sm:grid-cols-3">
       <Metric
-        label="Messages this week"
-        value={metrics.messagesWeek.toLocaleString()}
-        hint={`${metrics.messagesTotal.toLocaleString()} total`}
+        label="Conversations this month"
+        value={metrics.conversationsMonth.toLocaleString()}
+        hint={`${metrics.conversationsToday.toLocaleString()} today`}
       />
       <Metric
-        label="Today"
-        value={metrics.messagesToday.toLocaleString()}
-        hint={
-          metrics.tokensWeek > 0
-            ? `${metrics.tokensWeek.toLocaleString()} tokens / week`
-            : "—"
-        }
+        label="Messages this month"
+        value={metrics.messagesMonth.toLocaleString()}
+        hint={`${metrics.messagesToday.toLocaleString()} today`}
       />
       <Metric
         label="Avg response"
@@ -164,7 +186,7 @@ function MetricGrid({
             ? `${(metrics.avgLatencyMs / 1000).toFixed(1)}s`
             : "—"
         }
-        hint="last 7 days"
+        hint="this month"
       />
     </div>
   );
@@ -190,6 +212,93 @@ function Metric({
       )}
     </div>
   );
+}
+
+/**
+ * Slim quota strip below the metric grid. Glanceable signal so the
+ * customer sees they're approaching the cap before /chat starts returning
+ * 402s in production. Clicking jumps to Settings → Limits.
+ */
+function QuotaBar({ usage }: { usage: Usage }) {
+  const pct =
+    usage.tokenQuotaMonthly > 0
+      ? Math.min(100, (usage.tokensUsedMonth / usage.tokenQuotaMonthly) * 100)
+      : 0;
+  const overHalf = pct >= 50;
+  const overEighty = pct >= 80;
+  // Show ≥0.1% so the percentage doesn't read "0%" the moment any usage
+  // exists; full zeros are honest only when nothing's been spent.
+  const pctLabel =
+    pct === 0 ? "0%" : pct < 0.1 ? "<0.1%" : `${pct.toFixed(1)}%`;
+  const daysLeft = daysUntil(usage.monthResetsAt);
+
+  return (
+    <Link
+      href="/settings#limits"
+      className="group block rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:bg-muted/40"
+    >
+      <div className="flex items-baseline justify-between gap-4">
+        <div className="flex items-baseline gap-3">
+          <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            Tokens this month
+          </span>
+          <span className="font-mono text-[11px] text-muted-foreground">
+            resets in {daysLeft}d
+          </span>
+        </div>
+        <div className="flex items-center gap-2 font-mono text-xs">
+          <span className="text-foreground">
+            {formatCompact(usage.tokensUsedMonth)}
+          </span>
+          <span className="text-muted-foreground">
+            / {formatCompact(usage.tokenQuotaMonthly)}
+          </span>
+          {overHalf && (
+            <span
+              className={
+                "rounded px-1.5 py-0.5 text-[10px] font-medium " +
+                (overEighty
+                  ? "bg-destructive/15 text-destructive"
+                  : "bg-warning/15 text-warning")
+              }
+            >
+              {pctLabel}
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div
+          className={
+            "h-full rounded-full transition-all " +
+            (overEighty
+              ? "bg-destructive"
+              : overHalf
+                ? "bg-warning"
+                : "bg-primary")
+          }
+          style={{ width: `${Math.max(pct, pct > 0 ? 1 : 0)}%` }}
+        />
+      </div>
+    </Link>
+  );
+}
+
+/**
+ * Compact number formatting. 1936 → "1.9K", 2000000 → "2M". Easier to
+ * scan than "2,000,000" when paired with another number of similar shape.
+ */
+function formatCompact(n: number): string {
+  if (n < 1000) return String(n);
+  if (n < 10_000) return `${(n / 1000).toFixed(1)}K`;
+  if (n < 1_000_000) return `${Math.round(n / 1000)}K`;
+  if (n < 10_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  return `${Math.round(n / 1_000_000)}M`;
+}
+
+function daysUntil(iso: string): number {
+  const ms = new Date(iso).getTime() - Date.now();
+  return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)));
 }
 
 function timeAgo(iso: string): string {

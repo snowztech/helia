@@ -2,8 +2,8 @@ import { Hono, type Context } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { runAgent } from "@helia/agent";
-import { chatTraces, workspaces, type Workspace } from "@helia/db";
-import { eq } from "drizzle-orm";
+import { bannedUsers, chatTraces, workspaces, type Workspace } from "@helia/db";
+import { and, eq } from "drizzle-orm";
 import { db, log } from "../lib/state";
 import { makeAgentTools } from "../agent/tools";
 import { decrypt } from "../lib/crypto";
@@ -37,6 +37,11 @@ const Body = z.object({
  * Side effect: a `chat_traces` row is written after the stream completes,
  * powering the admin dashboard.
  */
+// Cap the number of past turns we feed the model. Older messages stay in
+// the DB for the admin's review but are dropped from the LLM's context to
+// keep token spend bounded.
+const HISTORY_TURN_CAP = 20;
+
 chatRouter.post("/", zValidator("json", Body), async (c) => {
   const { messages } = c.req.valid("json");
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
@@ -45,12 +50,33 @@ chatRouter.post("/", zValidator("json", Body), async (c) => {
   const ws = await resolveChatWorkspace(c);
   if (!ws) return c.json({ error: "workspace not found" }, 404);
 
+  const conversationId = resolveConversationId(c);
+
   const identity = resolveIdentity(c, ws);
   if (identity === "invalid") {
     return c.json({ error: "invalid identity signature" }, 401);
   }
   if (identity === null && ws.identityRequired) {
     return c.json({ error: "identity required" }, 401);
+  }
+
+  // Banned end-user → respond with a canned message, log the turn for the
+  // admin, never invoke the LLM. Bans only apply to identified users —
+  // anonymous traffic is rate-limited instead.
+  if (identity) {
+    const [ban] = await db
+      .select({ reason: bannedUsers.reason })
+      .from(bannedUsers)
+      .where(
+        and(
+          eq(bannedUsers.workspaceId, ws.id),
+          eq(bannedUsers.userId, identity.id),
+        ),
+      )
+      .limit(1);
+    if (ban) {
+      return bannedResponse(c, ws, identity, conversationId, lastUser.content);
+    }
   }
 
   // Soft monthly cap. We charge by total tokens (input + output, all turns
@@ -71,18 +97,42 @@ chatRouter.post("/", zValidator("json", Body), async (c) => {
   const tools = await makeAgentTools(ws.id, identity);
   const startedAt = Date.now();
 
+  const trimmed =
+    messages.length > HISTORY_TURN_CAP
+      ? messages.slice(-HISTORY_TURN_CAP)
+      : messages;
+
   const result = runAgent({
     persona: { name: ws.name, locale: ws.locale },
-    messages,
+    messages: trimmed,
     tools,
     model: { provider: "openai", model: ws.model },
     onError: (err) => log.error({ err }, "agent error"),
   });
 
-  void persistTrace(result, ws, identity, lastUser.content, startedAt);
+  void persistTrace(
+    result,
+    ws,
+    identity,
+    conversationId,
+    lastUser.content,
+    startedAt,
+  );
 
   return result.toDataStreamResponse();
 });
+
+/**
+ * Per-conversation grouping key. The widget generates one per session and
+ * sends it on every chat call so the admin UI can group turns into actual
+ * conversations. Falls back to null (each turn is its own conversation)
+ * when the caller doesn't pass one.
+ */
+function resolveConversationId(c: Context): string | null {
+  const conv = c.req.query("conv");
+  if (conv && UUID_RE.test(conv)) return conv;
+  return null;
+}
 
 /**
  * Verify the user identity headers if present.
@@ -126,6 +176,64 @@ function resolveIdentity(
   return { id: parsed.id, name };
 }
 
+const BANNED_REPLY = "This account cannot use this assistant.";
+
+/**
+ * Return a manually-framed Vercel AI SDK data stream so the widget treats
+ * the canned ban response exactly like a real assistant turn — same
+ * parser, same UI affordances. Also writes a trace so the admin sees the
+ * blocked attempt in /conversations.
+ */
+function bannedResponse(
+  c: Context,
+  ws: Workspace,
+  identity: Identity,
+  conversationId: string | null,
+  userMessage: string,
+): Response {
+  const lines = [
+    `0:${JSON.stringify(BANNED_REPLY)}\n`,
+    `d:${JSON.stringify({
+      finishReason: "stop",
+      usage: { promptTokens: 0, completionTokens: 0 },
+    })}\n`,
+  ];
+
+  void db
+    .insert(chatTraces)
+    .values({
+      workspaceId: ws.id,
+      conversationId,
+      userId: identity.id,
+      userName: identity.name,
+      userMessage,
+      finalAnswer: BANNED_REPLY,
+      totalTokens: 0,
+      totalLatencyMs: 0,
+      model: ws.model,
+      steps: [],
+      retrieval: [],
+      error: "banned",
+    })
+    .catch((err) => log.error({ err }, "banned trace persist failed"));
+
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      const encoder = new TextEncoder();
+      for (const line of lines) controller.enqueue(encoder.encode(line));
+      controller.close();
+    },
+  });
+
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      "content-type": "text/plain; charset=utf-8",
+      "x-vercel-ai-data-stream": "v1",
+    },
+  });
+}
+
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -156,6 +264,7 @@ async function persistTrace(
   result: AgentResult,
   ws: Workspace,
   identity: Identity | null,
+  conversationId: string | null,
   userMessage: string,
   startedAt: number,
 ): Promise<void> {
@@ -171,6 +280,7 @@ async function persistTrace(
 
     await db.insert(chatTraces).values({
       workspaceId: ws.id,
+      conversationId,
       userId: identity?.id ?? null,
       userName: identity?.name ?? null,
       userMessage,

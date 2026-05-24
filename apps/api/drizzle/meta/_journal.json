@@ -29,6 +29,20 @@
       "when": 1779567835700,
       "tag": "0003_token_quota",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1779579421242,
+      "tag": "0004_widget_branding",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1779581313903,
+      "tag": "0005_banned_users",
+      "breakpoints": true
     }
   ]
 }

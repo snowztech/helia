@@ -52,6 +52,12 @@ export const baseStyles = /* css */ `
   }
   .launcher:active { transform: translateY(0); }
   .launcher svg { width: 24px; height: 24px; }
+  .launcher img {
+    width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
+  }
+  .launcher .avatar-text {
+    font-size: 22px; line-height: 1; font-weight: 600;
+  }
   .launcher.hidden { opacity: 0; pointer-events: none; transform: scale(0.85); }
 
   /* Panel */
@@ -108,6 +114,8 @@ export const baseStyles = /* css */ `
     color: #ffffff;
   }
   .avatar svg { width: 16px; height: 16px; }
+  .avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+  .avatar .avatar-text { font-size: 14px; line-height: 1; font-weight: 600; }
   .header-text { min-width: 0; flex: 1; }
   .header-title {
     font-weight: 600;
@@ -156,9 +164,39 @@ export const baseStyles = /* css */ `
     border-radius: 12px;
     font-size: 14px;
     line-height: 1.45;
-    white-space: pre-wrap;
     word-wrap: break-word;
+    overflow-wrap: break-word;
   }
+  .message.assistant p { margin: 0; }
+  .message.assistant p + p { margin-top: 0.6em; }
+  .message.assistant ul,
+  .message.assistant ol { margin: 0.4em 0 0.4em 1.2em; padding: 0; }
+  .message.assistant li { margin: 0.15em 0; }
+  .message.assistant a {
+    color: var(--helia-primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .message.assistant a:hover { opacity: 0.85; }
+  .message.assistant code {
+    background: color-mix(in srgb, var(--helia-text) 10%, transparent);
+    padding: 1px 4px;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+  .message.assistant pre {
+    background: color-mix(in srgb, var(--helia-text) 10%, transparent);
+    padding: 8px 10px;
+    border-radius: 6px;
+    overflow: auto;
+    margin: 0.5em 0;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .message.assistant pre code { background: none; padding: 0; }
+  .message.assistant strong { font-weight: 600; }
+  .message.assistant em { font-style: italic; }
+  .message.user { white-space: pre-wrap; }
   .message.assistant {
     align-self: flex-start;
     background: var(--helia-surface);

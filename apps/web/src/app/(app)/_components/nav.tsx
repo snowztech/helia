@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 const ITEMS = [
   { href: "/sources", match: ["/sources", "/upload"], label: "sources" },
   { href: "/tools", match: ["/tools"], label: "tools" },
+  { href: "/conversations", match: ["/conversations"], label: "conversations" },
   { href: "/widget", match: ["/widget"], label: "widget" },
 ] as const;
 

@@ -2,6 +2,8 @@ import { baseStyles } from "./styles";
 import { streamChat } from "./stream";
 import { loadRemoteConfig, type RemoteConfig } from "./config";
 import { getIdentity } from "./identity";
+import { getOrCreateConversationId } from "./conversation";
+import { renderMarkdown } from "./markdown";
 import type { ChatMessage, WidgetConfig, WidgetHandle } from "./types";
 
 const HOST_ID = "helia-widget";
@@ -24,6 +26,8 @@ export function mount(config: WidgetConfig): WidgetHandle {
   let botName = config.botName ?? "Assistant";
   let greeting = config.greeting ?? "Hi, how can I help?";
   let placeholder = "Ask a question...";
+  let botAvatar: string | null = null;
+  let launcherIcon: LauncherIconName = "sparkles";
 
   const host = document.createElement("div");
   host.id = HOST_ID;
@@ -43,7 +47,7 @@ export function mount(config: WidgetConfig): WidgetHandle {
   launcher.className = "launcher right";
   launcher.type = "button";
   launcher.setAttribute("aria-label", "Open chat");
-  launcher.innerHTML = chatIcon();
+  launcher.innerHTML = launcherMarkup(botAvatar, launcherIcon);
   root.appendChild(launcher);
 
   // --- Panel
@@ -53,7 +57,7 @@ export function mount(config: WidgetConfig): WidgetHandle {
   panel.setAttribute("aria-label", `${botName} chat`);
   panel.innerHTML = `
     <div class="header">
-      <div class="avatar" aria-hidden="true">${avatarIcon()}</div>
+      <div class="avatar" aria-hidden="true">${avatarMarkup(botAvatar, launcherIcon)}</div>
       <div class="header-text">
         <div class="header-title">${escapeHtml(botName)}</div>
         <div class="header-subtitle"></div>
@@ -106,10 +110,19 @@ export function mount(config: WidgetConfig): WidgetHandle {
     botName = remote.bot.name;
     greeting = remote.bot.greeting;
     placeholder = remote.bot.placeholder ?? placeholder;
+    botAvatar = remote.bot.avatar ?? null;
+    launcherIcon = remote.bot.launcherIcon ?? "sparkles";
     titleEl.textContent = botName;
     subtitleEl.textContent = remote.bot.subtitle ?? "";
     input.placeholder = placeholder;
     panel.setAttribute("aria-label", `${botName} chat`);
+
+    // Refresh the icons now that we know what the customer chose.
+    launcher.innerHTML = launcherMarkup(botAvatar, launcherIcon);
+    const avatarSlot = panel.querySelector(".avatar");
+    if (avatarSlot) {
+      avatarSlot.innerHTML = avatarMarkup(botAvatar, launcherIcon);
+    }
 
     if (state.messages.length === 0) {
       greetingEl.textContent = greeting;
@@ -264,7 +277,14 @@ export function mount(config: WidgetConfig): WidgetHandle {
     let activeToolPill: HTMLElement | null = null;
     let sources: Array<{ title: string; url: string | null }> = [];
 
-    await streamChat(apiUrl, config.workspace, state.messages, getIdentity(), {
+    const conversationId = getOrCreateConversationId(config.workspace);
+    await streamChat(
+      apiUrl,
+      config.workspace,
+      conversationId,
+      state.messages,
+      getIdentity(),
+      {
       onDelta: (delta) => {
         if (!assistantEl) {
           if (typingEl.isConnected) typingEl.remove();
@@ -273,7 +293,7 @@ export function mount(config: WidgetConfig): WidgetHandle {
           messagesEl.appendChild(assistantEl);
         }
         assistantText += delta;
-        assistantEl.textContent = assistantText;
+        assistantEl.innerHTML = renderMarkdown(assistantText);
         scrollToBottom();
       },
       onToolStart: (toolName) => {
@@ -371,25 +391,95 @@ function dedupeSources(
   return out;
 }
 
-function avatarIcon(): string {
-  // Same Sparkles path as the launcher, scaled down for the header avatar.
-  return /* html */ `
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-         stroke-width="1.6" stroke-linejoin="round" aria-hidden="true">
-      <path d="M15 2L15.5387 4.39157C15.9957 6.42015 17.5798 8.00431 19.6084 8.46127L22 9L19.6084 9.53873C17.5798 9.99569 15.9957 11.5798 15.5387 13.6084L15 16L14.4613 13.6084C14.0043 11.5798 12.4202 9.99569 10.3916 9.53873L8 9L10.3916 8.46127C12.4201 8.00431 14.0043 6.42015 14.4613 4.39158L15 2Z" />
-      <path d="M7 12L7.38481 13.7083C7.71121 15.1572 8.84275 16.2888 10.2917 16.6152L12 17L10.2917 17.3848C8.84275 17.7112 7.71121 18.8427 7.38481 20.2917L7 22L6.61519 20.2917C6.28879 18.8427 5.15725 17.7112 3.70827 17.3848L2 17L3.70827 16.6152C5.15725 16.2888 6.28879 15.1573 6.61519 13.7083L7 12Z" />
-    </svg>
-  `;
+/**
+ * Header avatar. If the customer set `bot.avatar`, prefer it:
+ *  - URL → render as <img>
+ *  - anything else → first character (handles emoji and initials)
+ * Otherwise fall back to the launcher glyph.
+ */
+function avatarMarkup(
+  avatar: string | null | undefined,
+  fallback: LauncherIconName,
+): string {
+  if (avatar) {
+    if (isHttpUrl(avatar)) {
+      return /* html */ `<img src="${escapeAttr(avatar)}" alt="" />`;
+    }
+    const ch = [...avatar.trim()][0] ?? "";
+    return /* html */ `<span class="avatar-text">${escapeHtml(ch)}</span>`;
+  }
+  return iconSvg(fallback);
 }
 
-function chatIcon(): string {
-  return /* html */ `
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-         stroke-width="1.6" stroke-linejoin="round" aria-hidden="true">
-      <path d="M15 2L15.5387 4.39157C15.9957 6.42015 17.5798 8.00431 19.6084 8.46127L22 9L19.6084 9.53873C17.5798 9.99569 15.9957 11.5798 15.5387 13.6084L15 16L14.4613 13.6084C14.0043 11.5798 12.4202 9.99569 10.3916 9.53873L8 9L10.3916 8.46127C12.4201 8.00431 14.0043 6.42015 14.4613 4.39158L15 2Z" />
-      <path d="M7 12L7.38481 13.7083C7.71121 15.1572 8.84275 16.2888 10.2917 16.6152L12 17L10.2917 17.3848C8.84275 17.7112 7.71121 18.8427 7.38481 20.2917L7 22L6.61519 20.2917C6.28879 18.8427 5.15725 17.7112 3.70827 17.3848L2 17L3.70827 16.6152C5.15725 16.2888 6.28879 15.1573 6.61519 13.7083L7 12Z" />
-    </svg>
-  `;
+/**
+ * Launcher button content. Same rules as the header avatar — the customer's
+ * image/initial wins, otherwise we draw the picked icon.
+ */
+function launcherMarkup(
+  avatar: string | null | undefined,
+  icon: LauncherIconName,
+): string {
+  return avatarMarkup(avatar, icon);
+}
+
+type LauncherIconName = "sparkles" | "chat" | "question" | "mention";
+
+function iconSvg(name: LauncherIconName): string {
+  switch (name) {
+    case "chat":
+      return /* html */ `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+             aria-hidden="true">
+          <path d="M21 12a8 8 0 1 1-3.2-6.4L21 4l-1 4a8 8 0 0 1 1 4Z" />
+          <path d="M8 12h.01M12 12h.01M16 12h.01" />
+        </svg>
+      `;
+    case "question":
+      return /* html */ `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+             aria-hidden="true">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M9.5 9a2.5 2.5 0 1 1 4 2c-.8.5-1.5 1-1.5 2" />
+          <path d="M12 17h.01" />
+        </svg>
+      `;
+    case "mention":
+      return /* html */ `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+             aria-hidden="true">
+          <circle cx="12" cy="12" r="4" />
+          <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.8 7.8" />
+        </svg>
+      `;
+    case "sparkles":
+    default:
+      return /* html */ `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.6" stroke-linejoin="round" aria-hidden="true">
+          <path d="M15 2L15.5387 4.39157C15.9957 6.42015 17.5798 8.00431 19.6084 8.46127L22 9L19.6084 9.53873C17.5798 9.99569 15.9957 11.5798 15.5387 13.6084L15 16L14.4613 13.6084C14.0043 11.5798 12.4202 9.99569 10.3916 9.53873L8 9L10.3916 8.46127C12.4201 8.00431 14.0043 6.42015 14.4613 4.39158L15 2Z" />
+          <path d="M7 12L7.38481 13.7083C7.71121 15.1572 8.84275 16.2888 10.2917 16.6152L12 17L10.2917 17.3848C8.84275 17.7112 7.71121 18.8427 7.38481 20.2917L7 22L6.61519 20.2917C6.28879 18.8427 5.15725 17.7112 3.70827 17.3848L2 17L3.70827 16.6152C5.15725 16.2888 6.28879 15.1573 6.61519 13.7083L7 12Z" />
+        </svg>
+      `;
+  }
+}
+
+function isHttpUrl(s: string): boolean {
+  try {
+    const u = new URL(s);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function escapeAttr(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;");
 }
 
 function closeIcon(): string {

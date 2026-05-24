@@ -44,6 +44,8 @@ const EDITABLE_FIELDS = [
   "botGreeting",
   "botPlaceholder",
   "botSuggestions",
+  "botAvatar",
+  "launcherIcon",
   "widgetPosition",
   "widgetTheme",
   "widgetRadius",
@@ -59,6 +61,8 @@ function snapshot(ws: Workspace): EditableSnapshot {
     botGreeting: ws.botGreeting,
     botPlaceholder: ws.botPlaceholder,
     botSuggestions: ws.botSuggestions,
+    botAvatar: ws.botAvatar,
+    launcherIcon: ws.launcherIcon,
     widgetPosition: ws.widgetPosition,
     widgetTheme: ws.widgetTheme,
     widgetRadius: ws.widgetRadius,
@@ -132,6 +136,8 @@ export default function WidgetPage() {
     botGreeting: ws.botGreeting,
     botPlaceholder: ws.botPlaceholder,
     suggestions: ws.botSuggestions,
+    botAvatar: ws.botAvatar,
+    launcherIcon: ws.launcherIcon,
   };
 
   const snippet = `<script src="${WIDGET_PROD_URL}" data-workspace="${ws.id}" async></script>`;
@@ -212,7 +218,46 @@ export default function WidgetPage() {
             </div>
           </Section>
 
-          <Section title="Copy">
+          <Section title="Branding">
+            <div className="space-y-4">
+              <Field label="bot avatar">
+                <Input
+                  value={ws.botAvatar ?? ""}
+                  onChange={(e) =>
+                    setWs({
+                      ...ws,
+                      botAvatar: e.target.value.length ? e.target.value : null,
+                    })
+                  }
+                  placeholder="image URL or a single emoji"
+                  maxLength={500}
+                />
+              </Field>
+              <Field label="launcher icon">
+                <SegGroup
+                  options={[
+                    { value: "sparkles", label: "sparkles" },
+                    { value: "chat", label: "chat" },
+                    { value: "question", label: "question" },
+                    { value: "mention", label: "mention" },
+                  ]}
+                  value={ws.launcherIcon}
+                  onChange={(v) =>
+                    setWs({
+                      ...ws,
+                      launcherIcon: v as
+                        | "sparkles"
+                        | "chat"
+                        | "question"
+                        | "mention",
+                    })
+                  }
+                />
+              </Field>
+            </div>
+          </Section>
+
+          <Section title="Wording">
             <div className="space-y-4">
               <Field label="title">
                 <Input
@@ -373,7 +418,9 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label>{label}</Label>
+      <Label className="block text-xs font-normal normal-case tracking-normal text-foreground">
+        {label}
+      </Label>
       {children}
     </div>
   );
