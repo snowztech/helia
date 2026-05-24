@@ -5,11 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowUp02Icon,
-  AtIcon,
-  BubbleChatIcon,
   Cancel01Icon,
-  HelpCircleIcon,
-  SparklesIcon,
 } from "@hugeicons/core-free-icons";
 import { renderMarkdown } from "@/lib/markdown";
 import { API_URL } from "@/lib/api";
@@ -27,7 +23,6 @@ export interface PreviewConfig {
   botPlaceholder: string;
   suggestions: string[];
   botAvatar: string | null;
-  launcherIcon: "sparkles" | "chat" | "question" | "mention";
 }
 
 /**
@@ -120,11 +115,7 @@ function Launcher({
       )}
       style={{ background: config.primary }}
     >
-      <AvatarMark
-        avatar={config.botAvatar}
-        fallbackIcon={config.launcherIcon}
-        size={22}
-      />
+      <AvatarMark avatar={config.botAvatar} size={22} />
     </button>
   );
 }
@@ -135,11 +126,9 @@ function Launcher({
  */
 function AvatarMark({
   avatar,
-  fallbackIcon,
   size,
 }: {
   avatar: string | null;
-  fallbackIcon: PreviewConfig["launcherIcon"];
   size: number;
 }) {
   if (avatar) {
@@ -159,15 +148,24 @@ function AvatarMark({
       </span>
     );
   }
-  const icon =
-    fallbackIcon === "chat"
-      ? BubbleChatIcon
-      : fallbackIcon === "question"
-        ? HelpCircleIcon
-        : fallbackIcon === "mention"
-          ? AtIcon
-          : SparklesIcon;
-  return <HugeiconsIcon icon={icon} size={size} className="mx-auto" />;
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      width={size}
+      height={size}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={3.4}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="mx-auto"
+      aria-hidden="true"
+    >
+      <path d="M 4 22 A 12 12 0 0 1 28 22" opacity={1} />
+      <path d="M 9 22 A 7 7 0 0 1 23 22" opacity={0.65} />
+      <path d="M 13.5 22 A 2.5 2.5 0 0 1 18.5 22" opacity={0.35} />
+    </svg>
+  );
 }
 
 function Panel({
@@ -219,11 +217,7 @@ function Panel({
         style={{ background: config.primary }}
       >
         <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/20">
-          <AvatarMark
-            avatar={config.botAvatar}
-            fallbackIcon={config.launcherIcon}
-            size={16}
-          />
+          <AvatarMark avatar={config.botAvatar} size={16} />
         </div>
         <div className="min-w-0 flex-1">
           <div className="truncate text-[15px] font-semibold leading-tight">

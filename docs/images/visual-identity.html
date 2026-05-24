@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>helia · layered arcs</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#f5f3eb;
+    --paper:#faf9f3;
+    --ink:#0a0a0a;
+    --line:#e3e2d8;
+    --mute:#8b897e;
+    --dim:#5f5d54;
+    --accent:#3a55e0;
+    --accent-deep:#1d2f9a;
+    --accent-pale:#b5c0ec;
+
+    /* tonal stack on paper (default) */
+    --m1: #0a0a0a;
+    --m2: #6b695f;
+    --m3: #c2bfb1;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Inter",ui-sans-serif,system-ui,-apple-system,sans-serif;
+    font-feature-settings:"ss01","cv11";
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;}
+  .wrap{max-width:1080px;margin:0 auto;padding:64px 48px 120px;}
+  .crumb{
+    font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    color:var(--mute);font-size:11.5px;letter-spacing:0.06em;
+    margin-bottom:14px;
+  }
+  h1{font-size:34px;font-weight:600;letter-spacing:-0.025em;margin:0 0 8px;}
+  .sub{color:var(--dim);font-size:14px;line-height:1.55;margin:0;max-width:58ch;}
+
+  /* mark styles — three layered half-pills */
+  svg.mk{ display:block; }
+  svg.mk .a1{ stroke: var(--m1); }
+  svg.mk .a2{ stroke: var(--m2); }
+  svg.mk .a3{ stroke: var(--m3); }
+  svg.mk path{
+    fill: none;
+    stroke-width: 3.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  /* solar (filled) variant */
+  svg.mk.solar .a1{ fill: var(--m1); stroke: none; }
+  svg.mk.solar .a2{ fill: var(--m2); stroke: none; }
+  svg.mk.solar .a3{ fill: var(--m3); stroke: none; }
+
+  /* surface palettes */
+  .paper { --m1:#0a0a0a; --m2:#6b695f; --m3:#c2bfb1; }
+  .ink   { --m1:#faf9f3; --m2:#a09e95; --m3:#3d3c38; }
+  .cobalt{ --m1:#0a0a0a; --m2:#1d2f9a; --m3:#b5c0ec; }      /* on paper, with cobalt mid */
+  .cobalt-surface{ --m1:#ffffff; --m2:#b5c0ec; --m3:#2a3eaa; } /* on cobalt fill */
+  .mono-cobalt   { --m1:#1d2f9a; --m2:#3a55e0; --m3:#aab6e8; } /* pure cobalt tonal */
+  .mono-ink      { --m1:#0a0a0a; --m2:#6b695f; --m3:#c2bfb1; } /* pure ink tonal */
+
+  /* hero */
+  .hero{
+    margin-top:72px;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:18px;
+    aspect-ratio:21/10;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+  }
+  .hero .corner{
+    position:absolute; top:22px; left:24px;
+    font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    font-size:11px; color:var(--mute); letter-spacing:0.12em;
+  }
+  .hero .stamp{
+    position:absolute; bottom:22px; right:24px;
+    font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    font-size:11px; color:var(--mute); letter-spacing:0.12em;
+  }
+
+  /* tone strip */
+  .tones{
+    margin-top:14px;
+    display:grid;grid-template-columns:repeat(3,1fr);
+    gap:14px;
+  }
+  .tone{
+    aspect-ratio:1/1;
+    border:1px solid var(--line);
+    border-radius:14px;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+    overflow:hidden;
+  }
+  .tone.t-paper{ background:var(--paper); }
+  .tone.t-ink  { background:var(--ink);     border-color:transparent;}
+  .tone.t-acc  { background:var(--accent);  border-color:transparent;}
+  .tone .meta{
+    position:absolute; bottom:14px; left:16px;
+    font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    font-size:10.5px; letter-spacing:0.1em; opacity:0.55;
+    color:var(--ink);
+  }
+  .tone.t-ink .meta, .tone.t-acc .meta{ color:#fff; opacity:0.6;}
+
+  /* section heading */
+  .h2{
+    margin:80px 0 18px;
+    font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    font-size:11px; color:var(--mute); letter-spacing:0.18em;
+    text-transform:uppercase;
+    display:flex;align-items:baseline;gap:10px;
+  }
+  .h2 b{font-weight:500; color:var(--ink); letter-spacing:0.02em;}
+  .h2 .rule{flex:1; height:1px; background:var(--line);}
+
+  /* variations grid */
+  .alts{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .alt{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:14px;
+    overflow:hidden;
+  }
+  .alt .big{
+    aspect-ratio:5/4;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .alt .small{
+    display:grid;grid-template-columns:1fr 1fr;
+    border-top:1px solid var(--line);
+  }
+  .alt .small > div{
+    aspect-ratio:2/1;
+    display:flex;align-items:center;justify-content:center;
+    border-right:1px solid var(--line);
+  }
+  .alt .small > div:last-child{ border-right:0; }
+  .alt .name{
+    padding:14px 18px;
+    border-top:1px solid var(--line);
+    background:var(--bg);
+    font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    font-size:11.5px; color:var(--dim); letter-spacing:0.04em;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .alt .name b{ color:var(--ink); font-weight:500;}
+
+  /* sizes */
+  .sizes{
+    display:flex;align-items:center;gap:22px;
+    padding:32px;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:14px;
+  }
+  .sz{
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:var(--bg);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .sz.lg{width:80px;height:80px;border-radius:14px;}
+  .sz.md{width:40px;height:40px;border-radius:8px;}
+  .sz.sm{width:24px;height:24px;border-radius:5px;}
+  .sz.xs{width:16px;height:16px;border-radius:4px;}
+  .sizes .lbl{
+    margin-left:auto;
+    font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    font-size:11px; color:var(--mute); letter-spacing:0.06em;
+  }
+
+  /* in product */
+  .inprod{
+    display:grid;grid-template-columns:1fr 1fr;gap:14px;
+  }
+  .pnav{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:18px 22px;
+    display:flex;align-items:center;gap:18px;
+    color:var(--ink);
+  }
+  .pnav.dark{ background:var(--ink); border-color:transparent; color:#faf9f3; }
+  .pnav .brand{font-weight:600; font-size:15px; letter-spacing:-0.01em;}
+  .pnav .spacer{flex:1;}
+  .pnav a{
+    font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    font-size:12.5px; color:var(--mute); text-decoration:none; cursor:default;
+  }
+  .pnav.dark a{color:#888;}
+
+  .bubble-card{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:24px;
+    display:flex;align-items:center;gap:18px;
+  }
+  .bubble{
+    width:60px;height:60px;border-radius:50%;
+    background:var(--accent);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow: 0 10px 30px rgba(58,85,224,0.28);
+  }
+  .bubble-card .txt{
+    font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    font-size:12px; color:var(--dim);
+    flex:1;
+  }
+  .bubble-card .txt b{color:var(--ink); font-weight:500; display:block; font-size:13px; margin-bottom:2px;}
+
+  .app-icon{
+    width:44px;height:44px;border-radius:10px;
+    background:var(--ink);
+    display:flex;align-items:center;justify-content:center;
+  }
+
+  /* construction */
+  .build{
+    aspect-ratio:5/2;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:14px;
+    position:relative;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .build .annot{
+    font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    font-size:11px; color:var(--mute);
+    position:absolute;bottom:18px;left:22px;letter-spacing:0.08em;
+  }
+  .build .guides{ stroke: var(--accent); stroke-width:0.12; stroke-dasharray:0.5 0.6; opacity:0.5; fill:none;}
+
+  .note{
+    margin-top:48px;
+    font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    font-size:11.5px; color:var(--mute); line-height:1.7;
+    padding-top:24px; border-top:1px solid var(--line);
+  }
+  .note code{font-family:inherit;color:var(--dim);}
+
+  /* recommended pick card */
+  .pick{
+    margin-top:14px;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:16px;
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    overflow:hidden;
+  }
+  .pick .big{
+    aspect-ratio:1/1;
+    background:var(--paper);
+    display:flex;align-items:center;justify-content:center;
+    border-right:1px solid var(--line);
+  }
+  .pick .meta{
+    padding:32px;
+    display:flex;flex-direction:column;justify-content:center;gap:14px;
+  }
+  .pick .ttl{font-size:22px;font-weight:600;letter-spacing:-0.01em;color:var(--ink);margin:0;}
+  .pick .desc{font-size:13.5px;color:var(--dim);line-height:1.55;margin:0;max-width:36ch;}
+  .pick .palette{display:flex;gap:8px;margin-top:6px;}
+  .pick .palette .sw{
+    width:32px;height:32px;border-radius:8px;border:1px solid var(--line);
+    display:flex;align-items:flex-end;justify-content:flex-start;
+    padding:4px 6px;
+    font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    font-size:9px; color:rgba(255,255,255,0.6);
+  }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ── reusable SVG markup ──
+       The mark is plain inline SVG (no <symbol>/<use>) so per-layer colors
+       can be driven by CSS custom properties (--m1/--m2/--m3) set on any
+       parent surface. We hydrate via a small script that clones from a
+       <template> — keeps the markup tidy without breaking color inheritance.
+  -->
+  <template id="t-arcs">
+    <svg class="mk" viewBox="0 0 32 32" aria-hidden="true">
+      <path class="a1" d="M 4   22 A 12 12 0 0 1 28   22"/>
+      <path class="a2" d="M 9   22 A 7  7  0 0 1 23   22"/>
+      <path class="a3" d="M 13.5 22 A 2.5 2.5 0 0 1 18.5 22"/>
+    </svg>
+  </template>
+
+  <template id="t-arcs-sun">
+    <svg class="mk" viewBox="0 0 32 32" aria-hidden="true">
+      <path class="a1" d="M 4 22 A 12 12 0 0 1 28 22"/>
+      <path class="a2" d="M 9 22 A 7 7 0 0 1 23 22"/>
+      <circle class="a1" cx="16" cy="22" r="2.4" fill="currentColor" style="fill:var(--m1);stroke:none"/>
+    </svg>
+  </template>
+
+  <template id="t-arcs-solar">
+    <svg class="mk solar" viewBox="0 0 32 32" aria-hidden="true">
+      <path class="a1" d="M 3 22 A 13 13 0 0 1 29 22 L 3 22 Z"/>
+      <path class="a2" d="M 8 22 A 8 8 0 0 1 24 22 L 8 22 Z"/>
+      <path class="a3" d="M 12.5 22 A 3.5 3.5 0 0 1 19.5 22 L 12.5 22 Z"/>
+    </svg>
+  </template>
+
+
+  <div class="crumb">brand / mark / v3 · layered tonal arcs</div>
+  <h1>helia mark.</h1>
+  <p class="sub">Three nested half-arcs, each in a different tone of the brand palette. Reads as Helios rising — but each layer pulls a different weight, so the mark has depth and rhythm even at small sizes.</p>
+
+
+  <!-- ── HERO ── -->
+  <div class="hero mono-ink">
+    <span class="corner mono">01 · primary</span>
+    <div data-mark="t-arcs" style="width:340px;"></div>
+    <span class="stamp mono">/helia</span>
+  </div>
+
+  <!-- ── TONES ── -->
+  <div class="tones">
+    <div class="tone t-paper paper">
+      <div data-mark="t-arcs" style="width:150px;"></div>
+      <span class="meta mono">paper · 3 ink tones</span>
+    </div>
+    <div class="tone t-ink ink">
+      <div data-mark="t-arcs" style="width:150px;"></div>
+      <span class="meta mono">ink · inverted</span>
+    </div>
+    <div class="tone t-acc cobalt-surface">
+      <div data-mark="t-arcs" style="width:150px;"></div>
+      <span class="meta mono">cobalt · brand fill</span>
+    </div>
+  </div>
+
+
+  <!-- ── recommended pick ── -->
+  <div class="h2"><b>02 recommended</b> <span class="rule"></span> mono ink</div>
+  <div class="pick">
+    <div class="big mono-ink">
+      <div data-mark="t-arcs" style="width:60%;"></div>
+    </div>
+    <div class="meta">
+      <p class="ttl">arcs · three shades of ink</p>
+      <p class="desc">No brand tint — just three weights of ink. The mark holds depth from the tonal stack alone. Sits quietly on every surface and only ever asks the eye to read one shape.</p>
+      <div class="palette">
+        <div class="sw" style="background:#0a0a0a">ink</div>
+        <div class="sw" style="background:#6b695f">mid</div>
+        <div class="sw" style="background:#c2bfb1; color:#3a3a3a">pale</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── VARIATIONS ── -->
+  <div class="h2"><b>03 colour studies</b> <span class="rule"></span> same geometry · different palette</div>
+  <div class="alts">
+    <div class="alt">
+      <div class="big mono-ink"><div data-mark="t-arcs" style="width:65%;"></div></div>
+      <div class="small">
+        <div class="ink" style="background:var(--ink);"><div data-mark="t-arcs" style="width:55%;"></div></div>
+        <div class="cobalt-surface" style="background:var(--accent);"><div data-mark="t-arcs" style="width:55%;"></div></div>
+      </div>
+      <div class="name"><b>mono · ink</b><span>three shades of ink</span></div>
+    </div>
+
+    <div class="alt">
+      <div class="big mono-cobalt"><div data-mark="t-arcs" style="width:65%;"></div></div>
+      <div class="small">
+        <div style="background:var(--ink); --m1:#ffffff; --m2:#b5c0ec; --m3:#3a55e0;"><div data-mark="t-arcs" style="width:55%;"></div></div>
+        <div style="background:var(--accent); --m1:#ffffff; --m2:#0e1b6e; --m3:#aab6e8;"><div data-mark="t-arcs" style="width:55%;"></div></div>
+      </div>
+      <div class="name"><b>mono · cobalt</b><span>three shades of brand</span></div>
+    </div>
+
+    <div class="alt">
+      <div class="big cobalt"><div data-mark="t-arcs-solar" style="width:65%;"></div></div>
+      <div class="small">
+        <div style="background:var(--ink); --m1:#faf9f3; --m2:#a09e95; --m3:#3d3c38;"><div data-mark="t-arcs-solar" style="width:55%;"></div></div>
+        <div style="background:var(--accent); --m1:#ffffff; --m2:#b5c0ec; --m3:#2a3eaa;"><div data-mark="t-arcs-solar" style="width:55%;"></div></div>
+      </div>
+      <div class="name"><b>solar · filled</b><span>filled half-discs · app icon</span></div>
+    </div>
+  </div>
+
+
+  <!-- ── SIZES ── -->
+  <div class="h2"><b>04 sizes</b> <span class="rule"></span> 80 / 40 / 24 / 16 px · tones survive</div>
+  <div class="sizes mono-ink">
+    <div class="sz lg"><div data-mark="t-arcs" style="width:48px;"></div></div>
+    <div class="sz md"><div data-mark="t-arcs" style="width:26px;"></div></div>
+    <div class="sz sm"><div data-mark="t-arcs" style="width:16px;"></div></div>
+    <div class="sz xs"><div data-mark="t-arcs" style="width:11px;"></div></div>
+    <span class="lbl">at 16px the inner arc still reads as a separate tone</span>
+  </div>
+
+
+  <!-- ── CONSTRUCTION ── -->
+  <div class="h2"><b>05 construction</b> <span class="rule"></span> baseline at y=22 · radii 12 / 7 / 2.5 · stroke 3.4</div>
+  <div class="build mono-ink">
+    <svg width="40%" viewBox="0 0 32 32">
+      <g class="guides">
+        <line x1="0" y1="22" x2="32" y2="22"/>
+        <line x1="16" y1="0" x2="16" y2="32"/>
+        <circle cx="16" cy="22" r="12"/>
+        <circle cx="16" cy="22" r="7"/>
+        <circle cx="16" cy="22" r="2.5"/>
+      </g>
+      <path class="a1" stroke="#0a0a0a" stroke-width="3.4" stroke-linecap="round" fill="none"
+            d="M 4 22 A 12 12 0 0 1 28 22"/>
+      <path class="a2" stroke="#1d2f9a" stroke-width="3.4" stroke-linecap="round" fill="none"
+            d="M 9 22 A 7 7 0 0 1 23 22"/>
+      <path class="a3" stroke="#b5c0ec" stroke-width="3.4" stroke-linecap="round" fill="none"
+            d="M 13.5 22 A 2.5 2.5 0 0 1 18.5 22"/>
+    </svg>
+    <span class="annot">grid 32 · all arcs round-capped · concentric centred at (16, 22)</span>
+  </div>
+
+
+  <!-- ── IN PRODUCT ── -->
+  <div class="h2"><b>06 in product</b> <span class="rule"></span> nav · widget · app icon</div>
+  <div class="inprod">
+    <div class="pnav mono-ink">
+      <div data-mark="t-arcs" style="width:24px;"></div>
+      <span class="brand mono">helia</span>
+      <span class="spacer"></span>
+      <a>overview</a><a>knowledge</a><a>tools</a><a>widget</a>
+    </div>
+    <div class="pnav dark ink">
+      <div data-mark="t-arcs" style="width:24px;"></div>
+      <span class="brand mono">helia</span>
+      <span class="spacer"></span>
+      <a>overview</a><a>knowledge</a><a>tools</a><a>widget</a>
+    </div>
+  </div>
+
+  <div class="bubble-card" style="margin-top:14px;">
+    <div class="bubble cobalt-surface">
+      <div data-mark="t-arcs" style="width:32px;"></div>
+    </div>
+    <div class="txt">
+      <b>helia · floating widget</b>
+      Three arcs in a 60px chat bubble — middle layer fades up to match the cobalt bubble fill.
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="app-icon ink">
+        <div data-mark="t-arcs-solar" style="width:28px;"></div>
+      </div>
+      <span class="mono" style="font-size:11px;color:var(--mute);letter-spacing:0.08em;">app icon · solar</span>
+    </div>
+  </div>
+
+
+  <!-- ── notes ── -->
+  <p class="note">
+    inline svg paths, no <code>&lt;use&gt;</code> · each arc layer reads <code>stroke: var(--m1)</code>, <code>--m2</code>, <code>--m3</code>.<br/>
+    set the trio on any parent surface (e.g. <code>.cobalt { --m1: #0a0a0a; --m2: #1d2f9a; --m3: #b5c0ec; }</code>) — every nested mark adapts automatically.<br/>
+    viewBox <code>0 0 32 32</code> · stroke <code>3.4</code> · radii 12 / 7 / 2.5 · linecap <code>round</code>.
+  </p>
+
+</div>
+
+<script>
+  // hydrate marks from templates so color cascades from each parent's --m1/m2/m3
+  document.querySelectorAll('[data-mark]').forEach(slot => {
+    const tpl = document.getElementById(slot.dataset.mark);
+    if (!tpl) return;
+    const node = tpl.content.firstElementChild.cloneNode(true);
+    // copy the slot's width down to the svg
+    const w = slot.style.width;
+    if (w) { node.style.width = w; node.style.height = 'auto'; node.removeAttribute('width'); }
+    slot.replaceWith(node);
+  });
+</script>
+</body>
+</html>

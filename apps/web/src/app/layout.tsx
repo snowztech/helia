@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: "Helia",
   description:
     "Your own AI assistant. Upload your docs, plug in your APIs, drop one script tag.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 // Inline FOUC guard: applies the persisted theme before React hydrates,

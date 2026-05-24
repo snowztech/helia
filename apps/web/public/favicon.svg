@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" aria-hidden="true">
+  <style>
+    .a1 { stroke: #0a0a0a; }
+    .a2 { stroke: #6b695f; }
+    .a3 { stroke: #c2bfb1; }
+    @media (prefers-color-scheme: dark) {
+      .a1 { stroke: #faf9f3; }
+      .a2 { stroke: #a09e95; }
+      .a3 { stroke: #3d3c38; }
+    }
+    path { fill: none; stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+  <path class="a1" d="M 4 22 A 12 12 0 0 1 28 22"/>
+  <path class="a2" d="M 9 22 A 7 7 0 0 1 23 22"/>
+  <path class="a3" d="M 13.5 22 A 2.5 2.5 0 0 1 18.5 22"/>
+</svg>

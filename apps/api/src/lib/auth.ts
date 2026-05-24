@@ -50,6 +50,8 @@ export async function destroySession(id: string): Promise<void> {
   await db.delete(sessions).where(eq(sessions.id, id));
 }
 
+const COOKIE_DOMAIN = process.env.HELIA_COOKIE_DOMAIN;
+
 export function setSessionCookie(c: Context, id: string): void {
   setCookie(c, COOKIE_NAME, id, {
     httpOnly: true,
@@ -57,11 +59,15 @@ export function setSessionCookie(c: Context, id: string): void {
     secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: SESSION_DAYS * 24 * 60 * 60,
+    ...(COOKIE_DOMAIN ? { domain: COOKIE_DOMAIN } : {}),
   });
 }
 
 export function clearSessionCookie(c: Context): void {
-  deleteCookie(c, COOKIE_NAME, { path: "/" });
+  deleteCookie(c, COOKIE_NAME, {
+    path: "/",
+    ...(COOKIE_DOMAIN ? { domain: COOKIE_DOMAIN } : {}),
+  });
 }
 
 interface AuthContext {
@@ -106,6 +112,8 @@ const PUBLIC_PATHS = new Set([
   "/v1/auth/login",
   "/v1/auth/verify",
   "/v1/auth/me",
+  "/v1/auth/forgot-password",
+  "/v1/auth/reset-password",
 ]);
 
 export const authMiddleware: MiddlewareHandler = async (c, next) => {

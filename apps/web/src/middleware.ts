@@ -1,6 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const AUTH_PATHS = new Set(["/login", "/signup", "/verify"]);
+const AUTH_PATHS = new Set([
+  "/login",
+  "/signup",
+  "/verify",
+  "/forgot",
+  "/reset",
+]);
 
 /**
  * Soft auth gating. If there's no cookie at all on a protected path, bounce

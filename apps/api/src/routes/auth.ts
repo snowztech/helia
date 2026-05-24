@@ -4,6 +4,7 @@ import { z } from "zod";
 import { and, eq, isNull } from "drizzle-orm";
 import {
   emailTokens,
+  sessions,
   users,
   workspaceMembers,
   workspaces,
@@ -20,7 +21,10 @@ import {
   signupOpen,
   verifyPassword,
 } from "../lib/auth";
-import { sendVerificationEmail } from "../lib/email";
+import {
+  sendPasswordResetEmail,
+  sendVerificationEmail,
+} from "../lib/email";
 
 export const authRouter = new Hono();
 
@@ -240,6 +244,113 @@ authRouter.post("/resend-verification", async (c) => {
 
   return c.json({ ok: true });
 });
+
+const ForgotBody = z.object({ email: z.string().email().max(120) });
+
+/**
+ * POST /v1/auth/forgot-password
+ *
+ * Always returns 200, regardless of whether the email matches a user.
+ * That avoids leaking which emails are registered. If the email *does*
+ * match, we invalidate prior reset tokens, issue a new one, and email
+ * the link. The 1-hour expiry is much shorter than verification —
+ * password resets are sensitive and shouldn't sit in inboxes for days.
+ */
+authRouter.post(
+  "/forgot-password",
+  zValidator("json", ForgotBody),
+  async (c) => {
+    const { email } = c.req.valid("json");
+    const normalized = email.toLowerCase().trim();
+
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, normalized))
+      .limit(1);
+
+    if (user) {
+      await db
+        .update(emailTokens)
+        .set({ usedAt: new Date() })
+        .where(
+          and(
+            eq(emailTokens.userId, user.id),
+            eq(emailTokens.purpose, "reset_password"),
+            isNull(emailTokens.usedAt),
+          ),
+        );
+
+      const token = generateToken();
+      await db.insert(emailTokens).values({
+        token,
+        userId: user.id,
+        purpose: "reset_password",
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+      });
+      await sendPasswordResetEmail({ to: user.email, token });
+      log.info({ userId: user.id }, "password reset requested");
+    } else {
+      log.info({ email: normalized }, "password reset for unknown email");
+    }
+
+    return c.json({ ok: true });
+  },
+);
+
+const ResetBody = z.object({
+  token: z.string().min(8).max(200),
+  password: z.string().min(8).max(120),
+});
+
+/**
+ * POST /v1/auth/reset-password
+ *
+ * Verifies the token, updates the password hash, marks the token used,
+ * and revokes every active session for that user. The user has to log
+ * in again with their new password, which is the only safe behavior on
+ * a credential change.
+ */
+authRouter.post(
+  "/reset-password",
+  zValidator("json", ResetBody),
+  async (c) => {
+    const { token, password } = c.req.valid("json");
+
+    const [row] = await db
+      .select()
+      .from(emailTokens)
+      .where(
+        and(
+          eq(emailTokens.token, token),
+          eq(emailTokens.purpose, "reset_password"),
+          isNull(emailTokens.usedAt),
+        ),
+      )
+      .limit(1);
+
+    if (!row || row.expiresAt < new Date()) {
+      return c.json({ error: "invalid or expired token" }, 400);
+    }
+
+    const passwordHash = await hashPassword(password);
+
+    await db
+      .update(users)
+      .set({ passwordHash })
+      .where(eq(users.id, row.userId));
+
+    await db
+      .update(emailTokens)
+      .set({ usedAt: new Date() })
+      .where(eq(emailTokens.token, token));
+
+    await db.delete(sessions).where(eq(sessions.userId, row.userId));
+
+    log.info({ userId: row.userId }, "password reset");
+    return c.json({ ok: true });
+  },
+);
 
 const VerifyBody = z.object({ token: z.string().min(8).max(200) });
 

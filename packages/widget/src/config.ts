@@ -1,5 +1,5 @@
 export interface RemoteConfig {
-  workspace: { id: string; name: string };
+  workspace: { id: string; name: string; locale?: string };
   theme: {
     primary: string;
     mode?: "light" | "dark" | "auto";
@@ -15,11 +15,8 @@ export interface RemoteConfig {
     placeholder?: string;
     suggestions?: string[];
     avatar?: string | null;
-    launcherIcon?: LauncherIcon;
   };
 }
-
-export type LauncherIcon = "sparkles" | "chat" | "question" | "mention";
 
 export async function loadRemoteConfig(
   apiUrl: string,
