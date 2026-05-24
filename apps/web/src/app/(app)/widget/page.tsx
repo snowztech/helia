@@ -24,8 +24,8 @@ import {
 } from "./_components/widget-preview";
 
 const PRESETS = [
+  "#3a55e0", // helia indigo (default)
   "#0ea5e9",
-  "#6366f1",
   "#22c55e",
   "#f43f5e",
   "#f59e0b",

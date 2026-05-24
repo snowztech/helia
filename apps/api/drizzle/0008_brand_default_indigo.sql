@@ -1,0 +1,1 @@
+ALTER TABLE "workspaces" ALTER COLUMN "brand_primary" SET DEFAULT '#3a55e0';
