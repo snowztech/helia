@@ -66,7 +66,7 @@ function HeroMock() {
       <div className="absolute right-4 bottom-4 w-[270px] overflow-hidden rounded-2xl bg-card shadow-2xl ring-1 ring-line">
         <div className="flex items-center gap-2.5 bg-primary px-3.5 py-3 text-primary-fg">
           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15">
-            <HeliaMark className="h-4 w-4" />
+            <HeliaMark fullBox className="h-4 w-4" />
           </span>
           <div className="min-w-0 flex-1">
             <div className="text-[13px] font-semibold leading-tight">
@@ -92,7 +92,7 @@ function HeroMock() {
       </div>
 
       <div className="glow-primary absolute -bottom-3 -left-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-fg">
-        <HeliaMark className="h-5 w-5" />
+        <HeliaMark fullBox className="h-5 w-5" />
       </div>
     </div>
   );

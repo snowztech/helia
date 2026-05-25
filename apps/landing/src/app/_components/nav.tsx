@@ -12,24 +12,6 @@ export function Nav() {
           <HeliaWordmark />
         </Link>
 
-        <nav className="hidden items-center gap-7 text-[13px] text-muted md:flex">
-          <a href="#features" className="transition-colors hover:text-fg">
-            product
-          </a>
-          <a href="#how" className="transition-colors hover:text-fg">
-            how it works
-          </a>
-          <a href="#pricing" className="transition-colors hover:text-fg">
-            pricing
-          </a>
-          <a
-            href="https://github.com/snowztech/helia"
-            className="transition-colors hover:text-fg"
-          >
-            github
-          </a>
-        </nav>
-
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <a

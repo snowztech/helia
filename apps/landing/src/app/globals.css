@@ -60,6 +60,17 @@ body {
   transition: background-color 200ms ease, color 200ms ease;
 }
 
+/* Tailwind v4 removed the implicit `cursor: pointer` on interactive
+   elements. Restore the expected affordance. */
+a[href],
+button:not(:disabled),
+summary {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+
 h1,
 h2,
 h3 {

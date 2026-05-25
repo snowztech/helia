@@ -1,10 +1,16 @@
 export function HeliaMark({
   className = "h-5 w-5",
+  fullBox = false,
 }: {
   className?: string;
+  /** When true, render the full 32×32 viewBox (use for the standalone mark
+   *  inside circular launcher buttons). Default crops empty top space so it
+   *  baselines with text in lockups. */
+  fullBox?: boolean;
 }) {
+  const viewBox = fullBox ? "0 0 32 32" : "2 8 28 16";
   return (
-    <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
+    <svg viewBox={viewBox} className={className} aria-hidden="true">
       <path
         d="M 4 22 A 12 12 0 0 1 28 22"
         fill="none"
@@ -38,7 +44,7 @@ export function HeliaWordmark({ className = "" }: { className?: string }) {
       className={`inline-flex items-center gap-1.5 text-primary ${className}`}
       aria-label="Helia"
     >
-      <HeliaMark className="h-4 w-4" />
+      <HeliaMark className="h-3 w-5" />
       <span className="text-sm font-semibold tracking-tight">helia</span>
     </span>
   );

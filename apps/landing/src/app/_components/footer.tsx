@@ -1,12 +1,9 @@
 import { HeliaWordmark } from "./logo";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.gethelia.dev";
 const VERSION = process.env.NEXT_PUBLIC_HELIA_VERSION ?? "dev";
 
 const LINKS = [
-  { label: "pricing", href: "/#pricing" },
   { label: "github", href: "https://github.com/snowztech/helia" },
-  { label: "self-host", href: "https://github.com/snowztech/helia/blob/main/DEPLOY.md" },
   { label: "privacy", href: "/privacy" },
   { label: "terms", href: "/terms" },
   { label: "contact", href: "mailto:gethelia@protonmail.com" },
@@ -26,22 +23,11 @@ export function Footer() {
         <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] text-muted">
           {LINKS.map((l) => (
             <li key={l.label}>
-              <a
-                href={l.href}
-                className="transition-colors hover:text-fg"
-              >
+              <a href={l.href} className="transition-colors hover:text-fg">
                 {l.label}
               </a>
             </li>
           ))}
-          <li>
-            <a
-              href={`${APP_URL}/signup`}
-              className="transition-colors hover:text-fg"
-            >
-              sign up
-            </a>
-          </li>
         </ul>
       </div>
     </footer>
