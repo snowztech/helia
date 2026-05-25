@@ -6,6 +6,7 @@ const LINKS = [
   { label: "github", href: "https://github.com/snowztech/helia" },
   { label: "privacy", href: "/privacy" },
   { label: "terms", href: "/terms" },
+  { label: "legal", href: "/legal" },
   { label: "contact", href: "mailto:gethelia@protonmail.com" },
 ];
 

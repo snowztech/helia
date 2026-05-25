@@ -10,16 +10,16 @@ const TIERS = [
     accent: false,
   },
   {
-    name: "team",
+    name: "pro",
     price: "$29",
     suffix: "/ workspace / mo",
     bullets: [
-      "5,000 messages / mo",
+      "1,500 messages / mo",
       "Unlimited sources",
       "Inline embed, branding",
       "Tools (DB, REST)",
     ],
-    cta: { label: "start team", href: `${APP_URL}/signup?plan=team` },
+    cta: { label: "start pro", href: `${APP_URL}/signup?plan=pro` },
     accent: true,
   },
   {
