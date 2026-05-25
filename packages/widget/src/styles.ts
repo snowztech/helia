@@ -391,8 +391,15 @@ export const baseStyles = /* css */ `
     padding: 6px 0 8px;
     background: var(--helia-background);
   }
-  .footer a { color: inherit; text-decoration: none; }
-  .footer a:hover { text-decoration: underline; }
+  .footer .powered {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: inherit;
+    text-decoration: none;
+  }
+  .footer .powered:hover { color: var(--helia-text); }
+  .footer .mark { width: 12px; height: 12px; flex-shrink: 0; }
 
   /* Mobile */
   @media (max-width: 480px) {
