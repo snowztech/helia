@@ -385,21 +385,34 @@ export const baseStyles = /* css */ `
 
   /* Powered by */
   .footer {
-    text-align: center;
-    font-size: 11px;
-    color: var(--helia-muted);
-    padding: 6px 0 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 0 9px;
     background: var(--helia-background);
+    line-height: 1;
   }
   .footer .powered {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    color: inherit;
+    color: var(--helia-muted);
     text-decoration: none;
+    opacity: 0.75;
+    transition: opacity 120ms ease;
   }
-  .footer .powered:hover { color: var(--helia-text); }
-  .footer .mark { width: 12px; height: 12px; flex-shrink: 0; }
+  .footer .powered:hover { opacity: 1; }
+  .footer .mark {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    display: block;
+  }
+  .footer .wordmark {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
 
   /* Mobile */
   @media (max-width: 480px) {

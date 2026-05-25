@@ -107,7 +107,7 @@ export function mount(config: WidgetConfig): WidgetHandle {
           <path d="M 9 22 A 7 7 0 0 1 23 22" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" opacity="0.55" />
           <path d="M 13.5 22 A 2.5 2.5 0 0 1 18.5 22" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" opacity="0.28" />
         </svg>
-        <span>powered by helia</span>
+        <span class="wordmark">helia</span>
       </a>
     </div>
   `;
