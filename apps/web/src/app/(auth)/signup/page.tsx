@@ -53,7 +53,7 @@ export default function SignupPage() {
 
       <form onSubmit={submit} className="space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="name">Name</Label>
+          <Label htmlFor="name">Workspace Name</Label>
           <Input
             id="name"
             type="text"
@@ -84,7 +84,9 @@ export default function SignupPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <p className="text-xs text-muted-foreground">At least 8 characters.</p>
+          <p className="text-xs text-muted-foreground">
+            At least 8 characters.
+          </p>
         </div>
         <Button type="submit" disabled={busy} className="w-full">
           {busy ? "Creating..." : "Create account"}
