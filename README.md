@@ -131,8 +131,8 @@ top of that, any HTTP tools the workspace owner registered (via the
 `/tools` admin page) are loaded at chat time. The generic loop in
 `@helia/agent` stays app-agnostic.
 
-Full design in [`ARCHITECTURE.md`](./ARCHITECTURE.md). Current sprint
-plan in [`V1.md`](./V1.md). Long-arc roadmap in [`ROADMAP.md`](./ROADMAP.md).
+Full design in [`ARCHITECTURE.md`](./ARCHITECTURE.md). Long-arc
+direction in [`ROADMAP.md`](./ROADMAP.md).
 
 **Stack** — Next.js 15 · TypeScript · pnpm workspaces · Hono · Postgres +
 pgvector · Drizzle · Vercel AI SDK · OpenAI · shadcn/ui · hugeicons.

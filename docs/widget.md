@@ -17,7 +17,7 @@ The widget lives in `packages/widget`. It ships as v1 (see [`../ROADMAP.md`](../
 ### The default snippet
 
 ```html
-<script src="https://helia.snowztech.com/w.js" data-workspace="ws_xxx" async></script>
+<script src="https://app.gethelia.dev/w.js" data-workspace="ws_xxx" async></script>
 ```
 
 That's it. The loader fetches the workspace config from `/v1/widget/config?ws=ws_xxx`, mounts a launcher button in the corner, and lazy-loads the chat panel when the user opens it.
@@ -29,7 +29,7 @@ The config response includes the theme, the bot persona, the greeting, the allow
 For agencies or power users who want to override one or two values without going to the admin UI:
 
 ```html
-<script src="https://helia.snowztech.com/w.js"
+<script src="https://app.gethelia.dev/w.js"
         data-workspace="ws_xxx"
         data-primary="#0ea5e9"
         data-position="left"
@@ -142,7 +142,7 @@ The widget does not call source endpoints directly. Anything related to source m
 
 ## Build and ship
 
-The widget package is published to npm as `@helia/widget` and served as a static asset at `https://helia.snowztech.com/w.js`. The served file is the immutable, versioned build. A separate `https://helia.snowztech.com/w-latest.js` pointer lets customers pin a version if they want.
+The widget package is published to npm as `@helia/widget` and served as a static asset at `https://app.gethelia.dev/w.js`. The served file is the immutable, versioned build. A separate `https://app.gethelia.dev/w.js` pointer lets customers pin a version if they want.
 
 `pnpm --filter @helia/widget build` produces the loader and the panel bundles. CI runs the bundle-size check, the cross-browser smoke test, and the visual snapshot of the default theme.
 
