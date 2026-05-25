@@ -208,7 +208,7 @@ function IntegrationGuide({
         <div className="space-y-0.5">
           <p className="text-sm font-medium">Integration guide</p>
           <p className="text-[11px] text-muted-foreground">
-            Two steps: sign on your backend, point the widget at your route.
+            Secret, signing route, widget snippet.
           </p>
         </div>
         <HugeiconsIcon
@@ -230,34 +230,65 @@ function IntegrationGuide({
 }
 
 function CodeSamples({ workspaceId }: { workspaceId: string }) {
-  const [tab, setTab] = useState<"node" | "next">("node");
-  const backendCode = tab === "node" ? NODE_SAMPLE : NEXT_SAMPLE;
+  const [backendTab, setBackendTab] = useState<"node" | "next">("node");
+  const [embedTab, setEmbedTab] = useState<"html" | "next">("html");
+  const backendCode = backendTab === "node" ? NODE_SAMPLE : NEXT_SAMPLE;
 
   const widgetSrc =
     typeof window !== "undefined"
       ? `${window.location.origin}/w.js`
       : "/w.js";
-  const embedSnippet = `<script src="${widgetSrc}"
+
+  const htmlSnippet = `<script src="${widgetSrc}"
         data-workspace="${workspaceId}"
         data-token-endpoint="/api/helia/token"
         async></script>`;
+
+  const nextSnippet = `// app/layout.tsx
+import Script from "next/script";
+
+<Script
+  src="${widgetSrc}"
+  data-workspace="${workspaceId}"
+  data-token-endpoint="/api/helia/token"
+  strategy="afterInteractive"
+/>`;
+
+  const embedCode = embedTab === "html" ? htmlSnippet : nextSnippet;
 
   return (
     <div className="space-y-5">
       <Step
         number={1}
-        title="Add a backend route that signs the user"
-        description="Reads your logged-in user from your own auth (sessions, JWT, whatever you already use) and returns a signed identity. Helia verifies the signature with the secret above."
+        title="Add the secret to your backend env"
+        description="The signing route reads it from here."
+      >
+        <CodeBlock
+          code={`HELIA_IDENTITY_SECRET=<paste the secret you just generated>`}
+          language="env"
+        />
+      </Step>
+
+      <Step
+        number={2}
+        title="Add a signing route to your backend"
+        description="Returns a signed identity for the logged-in user."
       >
         <CodeBlock
           code={backendCode}
           language="ts"
           tabs={
             <div className="inline-flex items-center gap-0.5 rounded-md bg-zinc-900 p-0.5">
-              <TabButton active={tab === "node"} onClick={() => setTab("node")}>
+              <TabButton
+                active={backendTab === "node"}
+                onClick={() => setBackendTab("node")}
+              >
                 Node / Express
               </TabButton>
-              <TabButton active={tab === "next"} onClick={() => setTab("next")}>
+              <TabButton
+                active={backendTab === "next"}
+                onClick={() => setBackendTab("next")}
+              >
                 Next.js
               </TabButton>
             </div>
@@ -266,11 +297,30 @@ function CodeSamples({ workspaceId }: { workspaceId: string }) {
       </Step>
 
       <Step
-        number={2}
-        title="Point the widget at your route"
-        description="Add data-token-endpoint to your script tag. The widget fetches the signed token on every page load."
+        number={3}
+        title="Embed the widget"
+        description="Fetches a fresh signed token on every page load."
       >
-        <CodeBlock code={embedSnippet} language="html" />
+        <CodeBlock
+          code={embedCode}
+          language={embedTab === "html" ? "html" : "tsx"}
+          tabs={
+            <div className="inline-flex items-center gap-0.5 rounded-md bg-zinc-900 p-0.5">
+              <TabButton
+                active={embedTab === "html"}
+                onClick={() => setEmbedTab("html")}
+              >
+                HTML
+              </TabButton>
+              <TabButton
+                active={embedTab === "next"}
+                onClick={() => setEmbedTab("next")}
+              >
+                Next.js
+              </TabButton>
+            </div>
+          }
+        />
       </Step>
     </div>
   );
@@ -376,16 +426,12 @@ function CodeBlock({
 }
 
 const NODE_SAMPLE = `import crypto from "node:crypto";
-import express from "express";
-
-const app = express();
 
 app.get("/api/helia/token", (req, res) => {
-  const user = req.user; // your auth middleware
-  const payload = user.name
-    ? { id: user.id, name: user.name }
-    : { id: user.id };
+  const user = /* your auth */;
+  if (!user) return res.status(401).send("unauthorized");
 
+  const payload = user.name ? { id: user.id, name: user.name } : { id: user.id };
   const signature = crypto
     .createHmac("sha256", process.env.HELIA_IDENTITY_SECRET)
     .update(JSON.stringify(payload))
@@ -396,23 +442,19 @@ app.get("/api/helia/token", (req, res) => {
 
 const NEXT_SAMPLE = `// app/api/helia/token/route.ts
 import crypto from "node:crypto";
-import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user) {
-    return new NextResponse("unauthorized", { status: 401 });
-  }
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user) return new Response("unauthorized", { status: 401 });
 
-  const payload = session.user.name
-    ? { id: session.user.id, name: session.user.name }
-    : { id: session.user.id };
-
+  const { id, name } = session.user;
+  const payload = name ? { id, name } : { id };
   const signature = crypto
     .createHmac("sha256", process.env.HELIA_IDENTITY_SECRET!)
     .update(JSON.stringify(payload))
     .digest("hex");
 
-  return NextResponse.json({ ...payload, signature });
+  return Response.json({ ...payload, signature });
 }`;

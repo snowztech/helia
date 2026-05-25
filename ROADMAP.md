@@ -59,8 +59,13 @@ When v1 ships, the customer can:
 After the first paying customers run v1, the next sprint cycle is decided
 by what they actually ask for. Probable candidates:
 
-- **DX polish** — `@helia/server` and `@helia/react` npm packages reducing
-  integration to 2 lines
+- **`@helia/server` SDK** — npm package with one function (`signIdentity`) that
+  collapses the install token endpoint from ~15 lines of crypto to 3. The
+  customer keeps their own auth lookup, drops in the helper, ships. Cost is
+  mostly the publishing pipeline (npm org, build, release), not the code.
+- **`@helia/react` SDK** — typed React hooks for embedding (`<HeliaWidget />`,
+  `useHelia()`). Pairs with `@helia/server` so a Next.js install is a server
+  route + a single React component, both copy-paste-able.
 - **Memory tuning** — sliding window and summarization for long
   conversations, when full-history-per-call gets expensive
 - **Multi-workspace** — one Helia install hosting bots for multiple
