@@ -8,10 +8,6 @@ const FAQS = [
     a: "OpenAI today. Anthropic and Mistral next. Self-hosters can point at any OpenAI-compatible endpoint.",
   },
   {
-    q: "is helia really open source?",
-    a: "Yes. AGPL-3.0 on GitHub. The hosted version runs the same code you can run yourself.",
-  },
-  {
     q: "can i self-host?",
     a: "Yes. Docker compose, Railway, Hetzner, Fly. Anywhere that runs Postgres and Node.",
   },
@@ -31,7 +27,11 @@ export function FAQ() {
 
       <ul className="mt-10 divide-y divide-line border-y border-line">
         {FAQS.map((f, i) => (
-          <li key={f.q} className="reveal" style={{ transitionDelay: `${i * 40}ms` }}>
+          <li
+            key={f.q}
+            className="reveal"
+            style={{ transitionDelay: `${i * 40}ms` }}
+          >
             <details className="group">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-[15px] font-medium transition-colors hover:text-fg">
                 {f.q}
@@ -39,9 +39,7 @@ export function FAQ() {
                   +
                 </span>
               </summary>
-              <p className="pb-5 text-[14px] leading-relaxed text-muted">
-                {f.a}
-              </p>
+              <p className="pb-5 text-sm leading-relaxed text-muted">{f.a}</p>
             </details>
           </li>
         ))}

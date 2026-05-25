@@ -10,27 +10,21 @@ export function FinalCTA() {
         />
         <div className="relative space-y-6">
           <h2 className="text-3xl md:text-5xl">
-            put an ai assistant on your site.
+            put an ai assistant
             <br />
-            today.
+            on your site today.
           </h2>
-          <p className="mx-auto max-w-md text-[14px] leading-relaxed text-white/65">
+          <p className="mx-auto max-w-md text-sm leading-relaxed text-white/65">
             Start free. Connect a source. Paste a snippet. Your visitors get
             answers.
           </p>
-          <div className="flex flex-wrap justify-center gap-2 pt-2">
+          <div className="flex justify-center pt-2">
             <a
               href={`${APP_URL}/signup`}
-              className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-3 text-[13px] font-medium text-[#0a0a0a] transition-transform duration-150 hover:-translate-y-px"
+              className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-medium text-[#0a0a0a] transition-transform duration-150 hover:-translate-y-px"
             >
               start free
               <span aria-hidden>→</span>
-            </a>
-            <a
-              href="mailto:hello@gethelia.dev"
-              className="inline-flex items-center gap-2 rounded-lg border border-white/25 px-5 py-3 text-[13px] font-medium text-white/90 transition-colors hover:bg-white/10"
-            >
-              book a 15-min demo
             </a>
           </div>
         </div>

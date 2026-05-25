@@ -7,7 +7,7 @@ const LINKS = [
   { label: "pricing", href: "#pricing" },
   { label: "github", href: "https://github.com/snowztech/helia" },
   { label: "self-host", href: "https://github.com/snowztech/helia/blob/main/DEPLOY.md" },
-  { label: "contact", href: "mailto:hello@gethelia.dev" },
+  { label: "contact", href: "mailto:gethelia@protonmail.com" },
 ];
 
 export function Footer() {
