@@ -1,7 +1,7 @@
 export const baseStyles = /* css */ `
   :host {
-    /* Themeable. Default = dark surface with a blue accent. */
-    --helia-primary: #0ea5e9;
+    /* Themeable. Workspace brand color overrides this at mount time. */
+    --helia-primary: #3a55e0;
     --helia-background: #ffffff;
     --helia-surface: #f4f4f5;
     --helia-text: #0b0b0b;

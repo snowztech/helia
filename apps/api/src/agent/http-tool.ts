@@ -105,7 +105,7 @@ async function callHttpEndpoint(
   try {
     const headers: Record<string, string> = {
       accept: "application/json",
-      "user-agent": "helia/0.1 (+https://helia.snowztech.com)",
+      "user-agent": "helia/0.1 (+https://gethelia.dev)",
       ...decryptHeaders(t.headers ?? {}),
     };
 

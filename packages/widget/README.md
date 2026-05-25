@@ -6,7 +6,7 @@ IIFE script by esbuild. Customers drop one `<script>` tag on their site.
 ## Install snippet
 
 ```html
-<script src="https://helia.snowztech.com/w.js" data-workspace="ws_xxx" async></script>
+<script src="https://app.gethelia.dev/w.js" data-workspace="ws_xxx" async></script>
 ```
 
 Optional attributes:

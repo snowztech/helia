@@ -75,7 +75,7 @@ export async function sendPasswordResetEmail(args: {
   <body style="font-family: -apple-system, system-ui, sans-serif; font-size: 14px; line-height: 1.5; color: #0f172a;">
     <p>Someone (probably you) asked to reset your Helia password.</p>
     <p>
-      <a href="${safeUrl}" style="display: inline-block; padding: 10px 16px; background: #0ea5e9; color: #fff; text-decoration: none; border-radius: 8px;">
+      <a href="${safeUrl}" style="display: inline-block; padding: 10px 16px; background: #3a55e0; color: #fff; text-decoration: none; border-radius: 8px;">
         Reset password
       </a>
     </p>
@@ -111,7 +111,7 @@ export async function sendVerificationEmail(args: {
   <body style="font-family: -apple-system, system-ui, sans-serif; font-size: 14px; line-height: 1.5; color: #0f172a;">
     <p>Click to verify your email and finish signing up:</p>
     <p>
-      <a href="${safeUrl}" style="display: inline-block; padding: 10px 16px; background: #0ea5e9; color: #fff; text-decoration: none; border-radius: 8px;">
+      <a href="${safeUrl}" style="display: inline-block; padding: 10px 16px; background: #3a55e0; color: #fff; text-decoration: none; border-radius: 8px;">
         Verify email
       </a>
     </p>

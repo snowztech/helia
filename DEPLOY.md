@@ -193,20 +193,6 @@ bundle. If you ever change it, you must **redeploy** the web service
 
 ---
 
-## What still references `helia.snowztech.com`
-
-Two strings in code hard-code the demo origin. Replace before launch:
-
-- `apps/web/src/app/(app)/widget/page.tsx` → `WIDGET_PROD_URL`
-- `apps/web/src/app/(app)/settings/_components/identity-section.tsx`
-  → the `embedSnippet` template literal
-
-Both should become `https://app.gethelia.dev/w.js`. Or pull from
-`process.env.NEXT_PUBLIC_API_URL` if you want it to follow the
-environment automatically.
-
----
-
 ## After launch
 
 ### Backups
