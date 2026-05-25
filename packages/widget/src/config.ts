@@ -22,12 +22,21 @@ export async function loadRemoteConfig(
   apiUrl: string,
   workspace: string,
 ): Promise<RemoteConfig | null> {
+  const url = `${apiUrl.replace(/\/$/, "")}/v1/widget/config?ws=${encodeURIComponent(workspace)}`;
   try {
-    const url = `${apiUrl.replace(/\/$/, "")}/v1/widget/config?ws=${encodeURIComponent(workspace)}`;
     const res = await fetch(url, { credentials: "omit" });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.warn(
+        `[helia] widget config fetch returned ${res.status}. The widget will use defaults. Check that this origin is in your workspace allowlist.`,
+      );
+      return null;
+    }
     return (await res.json()) as RemoteConfig;
-  } catch {
+  } catch (err) {
+    console.warn(
+      "[helia] widget config fetch failed (network error). The widget will use defaults.",
+      err,
+    );
     return null;
   }
 }
