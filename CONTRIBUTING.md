@@ -14,7 +14,7 @@ make setup
 
 Open `apps/api/.env` and set `OPENAI_API_KEY`. Then run `make dev`. The API listens on port 4000 and the web UI on port 3000.
 
-If you change the schema in `packages/db/src/schema.ts`, run `make db:push` to apply it. If the change touches the generated tsvector column, run `make db:init`.
+If you change the schema in `packages/db/src/schema.ts`, run `make db:generate` to produce a migration, then `make db:migrate` to apply it. `db:migrate` also installs the `vector` / `pg_trgm` extensions and the generated tsvector column.
 
 ## Branching
 

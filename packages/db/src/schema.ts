@@ -117,8 +117,9 @@ export const chunks = pgTable(
       url?: string;
     }>(),
     embedding: vector("embedding", { dimensions: EMBEDDING_DIMENSIONS }).notNull(),
-    // Real `tsv` tsvector generated column is installed by db-init
-    // (apps/api/scripts/db-init.ts). Drizzle can't model GENERATED tsvector.
+    // Drizzle's DSL can't model GENERATED tsvector. The migration creates
+    // the real column (`tsvector GENERATED ALWAYS AS to_tsvector(content)`);
+    // we declare it as text here so queries that select it still typecheck.
     tsv: text("tsv"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },

@@ -1,1 +1,0 @@
-ALTER TABLE "workspaces" ALTER COLUMN "launcher_icon" SET DEFAULT 'helia';

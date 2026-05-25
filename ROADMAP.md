@@ -70,6 +70,37 @@ by what they actually ask for. Probable candidates:
 - **Mobile responsive admin** — when the first owner asks
 - **Sentry / OTel integration** — when the first production bug hits
 
+## RAG quality — known wins, post-v1
+
+Today's retrieval is single-pass HNSW over pgvector. Good enough to ship.
+These are the upgrades that move quality without rewriting the stack.
+Ordered by ROI:
+
+1. **Reranker** — top-50 vector hits → cross-encoder → top-5 to LLM.
+   Cohere Rerank (managed) or BGE-reranker (self-host). Biggest single
+   quality bump for one weekend of work. Trigger: customers complain the
+   bot picks the wrong chunk.
+2. **Hybrid retrieval** — the `tsv` column already exists for BM25. Fuse
+   vector + lexical scores via Reciprocal Rank Fusion. Pure vector loses
+   on exact-match queries like error codes, SKUs, names. Trigger: first
+   "why didn't it find X when X is literally in the doc?"
+3. **Better PDF parsing** — current extractor handles clean PDFs, struggles
+   with scanned/layout-heavy docs. Swap to LlamaParse or Unstructured.io
+   behind a feature flag. Trigger: a customer uploads invoices/contracts
+   and quality drops.
+4. **Eval harness** — small offline set of (question, expected source) per
+   workspace. Run before deploys. You can't improve what you can't measure.
+   Trigger: about to ship anything that touches retrieval.
+5. **Embedding model refresh** — when text-embedding-3-large beats small
+   by enough margin to justify re-embedding costs. Plan the re-embed path
+   now so it's not a panic later.
+
+Vector DB stays Postgres + pgvector through all of this. Only consider
+Pinecone / Qdrant / Weaviate when a single workspace exceeds ~1M chunks
+or hybrid query p95 drifts past 200ms with proper indexes. The
+`packages/rag/` module owns search end-to-end, so swapping the backend
+is a one-package change when the day comes.
+
 ## v2 — once we have signal
 
 Decided by reality, not guesses. Likely seeds:

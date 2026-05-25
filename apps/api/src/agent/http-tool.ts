@@ -70,7 +70,9 @@ function lookupContext(
   }
 }
 
-function buildZodSchema(params: ToolParam[]): z.ZodObject<Record<string, ZodTypeAny>> {
+function buildZodSchema(
+  params: ToolParam[],
+): z.ZodObject<Record<string, ZodTypeAny>> {
   const shape: Record<string, ZodTypeAny> = {};
   for (const p of params) {
     if (p.source !== "llm") continue; // context-sourced params handled later

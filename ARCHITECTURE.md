@@ -62,7 +62,7 @@ source_events    id, source_id, level, message, data, created_at
 
 `workspace_id` is on every row that is tenant data. Every query must filter on it. This is the kind of invariant that wants automated checks. We do not have those yet. They are on the roadmap.
 
-The tsvector column is a generated stored column. Drizzle does not have a first class API for tsvector yet, so the column starts life as a plain text placeholder. The bootstrap script (`pnpm db:init`) drops it and recreates it with `GENERATED ALWAYS AS (to_tsvector('simple', coalesce(content, '')))`. The script is idempotent and safe to re run.
+The tsvector column is a generated stored column. Drizzle does not have a first class API for tsvector yet, so the column starts life as a plain text placeholder. `scripts/migrate.ts` runs after drizzle migrations and swaps it for `GENERATED ALWAYS AS (to_tsvector('simple', coalesce(content, '')))`. The swap is idempotent and safe to re run.
 
 ## End to end request
 

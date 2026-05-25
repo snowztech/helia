@@ -14,9 +14,7 @@
     "typecheck": "pnpm -r typecheck",
     "db:generate": "pnpm --filter @helia/api db:generate",
     "db:migrate": "pnpm --filter @helia/api db:migrate",
-    "db:push": "pnpm --filter @helia/api db:push",
-    "db:studio": "pnpm --filter @helia/api db:studio",
-    "db:init": "pnpm --filter @helia/api db:init"
+    "db:studio": "pnpm --filter @helia/api db:studio"
   },
   "packageManager": "pnpm@9.15.0",
   "engines": {

@@ -1,1 +1,0 @@
-ALTER TABLE "workspaces" DROP COLUMN "launcher_icon";

@@ -16,6 +16,7 @@ apps/web/public/w.js.map
 # env
 .env
 .env.local
+.env.production
 .env.*.local
 
 # misc

@@ -1,4 +1,4 @@
-.PHONY: help dev dev-api dev-web dev-widget setup db install schema schema-push init build typecheck clean down reset env docker-up docker-build docker-down docker-logs docker-reset
+.PHONY: help dev dev-api dev-web dev-widget setup db install schema build typecheck clean down reset env docker-up docker-build docker-down docker-logs docker-reset
 
 help:
 	@echo "Helia — make targets"
@@ -10,13 +10,11 @@ help:
 	@echo "    dev-widget   Run only the widget dev server (port 5173)"
 	@echo ""
 	@echo "  Setup"
-	@echo "    setup        One-shot: db + env + install + schema + bootstrap"
+	@echo "    setup        One-shot: db + env + install + schema"
 	@echo "    db           Start Postgres only"
 	@echo "    env          Copy apps/api/.env.example if missing"
 	@echo "    install      pnpm install"
-	@echo "    schema       Apply pending Drizzle migrations (production-safe)"
-	@echo "    schema-push  Sync schema to DB without migrations (dev only)"
-	@echo "    init         Bootstrap extensions + default workspace"
+	@echo "    schema       Apply pending Drizzle migrations + install extensions"
 	@echo ""
 	@echo "  Quality"
 	@echo "    build        Build all packages and apps"
@@ -61,24 +59,14 @@ install:
 	@echo "→ pnpm install…"
 	@pnpm install
 
-# Production-safe: applies migration files from apps/api/drizzle/. The same
-# command runs in the api container on every boot.
+# Applies migration files from apps/api/drizzle/ and installs the
+# pgvector + pg_trgm extensions. Production runs the same command as a
+# pre-deploy step.
 schema:
 	@echo "→ Applying Drizzle migrations…"
 	@pnpm db:migrate
 
-# Dev-only fast path: syncs schema.ts straight to the DB without writing a
-# migration file. Use during schema iteration, then `pnpm db:generate` to
-# commit the migration before pushing the branch.
-schema-push:
-	@echo "→ Pushing Drizzle schema (dev only)…"
-	@pnpm db:push
-
-init:
-	@echo "→ Bootstrapping extensions and default workspace…"
-	@pnpm db:init
-
-setup: db env install schema init
+setup: db env install schema
 	@echo ""
 	@echo "✓ Helia is ready."
 	@echo "  Next: make dev"

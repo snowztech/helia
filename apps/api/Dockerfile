@@ -3,8 +3,8 @@
 # Helia API. Build context = repo root (monorepo with pnpm workspaces).
 # Two stages: deps (cached install) → runtime.
 #
-# devDeps stay in the runtime image because drizzle-kit runs at boot to
-# apply pending migrations.
+# Migrations run as a pre-deploy step (see Railway settings), not on every
+# boot. The runtime container only starts the api process.
 
 ARG NODE_VERSION=22-alpine
 ARG PNPM_VERSION=9.15.0
@@ -56,8 +56,6 @@ COPY --chown=helia:helia packages/config ./packages/config
 COPY --chown=helia:helia packages/db ./packages/db
 COPY --chown=helia:helia packages/rag ./packages/rag
 
-RUN chmod +x apps/api/scripts/start.sh
-
 USER helia
 WORKDIR /repo/apps/api
 ENV NODE_ENV=production PORT=4000
@@ -67,4 +65,4 @@ HEALTHCHECK --interval=10s --timeout=3s --start-period=30s --retries=5 \
   CMD wget -qO- http://localhost:4000/v1/health > /dev/null || exit 1
 
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["sh", "./scripts/start.sh"]
+CMD ["pnpm", "exec", "tsx", "src/main.ts"]

@@ -26,8 +26,9 @@ You need:
 The repo is deploy-ready:
 
 - `apps/api/Dockerfile` + `apps/web/Dockerfile` build production images.
-- `apps/api/scripts/start.sh` runs migrations + extension bootstrap
-  before booting Hono.
+- `apps/api/scripts/migrate.ts` enables extensions and applies pending
+  migrations. Run it as a pre-deploy step (Railway, Fly) or before the
+  container starts (compose, k8s).
 - `apps/web/next.config.ts` outputs a standalone Next.js bundle.
 - `.env.example` documents every variable.
 
@@ -113,8 +114,8 @@ Two Railway services + external Postgres. No server admin.
 - Connection Details → copy the **pooled connection string** (the one
   with `-pooler` in the hostname). Use this as `DATABASE_URL`.
 - The `pgvector` and `pg_trgm` extensions get installed by Helia's
-  boot script (`scripts/db-init.ts`) on first deploy. You don't need
-  to run them manually.
+  pre-deploy migration step (`scripts/migrate.ts`). You don't need
+  to enable them manually.
 
 ### 2. Railway: api service
 
@@ -122,6 +123,10 @@ Two Railway services + external Postgres. No server admin.
 - Service settings:
   - **Root directory**: `apps/api`
   - **Builder**: Dockerfile (Railway auto-detects)
+  - **Watch paths**: `/apps/api/**`, `/packages/**`, `/pnpm-lock.yaml`,
+    `/package.json` — covers monorepo lockfile changes too
+  - **Pre-deploy command**: `pnpm exec tsx scripts/migrate.ts` — runs
+    migrations before traffic switches to the new container
   - **Healthcheck path**: `/v1/health` ← important, prevents a broken
     deploy from going live
   - **Memory limit**: 512 MB (start there, raise if needed)
@@ -148,12 +153,10 @@ Two Railway services + external Postgres. No server admin.
 - Custom domain → `api.gethelia.dev`. Railway gives you a CNAME target;
   add it at your DNS host.
 
-Deploy. Watch the logs:
+Deploy. Pre-deploy runs `migrate.ts` → container boots api. Logs:
 
 ```
-→ applying migrations (drizzle migrate) ...
-→ bootstrapping extensions + tsvector column ...
-→ starting helia-api ...
+✓ migrations applied
 helia-api listening on http://localhost:4000
 ```
 
