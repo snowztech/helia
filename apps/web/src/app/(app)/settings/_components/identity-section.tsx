@@ -233,9 +233,13 @@ function CodeSamples({ workspaceId }: { workspaceId: string }) {
   const [tab, setTab] = useState<"node" | "next">("node");
   const backendCode = tab === "node" ? NODE_SAMPLE : NEXT_SAMPLE;
 
-  const embedSnippet = `<script src="https://helia.snowztech.com/w.js"
+  const widgetSrc =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/w.js`
+      : "/w.js";
+  const embedSnippet = `<script src="${widgetSrc}"
         data-workspace="${workspaceId}"
-        data-token-endpoint="/helia-token"
+        data-token-endpoint="/api/helia/token"
         async></script>`;
 
   return (
@@ -376,7 +380,7 @@ import express from "express";
 
 const app = express();
 
-app.get("/helia-token", (req, res) => {
+app.get("/api/helia/token", (req, res) => {
   const user = req.user; // your auth middleware
   const payload = user.name
     ? { id: user.id, name: user.name }
@@ -390,7 +394,7 @@ app.get("/helia-token", (req, res) => {
   res.json({ ...payload, signature });
 });`;
 
-const NEXT_SAMPLE = `// app/api/helia-token/route.ts
+const NEXT_SAMPLE = `// app/api/helia/token/route.ts
 import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";

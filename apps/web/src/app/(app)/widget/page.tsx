@@ -34,7 +34,6 @@ const PRESETS = [
   "#0b0b0b",
 ];
 const RADIUS_PRESETS = [0, 8, 14, 22];
-const WIDGET_PROD_URL = "https://helia.snowztech.com/w.js";
 
 // Fields we persist on save. Everything else on the workspace is read-only here.
 const EDITABLE_FIELDS = [
@@ -137,7 +136,14 @@ export default function WidgetPage() {
     botAvatar: ws.botAvatar,
   };
 
-  const snippet = `<script src="${WIDGET_PROD_URL}" data-workspace="${ws.id}" async></script>`;
+  // Whatever origin the admin loads (app.gethelia.dev for hosted, the
+  // operator's domain self-hosted) is where w.js is served from. Derive
+  // it at render time so the snippet is correct on every deployment.
+  const widgetSrc =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/w.js`
+      : "/w.js";
+  const snippet = `<script src="${widgetSrc}" data-workspace="${ws.id}" async></script>`;
 
   const save = async () => {
     setSaving(true);

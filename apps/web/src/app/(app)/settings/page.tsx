@@ -210,9 +210,6 @@ export default function SettingsPage() {
                 {copiedId ? "copied" : "copy"}
               </Button>
             </div>
-            <p className="text-[11px] text-muted-foreground">
-              Baked into the widget snippet. Read-only.
-            </p>
           </div>
 
           <div className="space-y-1.5">

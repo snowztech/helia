@@ -71,7 +71,7 @@ export function mount(config: WidgetConfig): WidgetHandle {
       <input type="text" placeholder="${escapeHtml(placeholder)}" aria-label="${escapeHtml(t.messageInput)}" autocomplete="off" />
       <button type="submit" aria-label="${escapeHtml(t.send)}" disabled>${sendIcon()}</button>
     </form>
-    <div class="footer">powered by <a href="https://helia.snowztech.com" target="_blank" rel="noopener">helia</a></div>
+    <div class="footer">powered by <a href="https://gethelia.dev" target="_blank" rel="noopener">helia</a></div>
   `;
   root.appendChild(panel);
 
