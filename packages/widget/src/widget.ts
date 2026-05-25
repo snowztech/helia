@@ -102,7 +102,13 @@ export function mount(config: WidgetConfig): WidgetHandle {
     </form>
     <div class="footer">
       <a href="https://gethelia.dev/?utm_source=widget&utm_medium=embed" target="_blank" rel="noopener" class="powered">
-        powered by helia
+        <span>powered by</span>
+        <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M 4 22 A 12 12 0 0 1 28 22" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" opacity="1" />
+          <path d="M 9 22 A 7 7 0 0 1 23 22" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" opacity="0.55" />
+          <path d="M 13.5 22 A 2.5 2.5 0 0 1 18.5 22" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" opacity="0.28" />
+        </svg>
+        <span class="wordmark">helia</span>
       </a>
     </div>
   `;

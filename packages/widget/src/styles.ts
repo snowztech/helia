@@ -393,6 +393,9 @@ export const baseStyles = /* css */ `
     line-height: 1;
   }
   .footer .powered {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     font-size: 11px;
     letter-spacing: 0.02em;
@@ -401,6 +404,15 @@ export const baseStyles = /* css */ `
     transition: color 120ms ease;
   }
   .footer .powered:hover { color: var(--helia-text); }
+  .footer .mark {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    display: block;
+  }
+  .footer .wordmark {
+    font-weight: 600;
+  }
 
   /* Mobile */
   @media (max-width: 480px) {

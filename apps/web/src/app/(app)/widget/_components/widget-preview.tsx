@@ -323,11 +323,42 @@ function Panel({
 
       <div
         className={cn(
-          "flex items-center justify-center py-2 font-mono text-[11px] leading-none tracking-wide",
+          "flex items-center justify-center gap-1.5 py-2 font-mono text-[11px] leading-none tracking-wide",
           dark ? "text-zinc-500" : "text-zinc-400",
         )}
       >
-        powered by helia
+        <span>powered by</span>
+        <svg
+          viewBox="0 0 32 32"
+          aria-hidden="true"
+          className="h-3 w-3 flex-shrink-0"
+        >
+          <path
+            d="M 4 22 A 12 12 0 0 1 28 22"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3.4"
+            strokeLinecap="round"
+            opacity="1"
+          />
+          <path
+            d="M 9 22 A 7 7 0 0 1 23 22"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3.4"
+            strokeLinecap="round"
+            opacity="0.55"
+          />
+          <path
+            d="M 13.5 22 A 2.5 2.5 0 0 1 18.5 22"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3.4"
+            strokeLinecap="round"
+            opacity="0.28"
+          />
+        </svg>
+        <span className="font-semibold">helia</span>
       </div>
     </div>
   );
