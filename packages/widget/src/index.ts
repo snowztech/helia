@@ -30,10 +30,18 @@ function autoMount(): void {
   if (typeof document === "undefined") return;
 
   const script = currentScript();
-  if (!script) return;
+  if (!script) {
+    console.warn(
+      "[helia] could not find the widget script tag. Make sure the snippet from /settings is on the page.",
+    );
+    return;
+  }
 
   const workspace = script.getAttribute("data-workspace");
-  if (!workspace) return;
+  if (!workspace) {
+    console.warn("[helia] missing data-workspace attribute on script tag.");
+    return;
+  }
 
   const apiUrl = script.getAttribute("data-api-url") ?? undefined;
   const tokenEndpoint = script.getAttribute("data-token-endpoint") ?? undefined;

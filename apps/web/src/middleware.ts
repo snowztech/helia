@@ -34,5 +34,9 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/|favicon.ico|widget.js|widget.css).*)"],
+  matcher: [
+    // Skip Next internals, the widget bundle (public, third-party origins
+    // fetch it without a session), and common favicons/static files.
+    "/((?!_next/|w\\.js|favicon\\.ico|favicon\\.svg|robots\\.txt|sitemap\\.xml).*)",
+  ],
 };
