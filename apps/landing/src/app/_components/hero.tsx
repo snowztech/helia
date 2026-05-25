@@ -7,12 +7,20 @@ export function Hero() {
     <section className="mx-auto max-w-5xl px-6 pt-24 pb-28 md:pt-32">
       <div className="grid items-center gap-14 md:grid-cols-[1.05fr_1fr]">
         <div className="space-y-7 reveal">
+          <span className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-3 py-1 text-[11px] tracking-widest text-muted uppercase">
+            <span
+              className="inline-block h-1.5 w-1.5 rounded-full bg-primary"
+              aria-hidden
+            />
+            open source · self-hostable
+          </span>
+
           <h1 className="text-4xl leading-[1.05] tracking-tight md:text-5xl">
             an ai assistant
             <br />
             your customers
             <br />
-            can chat with.
+            can <span className="text-primary">chat</span> with.
           </h1>
 
           <p className="max-w-md text-base leading-relaxed text-muted">
