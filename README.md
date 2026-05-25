@@ -86,7 +86,7 @@ HELIA_API_URL=https://helia.yourdomain.com
 HELIA_CORS_ORIGIN=https://helia.yourdomain.com,https://app.yourdomain.com
 ```
 
-Step-by-step deploy + reverse proxy + backups: [`SELF_HOST.md`](./SELF_HOST.md).
+Step-by-step deploy + reverse proxy + backups: [`docs/deploy.md`](./docs/deploy.md).
 
 ## API
 
@@ -131,8 +131,8 @@ top of that, any HTTP tools the workspace owner registered (via the
 `/tools` admin page) are loaded at chat time. The generic loop in
 `@helia/agent` stays app-agnostic.
 
-Full design in [`ARCHITECTURE.md`](./ARCHITECTURE.md). Long-arc
-direction in [`ROADMAP.md`](./ROADMAP.md).
+Full design in [`docs/architecture.md`](./docs/architecture.md). Long-arc
+direction in [`docs/roadmap.md`](./docs/roadmap.md).
 
 **Stack** — Next.js 15 · TypeScript · pnpm workspaces · Hono · Postgres +
 pgvector · Drizzle · Vercel AI SDK · OpenAI · shadcn/ui · hugeicons.

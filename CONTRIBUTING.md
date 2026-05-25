@@ -44,7 +44,7 @@ Before pushing run `make typecheck`. CI runs the same command on every PR.
 
 ## What to work on
 
-The `roadmap` section in `docs/05-roadmap.md` lists planned features by phase. The `What is not in the codebase yet` section of `ARCHITECTURE.md` lists the bigger gaps. Issues labeled `good first issue` are smaller cleanups that do not require deep context.
+[`docs/roadmap.md`](./docs/roadmap.md) lists what's next and what intentionally stays out. [`docs/architecture.md`](./docs/architecture.md) covers the design. Issues labeled `good first issue` are smaller cleanups that do not require deep context.
 
 If you want to add a new agent tool, look at `apps/api/src/agent/tools.ts` for the pattern. A tool is one file with a description, a zod schema, and an execute function. The description gets injected into the persona prompt automatically.
 
@@ -54,7 +54,7 @@ Open an issue with the reproduction steps, what you expected, and what happened.
 
 ## Security
 
-If you find a security issue, do not open a public issue. Send an email to the address in the snowztech org profile and we will respond within a few days.
+If you find a security issue, do not open a public issue. See [`SECURITY.md`](./SECURITY.md) for the reporting flow.
 
 ## License
 

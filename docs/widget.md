@@ -2,7 +2,7 @@
 
 The Helia widget is the script tag businesses drop on their site or inside their app to get the assistant. This document is the spec: how it embeds, how it is themed, how it talks to the API, and what it does not do.
 
-The widget lives in `packages/widget`. It ships as v1 (see [`../ROADMAP.md`](../ROADMAP.md)).
+The widget lives in `packages/widget`. See [`roadmap.md`](./roadmap.md) for what comes next.
 
 ## Design goals
 
