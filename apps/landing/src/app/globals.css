@@ -1,60 +1,113 @@
 @import "tailwindcss";
 
-@theme {
-  --color-cream: #f4f1e8;
-  --color-cream-soft: #ece9df;
-  --color-ink: #0a0a0a;
-  --color-ink-soft: #1a1a1a;
-  --color-muted: #6b695f;
-  --color-muted-soft: #a09e95;
-  --color-line: #e3dfd3;
-  --color-indigo: #3a55e0;
-  --color-indigo-soft: #5b71e6;
-  --color-indigo-fade: #eef0fc;
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap");
 
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+/* Token names mirror apps/web/src/app/globals.css so the brand reads as
+   one product, not two. Default = light (marketing convention).
+   `data-theme="dark"` on <html> opts into the dark palette. */
+@layer base {
+  :root {
+    --bg: #f7f7f5;
+    --fg: #161616;
+    --muted: #6a6a6a;
+    --muted-bg: #efefec;
+    --line: #e2e2dd;
+    --line-soft: #ececea;
+    --card: #ffffff;
+    --primary: #2a64d6;
+    --primary-fg: #ffffff;
+    --primary-glow: rgba(42, 100, 214, 0.35);
+  }
+
+  [data-theme="dark"] {
+    --bg: #0a0a0a;
+    --fg: #e8e8e8;
+    --muted: #888888;
+    --muted-bg: #161616;
+    --line: #1f1f1f;
+    --line-soft: #141414;
+    --card: #111111;
+    --primary: #8ab4f8;
+    --primary-fg: #0a0a0a;
+    --primary-glow: rgba(138, 180, 248, 0.3);
+  }
+}
+
+@theme {
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-muted-bg: var(--muted-bg);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-card: var(--card);
+  --color-primary: var(--primary);
+  --color-primary-fg: var(--primary-fg);
+
+  --font-sans: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas,
+    monospace;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas,
     monospace;
 }
 
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap");
-
-html {
-  background: var(--color-cream);
-  color: var(--color-ink);
+html,
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-family: var(--font-sans);
+  transition: background-color 200ms ease, color 200ms ease;
 }
 
-body {
-  background: var(--color-cream);
-}
-
-/* Tighter headings — the inspiration uses a dense weighty sans. */
 h1,
 h2,
 h3 {
-  letter-spacing: -0.02em;
   font-weight: 700;
+  letter-spacing: -0.015em;
 }
 
-/* The small section labels: `• OPEN SOURCE` */
 .eyebrow {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--color-muted);
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 .eyebrow::before {
   content: "";
   width: 6px;
   height: 6px;
   border-radius: 999px;
-  background: var(--color-indigo);
+  background: var(--primary);
+}
+
+.reveal {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 600ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 600ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.js-ready .reveal {
+  opacity: 0;
+  transform: translateY(12px);
+}
+.js-ready .reveal.in {
+  opacity: 1;
+  transform: none;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+.pulse-dot { animation: pulse-soft 1.8s ease-in-out infinite; }
+
+.glow-primary {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--primary) 30%, transparent),
+    0 0 60px 12px var(--primary-glow);
 }
