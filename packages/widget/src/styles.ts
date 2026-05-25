@@ -393,26 +393,14 @@ export const baseStyles = /* css */ `
     line-height: 1;
   }
   .footer .powered {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
+    font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    letter-spacing: 0.02em;
     color: var(--helia-muted);
     text-decoration: none;
-    opacity: 0.75;
-    transition: opacity 120ms ease;
+    transition: color 120ms ease;
   }
-  .footer .powered:hover { opacity: 1; }
-  .footer .mark {
-    width: 12px;
-    height: 12px;
-    flex-shrink: 0;
-    display: block;
-  }
-  .footer .wordmark {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-  }
+  .footer .powered:hover { color: var(--helia-text); }
 
   /* Mobile */
   @media (max-width: 480px) {
