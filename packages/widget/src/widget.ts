@@ -8,7 +8,36 @@ import { strings, type Locale } from "./i18n";
 import type { ChatMessage, WidgetConfig, WidgetHandle } from "./types";
 
 const HOST_ID = "helia-widget";
-const DEFAULT_API_URL = "http://localhost:4000";
+
+/**
+ * Default API URL. Derived from the script's own origin so the same bundle
+ * works in hosted (app.gethelia.dev → api.gethelia.dev) and self-host
+ * (helia.customer.com → api.helia.customer.com). Operators using a
+ * non-conventional layout pass `data-api-url` on the script tag.
+ */
+function defaultApiUrl(): string {
+  if (typeof window === "undefined") return "http://localhost:4000";
+
+  const script = Array.from(document.getElementsByTagName("script"))
+    .reverse()
+    .find((s) => s.src && s.src.includes("/w.js"));
+  if (!script) return "http://localhost:4000";
+
+  try {
+    const url = new URL(script.src);
+    // localhost dev: assume API on :4000 of the same host.
+    if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+      return `${url.protocol}//${url.hostname}:4000`;
+    }
+    // Swap leading `app.` for `api.` (Helia's convention).
+    const host = url.hostname.startsWith("app.")
+      ? "api." + url.hostname.slice(4)
+      : "api." + url.hostname;
+    return `${url.protocol}//${host}`;
+  } catch {
+    return "http://localhost:4000";
+  }
+}
 
 interface State {
   open: boolean;
@@ -22,7 +51,7 @@ export function mount(config: WidgetConfig): WidgetHandle {
     return { destroy: () => existing?.remove() };
   }
 
-  const apiUrl = config.apiUrl ?? DEFAULT_API_URL;
+  const apiUrl = config.apiUrl ?? defaultApiUrl();
 
   let botName = config.botName ?? "Assistant";
   let greeting = config.greeting ?? "Hi, how can I help?";
