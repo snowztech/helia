@@ -3,7 +3,7 @@ import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { workspaces } from "@helia/db";
 import { eq } from "drizzle-orm";
-import { db } from "../lib/state";
+import { db, HELIA_MODE } from "../lib/state";
 import { currentWorkspace } from "../lib/auth";
 import { encrypt } from "../lib/crypto";
 import { generateIdentitySecret } from "../lib/hmac";
@@ -69,6 +69,11 @@ workspaceRouter.patch("/", zValidator("json", PatchBody), async (c) => {
       { error: "generate an identity secret before requiring it" },
       400,
     );
+  }
+
+  // In hosted mode, token quota is a billing concept — not a user knob.
+  if (HELIA_MODE === "hosted" && patch.tokenQuotaMonthly !== undefined) {
+    return c.json({ error: "quota is managed by your plan" }, 403);
   }
 
   const [updated] = await db

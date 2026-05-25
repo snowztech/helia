@@ -9,9 +9,13 @@ import { api, type Usage, type Workspace } from "@/lib/api";
 export function LimitsSection({
   workspace,
   onWorkspace,
+  editable = true,
 }: {
   workspace: Workspace;
   onWorkspace: (ws: Workspace) => void;
+  /** When false, the quota number is shown but not user-editable.
+   * Used in hosted mode where quota is tied to a plan, not a user knob. */
+  editable?: boolean;
 }) {
   const [usage, setUsage] = useState<Usage | null>(null);
   const [editing, setEditing] = useState(false);
@@ -98,36 +102,37 @@ export function LimitsSection({
               </span>
             )}
           </span>
-          {editing ? (
-            <>
+          {editable &&
+            (editing ? (
+              <>
+                <button
+                  type="button"
+                  onClick={saveQuota}
+                  disabled={saving}
+                  className="text-foreground hover:text-muted-foreground disabled:opacity-50"
+                >
+                  {saving ? "saving…" : "save"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuotaDraft(workspace.tokenQuotaMonthly.toLocaleString());
+                    setEditing(false);
+                  }}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  cancel
+                </button>
+              </>
+            ) : (
               <button
                 type="button"
-                onClick={saveQuota}
-                disabled={saving}
-                className="text-foreground hover:text-muted-foreground disabled:opacity-50"
-              >
-                {saving ? "saving…" : "save"}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setQuotaDraft(workspace.tokenQuotaMonthly.toLocaleString());
-                  setEditing(false);
-                }}
+                onClick={() => setEditing(true)}
                 className="text-muted-foreground hover:text-foreground"
               >
-                cancel
+                edit
               </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setEditing(true)}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              edit
-            </button>
-          )}
+            ))}
         </div>
       </div>
 

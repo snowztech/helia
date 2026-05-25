@@ -68,7 +68,7 @@ export function EmbedAllowlist({
               void add();
             }
           }}
-          placeholder="https://fitdistance.io"
+          placeholder="https://example.com"
           disabled={saving}
         />
         <Button onClick={add} disabled={saving || !input.trim()}>

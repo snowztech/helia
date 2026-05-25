@@ -245,8 +245,8 @@ export default function SettingsPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>provider</Label>
-              <div className="rounded-md border border-border bg-muted px-3 py-1.5 text-sm capitalize">
-                {system.provider}
+              <div className="rounded-md border border-border bg-muted px-3 py-1.5 text-sm">
+                {providerLabel(system.provider)}
               </div>
             </div>
             <div className="space-y-1.5">
@@ -279,7 +279,11 @@ export default function SettingsPage() {
       </Section>
 
       <Section title="Limits" id="limits">
-        <LimitsSection workspace={ws} onWorkspace={setWs} />
+        <LimitsSection
+          workspace={ws}
+          onWorkspace={setWs}
+          editable={system.mode === "self_host"}
+        />
       </Section>
 
       <Section title="User identity" id="user-identity">
@@ -374,6 +378,11 @@ function SelectInput({
       )}
     </select>
   );
+}
+
+function providerLabel(p: SystemInfo["provider"]): string {
+  if (p === "openai") return "OpenAI";
+  return p;
 }
 
 function KeyStatusDot({ ok }: { ok: boolean }) {
