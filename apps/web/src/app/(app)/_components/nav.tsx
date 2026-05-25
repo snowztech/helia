@@ -24,7 +24,7 @@ export function Nav() {
             className={cn(
               "rounded-md px-2.5 py-1 transition-colors",
               active
-                ? "text-foreground bg-muted"
+                ? "text-primary bg-primary/8"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >

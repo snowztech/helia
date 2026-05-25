@@ -4,9 +4,11 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.gethelia.dev";
 const VERSION = process.env.NEXT_PUBLIC_HELIA_VERSION ?? "dev";
 
 const LINKS = [
-  { label: "pricing", href: "#pricing" },
+  { label: "pricing", href: "/#pricing" },
   { label: "github", href: "https://github.com/snowztech/helia" },
   { label: "self-host", href: "https://github.com/snowztech/helia/blob/main/DEPLOY.md" },
+  { label: "privacy", href: "/privacy" },
+  { label: "terms", href: "/terms" },
   { label: "contact", href: "mailto:gethelia@protonmail.com" },
 ];
 

@@ -4,6 +4,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Settings02Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { HeliaWordmark } from "@/components/helia-wordmark";
 import { api, ApiError } from "@/lib/api";
 import { Nav } from "./_components/nav";
 import { WorkspaceChip } from "./_components/workspace-chip";
@@ -30,8 +31,8 @@ export default async function AppLayout({
       <div className="mx-auto max-w-5xl px-6 py-8">
         <header className="mb-10 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <a href="/" className="text-sm font-semibold text-primary">
-              helia
+            <a href="/" aria-label="Helia home">
+              <HeliaWordmark />
             </a>
             <WorkspaceChip />
           </div>

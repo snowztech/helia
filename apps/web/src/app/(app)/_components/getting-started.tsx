@@ -128,7 +128,7 @@ export function GettingStarted({ hasSources }: { hasSources?: boolean }) {
                     "mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border text-[10px]",
                     s.done
                       ? "border-success bg-success/15 text-success"
-                      : "border-border text-muted-foreground",
+                      : "border-primary/30 bg-primary/8 text-primary",
                   )}
                 >
                   {s.done ? (

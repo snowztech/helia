@@ -35,11 +35,11 @@ export function HeliaMark({
 export function HeliaWordmark({ className = "" }: { className?: string }) {
   return (
     <span
-      className={`inline-flex items-center gap-2 text-primary ${className}`}
-      aria-label="helia"
+      className={`inline-flex items-center gap-1.5 text-primary ${className}`}
+      aria-label="Helia"
     >
-      <HeliaMark className="h-5 w-5" />
-      <span className="text-base font-semibold tracking-tight">helia</span>
+      <HeliaMark className="h-4 w-4" />
+      <span className="text-sm font-semibold tracking-tight">helia</span>
     </span>
   );
 }
