@@ -39,6 +39,18 @@ const PatchBody = z.object({
   botSuggestions: z.array(z.string().min(1).max(120)).max(6).optional(),
   identityRequired: z.boolean().optional(),
   tokenQuotaMonthly: z.number().int().min(10_000).max(100_000_000).optional(),
+  allowedOrigins: z
+    .array(
+      z
+        .string()
+        .url("must be a full URL like https://example.com")
+        .max(200)
+        // Normalize: strip trailing slashes so "https://x.com" and
+        // "https://x.com/" don't both need to be in the list.
+        .transform((u) => u.replace(/\/+$/, "")),
+    )
+    .max(50)
+    .optional(),
 });
 
 /**

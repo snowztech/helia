@@ -15,7 +15,7 @@ interface StepState {
   hasMessages: boolean;
 }
 
-const DEFAULT_PRIMARY = "#0ea5e9";
+const DEFAULT_PRIMARY = "#3a55e0";
 const DEFAULT_BOT_NAME = "Assistant";
 
 /**

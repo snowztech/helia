@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { CORS_POLICY } from "../lib/state";
+import { CORS_POLICY, HELIA_MODE } from "../lib/state";
 import { currentWorkspace } from "../lib/auth";
 import rootPkg from "../../../../package.json";
 
@@ -24,6 +24,7 @@ systemRouter.get("/", async (c) => {
 
   return c.json({
     version: rootPkg.version,
+    mode: HELIA_MODE,
     provider,
     model: ws.model,
     keyConfigured,

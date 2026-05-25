@@ -9,6 +9,7 @@ import { makeAgentTools } from "../agent/tools";
 import { decrypt } from "../lib/crypto";
 import { verifyIdentity } from "../lib/hmac";
 import { tokensUsedThisMonth } from "../lib/usage";
+import { checkWorkspaceOrigin } from "../lib/widget-origin";
 
 export interface Identity {
   id: string;
@@ -49,6 +50,9 @@ chatRouter.post("/", zValidator("json", Body), async (c) => {
 
   const ws = await resolveChatWorkspace(c);
   if (!ws) return c.json({ error: "workspace not found" }, 404);
+
+  const originError = checkWorkspaceOrigin(c, ws);
+  if (originError) return originError;
 
   const conversationId = resolveConversationId(c);
 

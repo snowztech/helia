@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { workspaces } from "@helia/db";
 import { eq } from "drizzle-orm";
 import { db } from "../lib/state";
+import { checkWorkspaceOrigin } from "../lib/widget-origin";
 
 export const widgetRouter = new Hono();
 
@@ -26,6 +27,9 @@ widgetRouter.get("/config", async (c) => {
     .limit(1);
 
   if (!workspace) return c.json({ error: "workspace not found" }, 404);
+
+  const originError = checkWorkspaceOrigin(c, workspace);
+  if (originError) return originError;
 
   c.header("Cache-Control", "public, max-age=60, stale-while-revalidate=600");
 

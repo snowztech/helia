@@ -1,5 +1,5 @@
 {
-  "id": "9c2ce3fc-1fa7-4344-ba2f-e463b7b15586",
+  "id": "f3cf0719-a206-41b0-bfb0-5bfda1a17cac",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1114,6 +1114,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": 1000000
+        },
+        "allowed_origins": {
+          "name": "allowed_origins",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
         },
         "created_at": {
           "name": "created_at",

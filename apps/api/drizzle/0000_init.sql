@@ -125,6 +125,7 @@ CREATE TABLE "workspaces" (
 	"identity_secret" text,
 	"identity_required" boolean DEFAULT false NOT NULL,
 	"token_quota_monthly" integer DEFAULT 1000000 NOT NULL,
+	"allowed_origins" text[] DEFAULT '{}'::text[] NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint

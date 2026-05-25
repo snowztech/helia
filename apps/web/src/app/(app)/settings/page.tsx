@@ -16,6 +16,7 @@ import { DeleteAccountDialog } from "../_components/delete-account-dialog";
 import { IdentitySection } from "./_components/identity-section";
 import { LimitsSection } from "./_components/limits-section";
 import { BansSection } from "./_components/bans-section";
+import { EmbedAllowlist } from "./_components/embed-allowlist";
 
 // Models we expose in the dropdown. The DB column accepts any string so
 // power-users can paste whatever they want, but typical usage picks one of
@@ -267,22 +268,12 @@ export default function SettingsPage() {
               <span className="text-sm">
                 {system.keyConfigured ? "configured" : "not configured"}
               </span>
-              <code className="ml-auto text-[11px] text-muted-foreground">
-                OPENAI_API_KEY
-              </code>
             </div>
-            <p className="text-[11px] text-muted-foreground">
-              {system.keyConfigured ? (
-                <>
-                  Set in <code>.env</code>.
-                </>
-              ) : (
-                <>
-                  Set <code>OPENAI_API_KEY</code> in <code>.env</code> and
-                  restart the API. Chat won't work until configured.
-                </>
-              )}
-            </p>
+            {!system.keyConfigured && (
+              <p className="text-[11px] text-muted-foreground">
+                Chat won't work until an API key is configured.
+              </p>
+            )}
           </div>
         </div>
       </Section>
@@ -305,29 +296,7 @@ export default function SettingsPage() {
       </Section>
 
       <Section title="Embed allowlist">
-        <div className="space-y-2">
-          {system.allowedOrigins === "wildcard" ? (
-            <Badge variant="warning">any origin allowed (dev wildcard)</Badge>
-          ) : system.allowedOrigins === "dev-localhost" ? (
-            <Badge>any localhost origin (dev only)</Badge>
-          ) : system.allowedOrigins.length === 0 ? (
-            <Badge variant="destructive">no origins configured</Badge>
-          ) : (
-            <ul className="flex flex-wrap gap-2">
-              {system.allowedOrigins.map((o) => (
-                <li key={o}>
-                  <code className="rounded-md border border-border bg-muted px-2 py-1 text-xs">
-                    {o}
-                  </code>
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="text-[11px] text-muted-foreground">
-            Set <code>HELIA_CORS_ORIGIN</code> in <code>.env</code> with a
-            comma-separated list for production.
-          </p>
-        </div>
+        <EmbedAllowlist workspace={ws} onWorkspace={setWs} />
       </Section>
 
       <section className="space-y-3">

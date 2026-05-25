@@ -76,6 +76,7 @@ export type Workspace = {
   identityRequired: boolean;
   identityConfigured: boolean;
   tokenQuotaMonthly: number;
+  allowedOrigins: string[];
   createdAt: string;
 };
 
@@ -97,11 +98,13 @@ export type WorkspacePatch = Partial<
     | "botAvatar"
     | "identityRequired"
     | "tokenQuotaMonthly"
+    | "allowedOrigins"
   >
 >;
 
 export type SystemInfo = {
   version: string;
+  mode: "hosted" | "self_host";
   provider: "openai";
   model: string;
   keyConfigured: boolean;

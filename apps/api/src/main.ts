@@ -23,10 +23,19 @@ const app = new Hono();
 
 const LOCALHOST_RE = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
 
+// Widget routes echo any Origin. Real enforcement happens server-side
+// against the workspace's allowedOrigins list (see lib/widget-origin.ts).
+// Browser CORS is advisory; security is the per-workspace check.
+const WIDGET_PREFIXES = ["/v1/chat", "/v1/widget"];
+
 app.use(
   "*",
   cors({
-    origin: (origin) => {
+    origin: (origin, c) => {
+      const path = c.req.path;
+      if (WIDGET_PREFIXES.some((p) => path.startsWith(p))) {
+        return origin ?? "*";
+      }
       if (CORS_POLICY.kind === "wildcard") return origin ?? "*";
       if (!origin) return null;
       if (CORS_POLICY.kind === "list") {

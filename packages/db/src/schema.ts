@@ -68,6 +68,13 @@ export const workspaces = pgTable("workspaces", {
   tokenQuotaMonthly: integer("token_quota_monthly")
     .default(1_000_000)
     .notNull(),
+  // Domains allowed to embed the widget for this workspace. Enforced
+  // server-side on /v1/chat and /v1/widget/config. Empty array = allow
+  // any origin (fine for dev / open assistants, dangerous on a paid plan).
+  allowedOrigins: text("allowed_origins")
+    .array()
+    .notNull()
+    .default(sql`'{}'::text[]`),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
