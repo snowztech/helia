@@ -1,6 +1,6 @@
 {
   "name": "helia",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "pnpm --parallel --filter @helia/api --filter @helia/web --filter @helia/widget dev",
