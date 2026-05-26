@@ -52,6 +52,21 @@ export function mount(config: WidgetConfig): WidgetHandle {
   }
 
   const apiUrl = config.apiUrl ?? defaultApiUrl();
+  const embedded = config.mode === "embedded";
+
+  // In embedded mode, resolve the target element.
+  let targetEl: Element | null = null;
+  if (embedded) {
+    if (!config.target) {
+      console.warn("[helia] embedded mode requires a `target` selector. Falling back to floating.");
+      targetEl = null;
+    } else {
+      targetEl = document.querySelector(config.target);
+      if (!targetEl) {
+        console.warn(`[helia] embedded mode: target "${config.target}" not found. Falling back to floating.`);
+      }
+    }
+  }
 
   let botName = config.botName ?? "Assistant";
   let greeting = config.greeting ?? "Hi, how can I help?";
@@ -63,7 +78,11 @@ export function mount(config: WidgetConfig): WidgetHandle {
   const host = document.createElement("div");
   host.id = HOST_ID;
   host.dataset.workspace = config.workspace;
-  document.body.appendChild(host);
+  if (targetEl) {
+    targetEl.appendChild(host);
+  } else {
+    document.body.appendChild(host);
+  }
 
   const root = host.attachShadow({ mode: "open" });
 
@@ -73,17 +92,20 @@ export function mount(config: WidgetConfig): WidgetHandle {
 
   const hostEl = root.host as HTMLElement;
 
-  // --- Launcher
-  const launcher = document.createElement("button");
-  launcher.className = "launcher right";
-  launcher.type = "button";
-  launcher.setAttribute("aria-label", t.openChat);
-  launcher.innerHTML = avatarMarkup(botAvatar);
-  root.appendChild(launcher);
+  // --- Launcher (floating mode only)
+  let launcher: HTMLButtonElement | null = null;
+  if (!embedded) {
+    launcher = document.createElement("button");
+    launcher.className = "launcher right";
+    launcher.type = "button";
+    launcher.setAttribute("aria-label", t.openChat);
+    launcher.innerHTML = avatarMarkup(botAvatar);
+    root.appendChild(launcher);
+  }
 
   // --- Panel
   const panel = document.createElement("div");
-  panel.className = "panel right";
+  panel.className = embedded ? "panel embedded" : "panel right";
   panel.setAttribute("role", "dialog");
   panel.setAttribute("aria-label", `${botName} chat`);
   panel.innerHTML = `
@@ -127,7 +149,7 @@ export function mount(config: WidgetConfig): WidgetHandle {
   messagesEl.appendChild(suggestionsEl);
 
   const state: State = {
-    open: false,
+    open: embedded,
     streaming: false,
     messages: [],
   };
@@ -154,7 +176,10 @@ export function mount(config: WidgetConfig): WidgetHandle {
     botAvatar = remote.bot.avatar ?? null;
     locale = remote.workspace.locale;
     t = strings(locale);
-    launcher.setAttribute("aria-label", t.openChat);
+    if (launcher) {
+      launcher.setAttribute("aria-label", t.openChat);
+      launcher.innerHTML = avatarMarkup(botAvatar);
+    }
     const closeBtn = panel.querySelector(".close");
     if (closeBtn) closeBtn.setAttribute("aria-label", t.closeChat);
     input.setAttribute("aria-label", t.messageInput);
@@ -165,7 +190,6 @@ export function mount(config: WidgetConfig): WidgetHandle {
     panel.setAttribute("aria-label", `${botName} chat`);
 
     // Refresh the icons now that we know what the customer chose.
-    launcher.innerHTML = avatarMarkup(botAvatar);
     const avatarSlot = panel.querySelector(".avatar");
     if (avatarSlot) {
       avatarSlot.innerHTML = avatarMarkup(botAvatar);
@@ -206,16 +230,23 @@ export function mount(config: WidgetConfig): WidgetHandle {
   function applyPosition(
     pos: "bottom-right" | "bottom-left" | undefined,
   ): void {
+    if (embedded) return;
     const next: "left" | "right" = pos === "bottom-left" ? "left" : "right";
-    launcher.classList.remove("left", "right");
-    launcher.classList.add(next);
+    if (launcher) {
+      launcher.classList.remove("left", "right");
+      launcher.classList.add(next);
+    }
     panel.classList.remove("left", "right");
     panel.classList.add(next);
   }
 
   // --- Wiring
-  launcher.addEventListener("click", () => setOpen(true));
-  closeBtn.addEventListener("click", () => setOpen(false));
+  if (launcher) {
+    launcher.addEventListener("click", () => setOpen(true));
+  }
+  if (!embedded) {
+    closeBtn.addEventListener("click", () => setOpen(false));
+  }
 
   input.addEventListener("input", () => {
     sendBtn.disabled = state.streaming || input.value.trim().length === 0;
@@ -226,14 +257,17 @@ export function mount(config: WidgetConfig): WidgetHandle {
     void send();
   });
 
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && state.open) setOpen(false);
-  });
+  if (!embedded) {
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && state.open) setOpen(false);
+    });
+  }
 
   function setOpen(open: boolean): void {
+    if (embedded) return;
     state.open = open;
     panel.classList.toggle("open", open);
-    launcher.classList.toggle("hidden", open);
+    if (launcher) launcher.classList.toggle("hidden", open);
     if (open) {
       setTimeout(() => input.focus(), 180);
     }

@@ -33,11 +33,23 @@ export interface PreviewConfig {
  * Uses the real `/v1/chat` endpoint, so clicking the launcher and chatting
  * actually exercises the agent end-to-end.
  */
-export function WidgetPreview({ config }: { config: PreviewConfig }) {
-  // Default open in the admin preview — you're configuring the panel, not
-  // the launcher, so showing the panel first is the right context.
-  const [open, setOpen] = useState(true);
+export function WidgetPreview({
+  config,
+  mode,
+}: {
+  config: PreviewConfig;
+  mode: "floating" | "embedded";
+}) {
   const themeMode = useResolvedTheme(config.theme);
+  const [open, setOpen] = useState(true);
+
+  if (mode === "embedded") {
+    return (
+      <div className="h-[580px] w-full">
+        <EmbeddedPreview config={config} themeMode={themeMode} />
+      </div>
+    );
+  }
 
   return (
     <FakeBrowser>
@@ -57,6 +69,182 @@ export function WidgetPreview({ config }: { config: PreviewConfig }) {
   );
 }
 
+function EmbeddedPreview({
+  config,
+  themeMode,
+}: {
+  config: PreviewConfig;
+  themeMode: "light" | "dark";
+}) {
+  const dark = themeMode === "dark";
+  const previewConversationId = useMemo(() => crypto.randomUUID(), []);
+  const { messages, input, handleInputChange, handleSubmit, status, append } =
+    useChat({
+      api: `${API_URL}/v1/chat?ws=${encodeURIComponent(config.workspaceId)}&conv=${previewConversationId}`,
+    });
+
+  const waiting = status === "submitted";
+  const busy = status === "submitted" || status === "streaming";
+  const messagesEnd = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEnd.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+    });
+  }, [messages, status]);
+
+  return (
+    <div
+      className={cn(
+        "flex h-full w-full flex-col overflow-hidden shadow-2xl",
+        dark ? "bg-[#161616] text-zinc-100" : "bg-white text-zinc-900",
+      )}
+      style={{ borderRadius: config.radius }}
+    >
+      <header
+        className="flex items-start gap-3 px-4 py-3.5 text-white"
+        style={{ background: config.primary }}
+      >
+        <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/20">
+          <AvatarMark avatar={config.botAvatar} size={16} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[15px] font-semibold leading-tight">
+            {config.botName}
+          </div>
+          {config.botSubtitle && (
+            <div className="mt-0.5 truncate text-xs opacity-90">
+              {config.botSubtitle}
+            </div>
+          )}
+        </div>
+      </header>
+
+      <div className="flex-1 space-y-2 overflow-y-auto px-3 py-3 text-sm">
+        <AssistantBubble dark={dark}>{config.botGreeting}</AssistantBubble>
+
+        {messages.map((m) => (
+          <MessageRender
+            key={m.id}
+            message={m}
+            primary={config.primary}
+            dark={dark}
+          />
+        ))}
+
+        {waiting && (
+          <div
+            className={cn(
+              "mr-auto inline-flex items-center gap-1 rounded-2xl rounded-bl-sm px-3 py-2",
+              dark ? "bg-zinc-800" : "bg-zinc-100",
+            )}
+          >
+            <Dot delay={0} />
+            <Dot delay={150} />
+            <Dot delay={300} />
+          </div>
+        )}
+
+        {messages.length === 0 && config.suggestions.length > 0 && !busy && (
+          <ul className="space-y-1.5 pt-1">
+            {config.suggestions.map((q) => (
+              <li key={q}>
+                <button
+                  type="button"
+                  data-shadcn=""
+                  onClick={() => void append({ role: "user", content: q })}
+                  className={cn(
+                    "w-full rounded-2xl border px-3 py-2 text-left text-[13px] leading-snug transition-colors",
+                    dark
+                      ? "border-zinc-700 hover:bg-zinc-800"
+                      : "border-zinc-200 hover:bg-zinc-50",
+                  )}
+                >
+                  {q}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div ref={messagesEnd} />
+      </div>
+
+      <form
+        onSubmit={handleSubmit}
+        className={cn(
+          "flex items-center gap-2 border-t px-3 py-2.5",
+          dark ? "border-zinc-800" : "border-zinc-200",
+        )}
+      >
+        <input
+          value={input}
+          onChange={handleInputChange}
+          placeholder={config.botPlaceholder}
+          disabled={busy}
+          className={cn(
+            "flex-1 rounded-full border bg-transparent px-3 py-1.5 text-[13px] outline-none focus:ring-2 focus:ring-offset-1",
+            dark
+              ? "border-zinc-700 focus:ring-zinc-600 focus:ring-offset-zinc-900"
+              : "border-zinc-200 focus:ring-zinc-300 focus:ring-offset-white",
+          )}
+        />
+        <button
+          type="submit"
+          data-shadcn=""
+          disabled={busy || input.trim().length === 0}
+          className="flex h-8 w-8 items-center justify-center rounded-full text-white disabled:opacity-50"
+          style={{ background: config.primary }}
+          aria-label="Send"
+        >
+          <HugeiconsIcon icon={ArrowUp02Icon} size={14} />
+        </button>
+      </form>
+
+      <div
+        className={cn(
+          "flex items-center justify-center gap-1.5 py-2 font-mono text-[11px] leading-none tracking-wide",
+          dark ? "text-zinc-500" : "text-zinc-400",
+        )}
+      >
+        <span>powered by</span>
+        <svg
+          viewBox="0 0 32 32"
+          aria-hidden="true"
+          className="h-3 w-3 flex-shrink-0"
+        >
+          <path
+            d="M 4 22 A 12 12 0 0 1 28 22"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3.4"
+            strokeLinecap="round"
+            opacity="1"
+          />
+          <path
+            d="M 9 22 A 7 7 0 0 1 23 22"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3.4"
+            strokeLinecap="round"
+            opacity="0.55"
+          />
+          <path
+            d="M 13.5 22 A 2.5 2.5 0 0 1 18.5 22"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3.4"
+            strokeLinecap="round"
+            opacity="0.28"
+          />
+        </svg>
+        <span className="font-semibold">helia</span>
+      </div>
+    </div>
+  );
+}
+
 function useResolvedTheme(theme: PreviewConfig["theme"]): "light" | "dark" {
   const [auto, setAuto] = useState<"light" | "dark">("dark");
   useEffect(() => {
@@ -71,7 +259,13 @@ function useResolvedTheme(theme: PreviewConfig["theme"]): "light" | "dark" {
   return theme === "auto" ? auto : theme;
 }
 
-function FakeBrowser({ children }: { children: React.ReactNode }) {
+function FakeBrowser({
+  children,
+  fill,
+}: {
+  children: React.ReactNode;
+  fill?: boolean;
+}) {
   // The frame represents the customer's website chrome — neutral, following
   // the admin's theme tokens. The widget panel inside is what reacts to the
   // widget's own light/dark/auto setting.
@@ -82,7 +276,12 @@ function FakeBrowser({ children }: { children: React.ReactNode }) {
         <div className="h-2 w-2 rounded-full bg-muted-foreground/40" />
         <div className="h-2 w-2 rounded-full bg-muted-foreground/40" />
       </div>
-      <div className="relative flex h-[580px] items-end justify-center p-4">
+      <div
+        className={cn(
+          "flex h-[580px]",
+          fill ? "flex-col" : "items-end justify-center p-4",
+        )}
+      >
         {children}
       </div>
     </div>

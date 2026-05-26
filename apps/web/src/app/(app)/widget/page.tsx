@@ -89,6 +89,10 @@ export default function WidgetPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [widgetMode, setWidgetMode] = useState<"floating" | "embedded">(
+    "floating",
+  );
+  const [widgetTarget, setWidgetTarget] = useState("#helia-chat");
 
   useEffect(() => {
     api
@@ -143,7 +147,11 @@ export default function WidgetPage() {
     typeof window !== "undefined"
       ? `${window.location.origin}/w.js`
       : "/w.js";
-  const snippet = `<script src="${widgetSrc}" data-workspace="${ws.id}" async></script>`;
+  const embedAttrs =
+    widgetMode === "embedded"
+      ? ` data-mode="embedded" data-target="${widgetTarget}"`
+      : "";
+  const snippet = `<script src="${widgetSrc}" data-workspace="${ws.id}"${embedAttrs} async></script>`;
 
   const save = async () => {
     setSaving(true);
@@ -288,6 +296,28 @@ export default function WidgetPage() {
 
           <Section title="Layout">
             <div className="space-y-4">
+              <Field label="mode">
+                <SegGroup
+                  options={[
+                    { value: "floating", label: "floating" },
+                    { value: "embedded", label: "embedded" },
+                  ]}
+                  value={widgetMode}
+                  onChange={(v) =>
+                    setWidgetMode(v as "floating" | "embedded")
+                  }
+                />
+              </Field>
+              {widgetMode === "embedded" && (
+                <Field label="target selector">
+                  <Input
+                    value={widgetTarget}
+                    onChange={(e) => setWidgetTarget(e.target.value)}
+                    placeholder="#helia-chat"
+                    maxLength={100}
+                  />
+                </Field>
+              )}
               <Field label="position">
                 <SegGroup
                   options={[
@@ -341,7 +371,7 @@ export default function WidgetPage() {
               primary task anyway. */}
           <div className="hidden lg:block">
             <Section title="Live preview">
-              <WidgetPreview config={config} />
+              <WidgetPreview config={config} mode={widgetMode} />
             </Section>
           </div>
 

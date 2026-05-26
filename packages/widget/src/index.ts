@@ -45,9 +45,11 @@ function autoMount(): void {
 
   const apiUrl = script.getAttribute("data-api-url") ?? undefined;
   const tokenEndpoint = script.getAttribute("data-token-endpoint") ?? undefined;
+  const mode = (script.getAttribute("data-mode") as WidgetConfig["mode"]) ?? undefined;
+  const target = script.getAttribute("data-target") ?? undefined;
 
   const boot = () => {
-    mount({ workspace, apiUrl });
+    mount({ workspace, apiUrl, mode, target });
     if (tokenEndpoint) void fetchAndSetIdentity(tokenEndpoint);
   };
 

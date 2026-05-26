@@ -414,6 +414,26 @@ export const baseStyles = /* css */ `
     font-weight: 600;
   }
 
+  /* Embedded mode overrides */
+  .panel.embedded {
+    position: relative !important;
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+    border-radius: var(--helia-radius);
+  }
+  .embedded .close { display: none; }
+  @media (max-width: 480px) {
+    .embedded {
+      border-radius: var(--helia-radius);
+      height: 100%;
+      max-height: 100%;
+    }
+  }
+
   /* Mobile */
   @media (max-width: 480px) {
     .panel {
