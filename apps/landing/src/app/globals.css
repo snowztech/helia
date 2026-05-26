@@ -60,6 +60,12 @@ body {
   transition: background-color 200ms ease, color 200ms ease;
 }
 
+/* Belt-and-suspenders against horizontal page scroll. Individual
+   scrollable containers (code blocks, etc.) still scroll on their own. */
+html {
+  overflow-x: hidden;
+}
+
 /* Tailwind v4 removed the implicit `cursor: pointer` on interactive
    elements. Restore the expected affordance. */
 a[href],

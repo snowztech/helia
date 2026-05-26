@@ -10,6 +10,7 @@ import { Nav } from "./_components/nav";
 import { WorkspaceChip } from "./_components/workspace-chip";
 import { WorkspaceProvider } from "./_components/workspace-provider";
 import { LogoutButton } from "./_components/logout-button";
+import { MobileMenu } from "./_components/mobile-menu";
 
 const VERSION = process.env.NEXT_PUBLIC_HELIA_VERSION ?? "dev";
 
@@ -28,15 +29,17 @@ export default async function AppLayout({
 
   return (
     <WorkspaceProvider>
-      <div className="mx-auto max-w-5xl px-6 py-8">
-        <header className="mb-10 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+      <div className="mx-auto max-w-5xl px-4 py-5 sm:px-6 sm:py-8">
+        <header className="mb-8 flex items-center justify-between gap-3 sm:mb-10 sm:gap-4">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <a href="/" aria-label="Helia home">
               <HeliaWordmark />
             </a>
             <WorkspaceChip />
           </div>
-          <div className="flex items-center gap-2">
+
+          {/* Desktop nav cluster */}
+          <div className="hidden items-center gap-2 md:flex">
             <Nav />
             <Button asChild variant="ghost" size="icon" aria-label="Settings">
               <Link href="/settings">
@@ -46,9 +49,18 @@ export default async function AppLayout({
             <ThemeToggle />
             <LogoutButton />
           </div>
+
+          {/* Mobile: keep theme + logout visible, fold nav into a menu */}
+          <div className="flex items-center gap-1 md:hidden">
+            <ThemeToggle />
+            <LogoutButton />
+            <MobileMenu />
+          </div>
         </header>
+
         {children}
-        <footer className="mt-20 flex items-center justify-between border-t border-border-subtle pt-4 text-xs text-muted-foreground">
+
+        <footer className="mt-16 flex items-center justify-between border-t border-border-subtle pt-4 text-xs text-muted-foreground sm:mt-20">
           <span>v{VERSION} · open source</span>
           <a
             href="https://github.com/snowztech/helia"

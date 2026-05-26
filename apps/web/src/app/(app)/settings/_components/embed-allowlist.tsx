@@ -78,8 +78,10 @@ export function EmbedAllowlist({
       </div>
 
       {empty ? (
-        <div className="flex items-center gap-2">
-          <Badge variant="warning">no origins set</Badge>
+        <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
+          <Badge variant="warning" className="whitespace-nowrap">
+            no origins set
+          </Badge>
           <p className="text-[11px] text-muted-foreground">
             Widget loads from any site. Lock it to your domain before going
             live.

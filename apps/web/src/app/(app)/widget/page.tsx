@@ -173,7 +173,7 @@ export default function WidgetPage() {
 
   return (
     <div className="space-y-6">
-      <header className="sticky top-0 z-20 -mx-6 flex items-end justify-between border-b border-border-subtle bg-background px-6 py-3">
+      <header className="sticky top-0 z-20 -mx-4 flex items-end justify-between sm:-mx-6 border-b border-border-subtle bg-background px-4 py-3 sm:px-6">
         <div className="space-y-1">
           <h1 className="text-2xl">widget.</h1>
           <p className="text-xs text-muted-foreground">
@@ -186,9 +186,9 @@ export default function WidgetPage() {
       </header>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        <div className="space-y-8">
+        <div className="min-w-0 space-y-8">
           <Section title="Brand color">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Input
                 value={ws.brandPrimary}
                 onChange={(e) =>
@@ -197,7 +197,7 @@ export default function WidgetPage() {
                 pattern="^#[0-9a-fA-F]{6}$"
                 className="w-32 font-mono"
               />
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 {PRESETS.map((c) => {
                   const active = ws.brandPrimary.toLowerCase() === c;
                   return (
@@ -335,10 +335,15 @@ export default function WidgetPage() {
           </Section>
         </div>
 
-        <div className="space-y-6">
-          <Section title="Live preview">
-            <WidgetPreview config={config} />
-          </Section>
+        <div className="min-w-0 space-y-6">
+          {/* Live preview is desktop-only. At <lg widths the panel
+              would overflow the column and the configurator is the
+              primary task anyway. */}
+          <div className="hidden lg:block">
+            <Section title="Live preview">
+              <WidgetPreview config={config} />
+            </Section>
+          </div>
 
           <Section title="Install">
             <div className="rounded-lg border border-border bg-card p-4">
@@ -376,13 +381,15 @@ export default function WidgetPage() {
 
 function Section({
   title,
+  className,
   children,
 }: {
   title: string;
+  className?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="space-y-3">
+    <section className={cn("space-y-3", className)}>
       <h2 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
         {title}
       </h2>
