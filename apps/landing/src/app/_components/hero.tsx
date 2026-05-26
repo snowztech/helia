@@ -4,8 +4,8 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.gethelia.dev";
 
 export function Hero() {
   return (
-    <section className="mx-auto max-w-5xl px-6 pt-24 pb-28 md:pt-32">
-      <div className="grid items-center gap-14 md:grid-cols-[1.05fr_1fr]">
+    <section className="mx-auto max-w-5xl px-6 pt-14 pb-20 md:pt-32 md:pb-28">
+      <div className="grid items-center gap-10 md:grid-cols-[1.05fr_1fr] md:gap-14">
         <div className="space-y-7 reveal">
           <span className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-3 py-1 text-[11px] tracking-widest text-muted uppercase">
             <span
@@ -15,7 +15,7 @@ export function Hero() {
             open source · self-hostable
           </span>
 
-          <h1 className="text-4xl leading-[1.05] tracking-tight md:text-5xl">
+          <h1 className="text-3xl leading-[1.05] tracking-tight sm:text-4xl md:text-5xl">
             an ai assistant
             <br />
             your customers
