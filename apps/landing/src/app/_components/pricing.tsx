@@ -2,32 +2,52 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.gethelia.dev";
 
 const TIERS = [
   {
-    name: "starter",
+    name: "free",
     price: "$0",
-    suffix: "forever free",
-    bullets: ["100 messages / mo", "1 workspace", "Floating widget"],
+    suffix: "forever",
+    blurb: "Hosted. Get going in a minute.",
+    bullets: [
+      "1M tokens / mo",
+      "Unlimited sources",
+      "Floating + inline widget",
+      "Branding, locale, tools",
+      "Community support",
+    ],
     cta: { label: "start free", href: `${APP_URL}/signup` },
     accent: false,
   },
   {
     name: "pro",
-    price: "$29",
+    price: "$19",
     suffix: "/ workspace / mo",
+    blurb: "More headroom + priority support.",
     bullets: [
-      "1,500 messages / mo",
-      "Unlimited sources",
-      "Inline embed, branding",
-      "Tools (DB, REST)",
+      "10M tokens / mo",
+      "Everything in Free",
+      "Priority email support",
+      "Early access to team features",
     ],
-    cta: { label: "start pro", href: `${APP_URL}/signup?plan=pro` },
+    cta: {
+      label: "contact us",
+      href: "mailto:gethelia@protonmail.com?subject=Helia%20Pro",
+    },
     accent: true,
   },
   {
-    name: "scale",
-    price: "custom",
-    suffix: "",
-    bullets: ["Unlimited messages", "SSO, audit log", "Self-host", "SLA"],
-    cta: { label: "talk to us", href: "mailto:gethelia@protonmail.com" },
+    name: "self-host",
+    price: "$0",
+    suffix: "AGPL-3.0",
+    blurb: "Run Helia on your own infra. Same code.",
+    bullets: [
+      "Unlimited everything",
+      "Docker compose, Railway, Fly",
+      "Bring your own OpenAI key",
+      "No vendor lock-in",
+    ],
+    cta: {
+      label: "view on github",
+      href: "https://github.com/snowztech/helia",
+    },
     accent: false,
   },
 ];
@@ -38,6 +58,9 @@ export function Pricing() {
       <div className="space-y-3 text-center reveal">
         <span className="eyebrow justify-center">pricing</span>
         <h2 className="text-3xl md:text-4xl">simple, predictable.</h2>
+        <p className="mx-auto max-w-md text-sm leading-relaxed text-muted">
+          Start free. Email us when you're ready for Pro. Self-host any time.
+        </p>
       </div>
 
       <ul className="mt-12 grid gap-4 md:grid-cols-3">
@@ -54,26 +77,35 @@ export function Pricing() {
               }
               style={{ transitionDelay: `${i * 70}ms` }}
             >
-              <p
-                className={
-                  "text-[10px] tracking-widest uppercase " +
-                  (dark ? "text-white/55" : "text-muted")
-                }
-              >
-                {t.name}
-              </p>
-
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-bold tracking-tight">
-                  {t.price}
-                </span>
-                <span
+              <div className="space-y-2">
+                <p
                   className={
-                    "text-xs " + (dark ? "text-white/55" : "text-muted")
+                    "text-[10px] tracking-widest uppercase " +
+                    (dark ? "text-white/55" : "text-muted")
                   }
                 >
-                  {t.suffix}
-                </span>
+                  {t.name}
+                </p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-bold tracking-tight">
+                    {t.price}
+                  </span>
+                  <span
+                    className={
+                      "text-xs " + (dark ? "text-white/55" : "text-muted")
+                    }
+                  >
+                    {t.suffix}
+                  </span>
+                </div>
+                <p
+                  className={
+                    "text-[12px] leading-relaxed " +
+                    (dark ? "text-white/75" : "text-muted")
+                  }
+                >
+                  {t.blurb}
+                </p>
               </div>
 
               <ul className="space-y-1.5 text-sm">
@@ -110,6 +142,10 @@ export function Pricing() {
           );
         })}
       </ul>
+
+      <p className="mt-8 text-center text-xs text-muted">
+        Need SSO, audit log, or SLA? Email us. Custom plans for teams 10+.
+      </p>
     </section>
   );
 }
