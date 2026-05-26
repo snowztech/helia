@@ -1,7 +1,5 @@
 @import "tailwindcss";
 
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap");
-
 /* Token names mirror apps/web/src/app/globals.css so the brand reads as
    one product, not two. Default = light (marketing convention).
    `data-theme="dark"` on <html> opts into the dark palette. */

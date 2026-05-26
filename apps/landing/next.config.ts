@@ -12,6 +12,8 @@ const config: NextConfig = {
   env: {
     NEXT_PUBLIC_HELIA_VERSION: rootPkg.version,
     NEXT_PUBLIC_APP_URL: process.env.HELIA_WEB_URL ?? "https://app.gethelia.dev",
+    NEXT_PUBLIC_SITE_URL:
+      process.env.HELIA_SITE_URL ?? "https://gethelia.dev",
   },
 };
 

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LegalLayout, Section } from "../_components/legal-layout";
 
 export const metadata: Metadata = {
-  title: "Terms — Helia",
+  title: "Terms",
   description: "Helia's terms of service.",
 };
 

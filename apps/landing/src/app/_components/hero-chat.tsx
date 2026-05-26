@@ -26,7 +26,7 @@ const SCRIPT: Array<{ q: string; a: string }> = [
   },
   {
     q: "can i self-host?",
-    a: "yes. docker compose, railway, fly — anywhere postgres and node run. bring your own openai key.",
+    a: "yes. docker compose, railway, fly. anywhere postgres and node run. bring your own openai key.",
   },
 ];
 

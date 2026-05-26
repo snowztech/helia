@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LegalLayout, Section } from "../_components/legal-layout";
 
 export const metadata: Metadata = {
-  title: "Privacy — Helia",
+  title: "Privacy",
   description: "How Helia handles your data.",
 };
 
@@ -105,21 +105,21 @@ export default function PrivacyPage() {
         </p>
         <ul className="space-y-1 pt-1 pl-5 list-disc">
           <li>
-            <strong>OpenAI Ireland Ltd</strong> (Ireland) — LLM inference and
+            <strong>OpenAI Ireland Ltd</strong> (Ireland), LLM inference and
             embeddings.
           </li>
           <li>
-            <strong>Neon Inc.</strong> (USA) — Postgres database hosting.
+            <strong>Neon Inc.</strong> (USA), Postgres database hosting.
           </li>
           <li>
-            <strong>Railway Corp.</strong> (USA) — application and API
+            <strong>Railway Corp.</strong> (USA), application and API
             hosting.
           </li>
           <li>
-            <strong>Vercel Inc.</strong> (USA) — marketing site hosting.
+            <strong>Vercel Inc.</strong> (USA), marketing site hosting.
           </li>
           <li>
-            <strong>Resend Inc.</strong> (USA) — transactional email
+            <strong>Resend Inc.</strong> (USA), transactional email
             delivery.
           </li>
         </ul>
