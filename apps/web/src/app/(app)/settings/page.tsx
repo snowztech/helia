@@ -148,7 +148,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <header className="sticky top-0 z-20 -mx-6 flex items-end justify-between gap-4 border-b border-border-subtle bg-background px-6 py-3">
+      <header className="sticky top-0 z-20 -mx-4 flex items-end justify-between sm:-mx-6 gap-4 border-b border-border-subtle bg-background px-4 py-3 sm:px-6">
         <div className="space-y-1">
           <h1 className="text-2xl">settings.</h1>
           <p className="text-xs text-muted-foreground">
@@ -239,7 +239,7 @@ export default function SettingsPage() {
 
       <Section title="AI">
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>provider</Label>
               <div className="rounded-md border border-border bg-muted px-3 py-1.5 text-sm">
@@ -304,7 +304,7 @@ export default function SettingsPage() {
         <h2 className="text-[11px] uppercase tracking-[0.18em] text-destructive">
           Danger zone
         </h2>
-        <div className="flex items-center justify-between gap-4 rounded-lg border border-destructive/40 bg-card p-5">
+        <div className="flex flex-col gap-4 rounded-lg border border-destructive/40 bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <p className="text-sm font-medium">Delete account</p>
             <p className="text-xs text-muted-foreground">

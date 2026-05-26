@@ -130,7 +130,7 @@ export function ToolDialog({
         </DialogHeader>
 
         <div className="space-y-5">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="t-name">name</Label>
               <Input
@@ -204,7 +204,7 @@ export function ToolDialog({
             <summary className="cursor-pointer text-xs uppercase tracking-wider text-muted-foreground">
               advanced
             </summary>
-            <div className="mt-3 grid grid-cols-2 gap-3">
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="t-timeout">timeout (ms)</Label>
                 <Input

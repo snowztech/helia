@@ -108,6 +108,13 @@
     font-family: var(--font-sans);
   }
 
+  /* Prevent stray content (long URLs, code blocks, etc.) from making the
+     page wider than the viewport. Individual scroll containers (pre,
+     dialogs) still scroll on their own. */
+  html {
+    overflow-x: hidden;
+  }
+
   body {
     font-size: 14px;
     line-height: 1.5;

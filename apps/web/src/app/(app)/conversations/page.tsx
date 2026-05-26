@@ -71,7 +71,7 @@ export default function ConversationsPage() {
 
   return (
     <div className="space-y-6">
-      <header className="sticky top-0 z-20 -mx-6 flex items-end justify-between gap-4 border-b border-border-subtle bg-background px-6 py-3">
+      <header className="sticky top-0 z-20 -mx-4 flex items-end justify-between sm:-mx-6 gap-4 border-b border-border-subtle bg-background px-4 py-3 sm:px-6">
         <div className="space-y-1">
           <h1 className="text-2xl">conversations.</h1>
           <p className="text-xs text-muted-foreground">
