@@ -414,9 +414,14 @@ export const baseStyles = /* css */ `
     font-weight: 600;
   }
 
-  /* Embedded mode overrides */
+  /* Embedded mode overrides. The panel sizes to its container, and the
+     responsive rules below key off the container — not the viewport — so
+     the same chat looks right whether it's a 280px sidebar or a 1000px
+     full-page card on the customer's site. */
   .panel.embedded {
     position: relative !important;
+    container-type: inline-size;
+    container-name: helia-panel;
     width: 100%;
     height: 100%;
     max-height: none;
@@ -425,18 +430,32 @@ export const baseStyles = /* css */ `
     transform: none;
     border-radius: var(--helia-radius);
   }
-  .embedded .close { display: none; }
-  @media (max-width: 480px) {
-    .embedded {
-      border-radius: var(--helia-radius);
-      height: 100%;
-      max-height: 100%;
-    }
+
+  /* Narrow containers (embedded in a sidebar). Tighten chrome so the
+     header doesn't dominate and the input still fits comfortably. */
+  @container helia-panel (max-width: 360px) {
+    .header { padding: 10px 12px; gap: 8px; }
+    .header-subtitle { display: none; }
+    .header-title { font-size: 14px; }
+    .messages { padding: 12px; gap: 8px; }
+    .message { max-width: 92%; font-size: 13px; padding: 8px 10px; }
+    .input { padding: 8px; }
+    .input input { padding: 8px 12px; font-size: 13px; }
+    .input button { width: 34px; height: 34px; }
   }
 
-  /* Mobile */
+  /* Wide containers (full-page embed). Cap the readable column so lines
+     don't stretch to 1000px, and centre everything. */
+  @container helia-panel (min-width: 720px) {
+    .messages { padding: 24px max(24px, calc((100% - 760px) / 2)); }
+    .input { padding: 14px max(24px, calc((100% - 760px) / 2)); }
+    .message { max-width: 78%; }
+  }
+
+  /* Floating panel on small viewports. Container queries don't help here
+     because the floating panel sizes against the viewport, not a parent. */
   @media (max-width: 480px) {
-    .panel {
+    .panel:not(.embedded) {
       right: 0 !important;
       left: 0 !important;
       bottom: 0;
@@ -446,4 +465,21 @@ export const baseStyles = /* css */ `
       border-radius: 0;
     }
   }
+
+  /* Reset button (embedded mode). Sits where .close lives in floating. */
+  .reset {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    border-radius: 6px;
+    opacity: 0.85;
+    flex-shrink: 0;
+  }
+  .reset:hover { opacity: 1; background: rgba(255, 255, 255, 0.12); }
+  .reset svg { width: 18px; height: 18px; }
+  .embedded .close { display: none; }
+  .panel:not(.embedded) .reset { display: none; }
 `;

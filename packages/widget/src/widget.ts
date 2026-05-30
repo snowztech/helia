@@ -1,8 +1,16 @@
 import { baseStyles } from "./styles";
 import { streamChat } from "./stream";
-import { loadRemoteConfig, type RemoteConfig } from "./config";
+import {
+  loadRemoteConfig,
+  readCachedConfig,
+  writeCachedConfig,
+  type RemoteConfig,
+} from "./config";
 import { getIdentity } from "./identity";
-import { getOrCreateConversationId } from "./conversation";
+import {
+  getOrCreateConversationId,
+  resetConversationId,
+} from "./conversation";
 import { renderMarkdown } from "./markdown";
 import { strings, type Locale } from "./i18n";
 import type { ChatMessage, WidgetConfig, WidgetHandle } from "./types";
@@ -115,6 +123,7 @@ export function mount(config: WidgetConfig): WidgetHandle {
         <div class="header-title">${escapeHtml(botName)}</div>
         <div class="header-subtitle"></div>
       </div>
+      <button class="reset" type="button" aria-label="${escapeHtml(t.newChat)}" title="${escapeHtml(t.newChat)}">${resetIcon()}</button>
       <button class="close" type="button" aria-label="${escapeHtml(t.closeChat)}">${closeIcon()}</button>
     </div>
     <div class="messages" role="log" aria-live="polite"></div>
@@ -141,6 +150,7 @@ export function mount(config: WidgetConfig): WidgetHandle {
   const input = panel.querySelector("input") as HTMLInputElement;
   const sendBtn = panel.querySelector('button[type="submit"]') as HTMLButtonElement;
   const closeBtn = panel.querySelector(".close") as HTMLButtonElement;
+  const resetBtn = panel.querySelector(".reset") as HTMLButtonElement;
   const titleEl = panel.querySelector(".header-title") as HTMLElement;
   const subtitleEl = panel.querySelector(".header-subtitle") as HTMLElement;
 
@@ -154,13 +164,36 @@ export function mount(config: WidgetConfig): WidgetHandle {
     messages: [],
   };
 
-  const greetingEl = appendMessage("assistant", greeting);
+  // Hold the latest suggestion list so we can re-render when the
+  // conversation resets to empty.
+  let currentSuggestions: string[] = [];
 
-  // Fetch the workspace config and apply it.
+  let greetingEl = appendMessage("assistant", greeting);
+
+  // First paint: if we have a cached config from a previous load, apply it
+  // immediately so the right brand/wording shows up on the first frame
+  // instead of flashing defaults while the network call resolves.
+  const cached = readCachedConfig(config.workspace);
+  if (cached) applyRemote(cached);
+
   void loadRemoteConfig(apiUrl, config.workspace).then((remote) => {
     if (!remote) return;
     applyRemote(remote);
+    writeCachedConfig(config.workspace, remote);
   });
+
+  // DX hint: most common embed mistake is forgetting to give the target
+  // container a height. Check after a paint so flex parents have settled.
+  if (embedded && targetEl instanceof HTMLElement) {
+    const el = targetEl;
+    requestAnimationFrame(() => {
+      if (el.isConnected && el.offsetHeight === 0) {
+        console.warn(
+          `[helia] embed target "${config.target}" has 0 height. Give it an explicit height (e.g. style="height: 600px") or place it in a flex/grid cell with a defined size.`,
+        );
+      }
+    });
+  }
 
   function applyRemote(remote: RemoteConfig): void {
     hostEl.style.setProperty("--helia-primary", remote.theme.primary);
@@ -182,6 +215,8 @@ export function mount(config: WidgetConfig): WidgetHandle {
     }
     const closeBtn = panel.querySelector(".close");
     if (closeBtn) closeBtn.setAttribute("aria-label", t.closeChat);
+    resetBtn.setAttribute("aria-label", t.newChat);
+    resetBtn.setAttribute("title", t.newChat);
     input.setAttribute("aria-label", t.messageInput);
     sendBtn.setAttribute("aria-label", t.send);
     titleEl.textContent = botName;
@@ -195,9 +230,10 @@ export function mount(config: WidgetConfig): WidgetHandle {
       avatarSlot.innerHTML = avatarMarkup(botAvatar);
     }
 
+    currentSuggestions = remote.bot.suggestions ?? [];
     if (state.messages.length === 0) {
       greetingEl.textContent = greeting;
-      renderSuggestions(remote.bot.suggestions ?? []);
+      renderSuggestions(currentSuggestions);
     }
   }
 
@@ -220,6 +256,22 @@ export function mount(config: WidgetConfig): WidgetHandle {
       suggestionsEl.appendChild(li);
     }
     suggestionsEl.classList.remove("hidden");
+  }
+
+  function resetConversation(): void {
+    if (state.streaming) return;
+    state.messages = [];
+    resetConversationId(config.workspace);
+    // Wipe everything from the messages area and re-seed with the greeting
+    // and any configured suggestions, so the user sees the same first
+    // frame they got when they originally opened the chat.
+    messagesEl.innerHTML = "";
+    messagesEl.appendChild(suggestionsEl);
+    greetingEl = appendMessage("assistant", greeting);
+    renderSuggestions(currentSuggestions);
+    input.value = "";
+    sendBtn.disabled = true;
+    input.focus();
   }
 
   function applyThemeMode(mode: RemoteConfig["theme"]["mode"]): void {
@@ -247,6 +299,7 @@ export function mount(config: WidgetConfig): WidgetHandle {
   if (!embedded) {
     closeBtn.addEventListener("click", () => setOpen(false));
   }
+  resetBtn.addEventListener("click", () => resetConversation());
 
   input.addEventListener("input", () => {
     sendBtn.disabled = state.streaming || input.value.trim().length === 0;
@@ -510,6 +563,17 @@ function escapeAttr(s: string): string {
     .replace(/&/g, "&amp;")
     .replace(/"/g, "&quot;")
     .replace(/</g, "&lt;");
+}
+
+function resetIcon(): string {
+  return /* html */ `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+         aria-hidden="true">
+      <path d="M3 12a9 9 0 1 0 3-6.7" />
+      <path d="M3 4v5h5" />
+    </svg>
+  `;
 }
 
 function closeIcon(): string {

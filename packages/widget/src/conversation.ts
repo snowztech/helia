@@ -25,6 +25,19 @@ export function getOrCreateConversationId(workspace: string): string {
   }
 }
 
+/**
+ * Forget the current conversation id. Next call to
+ * `getOrCreateConversationId` mints a fresh one.
+ */
+export function resetConversationId(workspace: string): void {
+  if (typeof window === "undefined" || !window.sessionStorage) return;
+  try {
+    window.sessionStorage.removeItem(KEY_PREFIX + workspace);
+  } catch {
+    // Storage disabled — next read returns a fresh id anyway.
+  }
+}
+
 function uuid(): string {
   const g = globalThis as { crypto?: Crypto };
   if (g.crypto?.randomUUID) {

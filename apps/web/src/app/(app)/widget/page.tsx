@@ -151,7 +151,14 @@ export default function WidgetPage() {
     widgetMode === "embedded"
       ? ` data-mode="embedded" data-target="${widgetTarget}"`
       : "";
-  const snippet = `<script src="${widgetSrc}" data-workspace="${ws.id}"${embedAttrs} async></script>`;
+  const scriptTag = `<script src="${widgetSrc}" data-workspace="${ws.id}"${embedAttrs} async></script>`;
+  // For embedded mode, ship the target container alongside the script so
+  // the snippet works on paste. The container needs an explicit height;
+  // otherwise the chat collapses to 0 and devs think the widget is broken.
+  const snippet =
+    widgetMode === "embedded"
+      ? `<div id="${widgetTarget.replace(/^#/, "")}" style="height: 600px"></div>\n${scriptTag}`
+      : scriptTag;
 
   const save = async () => {
     setSaving(true);

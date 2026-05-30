@@ -40,3 +40,36 @@ export async function loadRemoteConfig(
     return null;
   }
 }
+
+/**
+ * Cache the last good config per workspace in localStorage. Used to paint
+ * the right brand on the first frame instead of flashing defaults while
+ * the network call to /v1/widget/config is in flight.
+ */
+const CACHE_PREFIX = "helia.config.";
+
+export function readCachedConfig(workspace: string): RemoteConfig | null {
+  if (typeof window === "undefined" || !window.localStorage) return null;
+  try {
+    const raw = window.localStorage.getItem(CACHE_PREFIX + workspace);
+    if (!raw) return null;
+    return JSON.parse(raw) as RemoteConfig;
+  } catch {
+    return null;
+  }
+}
+
+export function writeCachedConfig(
+  workspace: string,
+  config: RemoteConfig,
+): void {
+  if (typeof window === "undefined" || !window.localStorage) return;
+  try {
+    window.localStorage.setItem(
+      CACHE_PREFIX + workspace,
+      JSON.stringify(config),
+    );
+  } catch {
+    // Quota or privacy mode — silent fallback to defaults next load.
+  }
+}
