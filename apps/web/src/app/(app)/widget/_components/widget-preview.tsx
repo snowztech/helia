@@ -6,6 +6,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowUp02Icon,
   Cancel01Icon,
+  RefreshIcon,
 } from "@hugeicons/core-free-icons";
 import { renderMarkdown } from "@/lib/markdown";
 import { API_URL } from "@/lib/api";
@@ -78,10 +79,17 @@ function EmbeddedPreview({
 }) {
   const dark = themeMode === "dark";
   const previewConversationId = useMemo(() => crypto.randomUUID(), []);
-  const { messages, input, handleInputChange, handleSubmit, status, append } =
-    useChat({
-      api: `${API_URL}/v1/chat?ws=${encodeURIComponent(config.workspaceId)}&conv=${previewConversationId}`,
-    });
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    status,
+    append,
+    setMessages,
+  } = useChat({
+    api: `${API_URL}/v1/chat?ws=${encodeURIComponent(config.workspaceId)}&conv=${previewConversationId}`,
+  });
 
   const waiting = status === "submitted";
   const busy = status === "submitted" || status === "streaming";
@@ -119,6 +127,17 @@ function EmbeddedPreview({
             </div>
           )}
         </div>
+        <button
+          type="button"
+          data-shadcn=""
+          onClick={() => setMessages([])}
+          disabled={busy || messages.length === 0}
+          aria-label="New chat"
+          title="New chat"
+          className="rounded p-1 opacity-80 hover:bg-white/10 hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <HugeiconsIcon icon={RefreshIcon} size={16} />
+        </button>
       </header>
 
       <div className="flex-1 space-y-2 overflow-y-auto px-3 py-3 text-sm">
