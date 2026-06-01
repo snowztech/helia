@@ -49,7 +49,7 @@ export async function loadRemoteConfig(
 const CACHE_PREFIX = "helia.config.";
 
 export function readCachedConfig(workspace: string): RemoteConfig | null {
-  if (typeof window === "undefined" || !window.localStorage) return null;
+  if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(CACHE_PREFIX + workspace);
     if (!raw) return null;
@@ -63,7 +63,7 @@ export function writeCachedConfig(
   workspace: string,
   config: RemoteConfig,
 ): void {
-  if (typeof window === "undefined" || !window.localStorage) return;
+  if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(
       CACHE_PREFIX + workspace,

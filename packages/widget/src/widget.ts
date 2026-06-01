@@ -60,21 +60,34 @@ export function mount(config: WidgetConfig): WidgetHandle {
   }
 
   const apiUrl = config.apiUrl ?? defaultApiUrl();
-  const embedded = config.mode === "embedded";
+  const requestedEmbedded = config.mode === "embedded";
 
   // In embedded mode, resolve the target element.
   let targetEl: Element | null = null;
-  if (embedded) {
+  if (requestedEmbedded) {
     if (!config.target) {
-      console.warn("[helia] embedded mode requires a `target` selector. Falling back to floating.");
+      console.warn(
+        "[helia] embedded mode requires a `target` selector. Falling back to floating.",
+      );
       targetEl = null;
     } else {
-      targetEl = document.querySelector(config.target);
-      if (!targetEl) {
-        console.warn(`[helia] embedded mode: target "${config.target}" not found. Falling back to floating.`);
+      let selectorValid = true;
+      try {
+        targetEl = document.querySelector(config.target);
+      } catch {
+        selectorValid = false;
+        console.warn(
+          `[helia] embedded mode: target "${config.target}" is not a valid selector. Falling back to floating.`,
+        );
+      }
+      if (selectorValid && !targetEl) {
+        console.warn(
+          `[helia] embedded mode: target "${config.target}" not found. Falling back to floating.`,
+        );
       }
     }
   }
+  const embedded = requestedEmbedded && targetEl !== null;
 
   let botName = config.botName ?? "Assistant";
   let greeting = config.greeting ?? "Hi, how can I help?";
