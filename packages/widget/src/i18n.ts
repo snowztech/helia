@@ -13,6 +13,7 @@ export type Locale = "en" | "fr" | string;
 type Strings = {
   openChat: string;
   closeChat: string;
+  newChat: string;
   send: string;
   messageInput: string;
   searchingKnowledge: string;
@@ -23,6 +24,7 @@ type Strings = {
 const EN: Strings = {
   openChat: "Open chat",
   closeChat: "Close chat",
+  newChat: "New chat",
   send: "Send",
   messageInput: "Message input",
   searchingKnowledge: "Searching your knowledge…",
@@ -33,6 +35,7 @@ const EN: Strings = {
 const FR: Strings = {
   openChat: "Ouvrir le chat",
   closeChat: "Fermer le chat",
+  newChat: "Nouvelle conversation",
   send: "Envoyer",
   messageInput: "Champ de message",
   searchingKnowledge: "Recherche dans votre base…",

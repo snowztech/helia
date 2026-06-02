@@ -1,6 +1,8 @@
 export interface WidgetConfig {
   workspace: string;
   apiUrl?: string;
+  mode?: "floating" | "embedded";
+  target?: string;
   botName?: string;
   greeting?: string;
 }
