@@ -1,0 +1,16 @@
+[
+  {
+    "name": "pricing-page",
+    "question": "What plans are available?",
+    "expected": {
+      "title": "Pricing"
+    }
+  },
+  {
+    "name": "support-policy",
+    "question": "How can I contact support?",
+    "expected": {
+      "title": "Support"
+    }
+  }
+]

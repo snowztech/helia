@@ -26,36 +26,28 @@ into a real B2B SaaS dashboard.
 
 Roughly ordered by expected impact. Items move as real feedback lands.
 
-### `@helia/server` SDK
+### SDKs and install DX
 
-A small npm package exposing `signIdentity(user, secret)`. Collapses the
-customer's token endpoint from ~15 lines of crypto to 3. The customer
-keeps their own auth lookup. Cost is mostly the publishing pipeline
-(npm org, build, release), not the code.
-
-### `@helia/react` SDK
-
-Typed React hooks and a `<HeliaWidget />` component. Pairs with
-`@helia/server` so a Next.js install is a server route plus a single
-React component, both paste-and-run.
+`@helia/server` exposes `signIdentity(user, secret)` and
+`identityHeaders(user, secret)`. `@helia/react` wraps the vanilla widget
+as `<HeliaWidget />` for React/Next.js apps. The script tag remains the
+lowest-friction path; SDKs are for teams that want typed integration.
 
 ### RAG quality
 
-Today's retrieval is single-pass HNSW over pgvector. Good enough to ship.
-Upgrades that move quality without rewriting the stack, in order of ROI:
+Today’s retrieval is hybrid vector + Postgres full-text with RRF. Good
+enough to ship, but not yet objectively measured. Upgrades that move
+quality without rewriting the stack, in order of ROI:
 
-1. **Reranker** — top-50 vector hits → cross-encoder → top-5 to LLM.
+1. **Eval harness** — small offline set of (question, expected source)
+   per workspace. Run before deploys and before ranking changes.
+2. **Reranker** — top-50 candidates → cross-encoder → top-5 to LLM.
    Cohere Rerank (managed) or BGE-reranker (self-host). Biggest single
-   quality bump.
-2. **Hybrid retrieval** — the `tsv` column already exists for BM25. Fuse
-   vector + lexical scores via Reciprocal Rank Fusion. Pure vector loses
-   on exact-match queries like error codes, SKUs, or proper names.
+   quality bump once evals exist.
 3. **Better PDF parsing** — current extractor handles clean PDFs,
    struggles with scanned or layout-heavy docs. LlamaParse or
    Unstructured.io behind a feature flag.
-4. **Eval harness** — small offline set of (question, expected source)
-   per workspace. Run before deploys.
-5. **Embedding model refresh** — when text-embedding-3-large beats small
+4. **Embedding model refresh** — when text-embedding-3-large beats small
    by enough margin to justify re-embedding costs. Plan the re-embed path
    now so it isn't a panic later.
 
@@ -69,8 +61,8 @@ a one-package change when the day comes.
 
 - **Memory tuning** — sliding window and summarization for long
   conversations, when full-history-per-call gets expensive.
-- **Conversation grouping by session** — the column exists, the widget
-  needs to send a session id.
+- **Conversation debugging depth** — traces exist; keep making “why this
+  answer?” obvious in the admin before adding more complex agent behavior.
 - **Mobile responsive admin** — when the first owner asks.
 - **Sentry / OTel integration** — when the first production bug hits.
 

@@ -25,6 +25,9 @@ importers:
       '@helia/rag':
         specifier: workspace:*
         version: link:../../packages/rag
+      '@helia/server':
+        specifier: workspace:*
+        version: link:../../packages/server
       '@hono/node-server':
         specifier: ^1.13.7
         version: 1.19.14(hono@4.12.21)
@@ -260,9 +263,40 @@ importers:
       '@types/jsdom':
         specifier: ^21.1.7
         version: 21.1.7
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.19.19
       '@types/pdf-parse':
         specifier: ^1.1.5
         version: 1.1.5
+      tsx:
+        specifier: ^4.19.0
+        version: 4.22.3
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  packages/react:
+    dependencies:
+      '@helia/widget':
+        specifier: workspace:*
+        version: link:../widget
+      react:
+        specifier: '>=18'
+        version: 19.0.0
+    devDependencies:
+      '@types/react':
+        specifier: 19.0.0
+        version: 19.0.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  packages/server:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.19.19
       typescript:
         specifier: ^5.7.0
         version: 5.9.3

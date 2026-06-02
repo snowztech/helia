@@ -22,6 +22,23 @@ The widget lives in `packages/widget`. See [`roadmap.md`](./roadmap.md) for what
 
 That's it. The loader fetches the workspace config from `/v1/widget/config?ws=ws_xxx`, mounts a launcher button in the corner, and lazy-loads the chat panel when the user opens it.
 
+Embedded mode mounts the panel inside a page container instead of using the
+floating launcher:
+
+```html
+<div id="helia-chat" style="height: 600px"></div>
+<script
+  src="https://app.gethelia.dev/w.js"
+  data-workspace="ws_xxx"
+  data-mode="embedded"
+  data-target="#helia-chat"
+  async
+></script>
+```
+
+React apps can use `<HeliaWidget />`; backend identity helpers live in
+`@helia/server`. See [`docs/sdk.md`](./sdk.md).
+
 The config response includes the theme, the bot persona, the greeting, the allowed origin list, and the chat endpoint URL. It is cached on the CDN edge with stale-while-revalidate so theme changes propagate within seconds without the customer touching their HTML.
 
 ### HTML overrides
