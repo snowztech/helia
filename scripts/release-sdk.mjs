@@ -73,15 +73,8 @@ try {
   }
 
   publishingStarted = true;
-  for (const pkg of packages) {
-    run("pnpm", [
-      "--dir",
-      pkg.dir,
-      "publish",
-      "--access",
-      "public",
-      "--no-git-checks",
-    ]);
+  for (const tarball of tarballs) {
+    run("npm", ["publish", tarball, "--access", "public"]);
   }
 
   console.log("");
