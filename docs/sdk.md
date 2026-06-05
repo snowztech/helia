@@ -15,7 +15,7 @@ The integration model is the same in both cases.
 In normal setup, copy snippets from your Helia admin. The generated `w.js`
 URL already points at the correct hosted or self-hosted origin.
 
-## Install
+## Quick start
 
 Most websites do not install an npm package. Copy the script tag from your
 Helia admin and paste it into the site.
@@ -37,10 +37,19 @@ npm install @gethelia/server
 Anonymous installs only need the workspace id. Authenticated installs add a
 token endpoint that returns `{ id, name?, signature }`.
 
+Use this mental model:
+
+| User goal | What they do |
+|-----------|--------------|
+| Website or CMS | Paste the script tag from the Widget page |
+| React or Next.js app | Install `@gethelia/react` and render `HeliaWidget` |
+| Logged-in users | Install `@gethelia/server` and return a signed identity from a token endpoint |
+| Self-hosting Helia itself | Run Helia with Docker, then copy the generated widget snippet |
+
 ## `@gethelia/server`
 
 Use this in your backend token endpoint after your own auth has identified
-the current user.
+the current user. The endpoint returns `{ id, name?, signature }`.
 
 ```bash
 pnpm add @gethelia/server
@@ -64,16 +73,17 @@ export async function GET() {
 }
 ```
 
-The JSON response is `{ id, name?, signature }`, which the widget accepts
-from `data-token-endpoint`.
+Pass that endpoint to the widget with `tokenEndpoint` in React or
+`data-token-endpoint` in the script tag.
 
 For server-to-server calls, use `identityHeaders(identity, secret)` and
 forward the returned `x-helia-user` and `x-helia-signature` headers.
 
-## `@gethelia/react`
+## React / Next.js
 
-Use this when the host app is React/Next.js and you prefer a component over
-managing the script tag.
+Use this when the host app is React or Next.js and you prefer a component over
+managing the script tag. In Next.js App Router, render the widget from a client
+component.
 
 ```bash
 pnpm add @gethelia/react
