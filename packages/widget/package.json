@@ -1,6 +1,8 @@
 {
   "name": "@gethelia/widget",
   "version": "0.0.2",
+  "description": "Helia widget runtime for script tag and vanilla embeds.",
+  "license": "AGPL-3.0-only",
   "private": false,
   "type": "module",
   "main": "./dist/index.js",
@@ -14,6 +16,15 @@
   "files": [
     "dist"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/snowztech/helia.git",
+    "directory": "packages/widget"
+  },
+  "homepage": "https://gethelia.dev/docs",
+  "bugs": {
+    "url": "https://github.com/snowztech/helia/issues"
+  },
   "publishConfig": {
     "access": "public"
   },

@@ -1,61 +1,72 @@
 # @gethelia/widget
 
-The embeddable chat widget. Pure TypeScript (no React), bundled to a single
-IIFE script by esbuild. Customers drop one `<script>` tag on their site.
+Vanilla Helia widget runtime for script tag and non-React embeds.
 
-## Install snippet
+Most users do not install this package directly. Copy the snippet from your
+Helia admin Widget page instead.
 
 ```html
-<script src="https://app.gethelia.dev/w.js" data-workspace="ws_xxx" async></script>
+<script
+  src="https://your-helia-admin/w.js"
+  data-workspace="YOUR_WORKSPACE_ID"
+  async
+></script>
 ```
 
-Optional attributes:
-
-- `data-api-url` — point the widget at a different API (useful in dev).
-- `data-bot-name`, `data-greeting` — override the workspace defaults
-  for this page only (most users set these in the admin and skip these).
-
-## How it works
-
-1. The script tag auto-mounts on `DOMContentLoaded` (see `src/index.ts`).
-2. The widget creates a host element, attaches a Shadow Root, and renders
-   the launcher + panel inside it. Shadow DOM means host page CSS cannot
-   leak in or out.
-3. On mount, the widget fetches `/v1/widget/config?ws=…` and applies the
-   workspace's brand color, bot name, subtitle, greeting, placeholder,
-   suggested questions, position, theme, and corner radius.
-4. On send, the widget POSTs to `/v1/chat` and consumes the Vercel AI SDK
-   v4 data stream (text deltas, tool calls, tool results, errors).
-5. Tool calls render as inline pills while the agent works. Citations
-   appear under the answer if `search_knowledge` was used.
-
-## Files
-
-```
-src/
-├── index.ts    auto-mount + window.Helia.init() API
-├── widget.ts   shadow DOM mount, panel UI, send loop, state
-├── stream.ts   AI SDK v4 data-stream parser (text, tools, errors)
-├── styles.ts   all CSS for the shadow root, themed via custom properties
-├── config.ts   fetch + type the remote workspace config
-└── types.ts    WidgetConfig, ChatMessage, WidgetHandle
-```
-
-## Build
+## Install
 
 ```bash
-pnpm --filter @gethelia/widget build   # one-shot, minified bundle in dist/
-pnpm --filter @gethelia/widget dev     # esbuild --servedir on port 5173
+pnpm add @gethelia/widget
+npm install @gethelia/widget
 ```
 
-The bundle target is `<30 KB minified`. Current size: ~20 KB.
+Use the package when you want to initialize the widget from JavaScript:
 
-## Testing locally
+```ts
+import Helia from "@gethelia/widget";
 
-```bash
-make dev   # starts api (4000) + admin (3000) + widget (5173) in parallel
+const widget = Helia.init({
+  workspace: "YOUR_WORKSPACE_ID",
+});
+
+// Later, if needed:
+widget.destroy();
 ```
 
-Open http://localhost:5173/test.html — the launcher should appear in the
-bottom-right corner, the API on port 4000 should be reachable, and CORS
-is auto-permissive on any `localhost:*` origin in dev.
+## Embedded Mode
+
+Embedded mode renders the chat into your own container. Give the container a
+height or the widget will collapse.
+
+```html
+<div id="helia-chat" style="height: 600px"></div>
+```
+
+```ts
+import Helia from "@gethelia/widget";
+
+Helia.init({
+  workspace: "YOUR_WORKSPACE_ID",
+  mode: "embedded",
+  target: "#helia-chat",
+});
+```
+
+## Signed Users
+
+When Helia should know the logged-in user, return a signed identity from your
+backend and pass it to the widget:
+
+```ts
+Helia.identify({
+  id: "user_123",
+  name: "Ada",
+  signature: "hmac-signature-from-your-server",
+});
+```
+
+Use `@gethelia/server` to generate the signature.
+
+## Docs
+
+Full install docs: https://gethelia.dev/docs
