@@ -15,10 +15,15 @@ and SDK packages can patch without changing the hosted app version.
 Use this for product changes, backend changes, dashboard changes, docs shipped
 with the app, and deployable self-hosted changes.
 
+Happy path:
+
 ```bash
 pnpm release:app patch
-# or minor / major
+git push --follow-tags
+gh release create v$(node -p "require('./package.json').version") --generate-notes
 ```
+
+Use `minor` or `major` instead of `patch` when the bump guide below applies.
 
 The script:
 
@@ -38,6 +43,21 @@ gh release create v$(node -p "require('./package.json').version") --generate-not
 
 Use this when the public npm API changes, package docs change, or the widget,
 React wrapper, or server helpers need to be published.
+
+Happy path:
+
+```bash
+npm login
+npm whoami
+pnpm release:sdk patch
+pnpm release:sdk patch --publish
+git add packages/widget/package.json packages/server/package.json packages/react/package.json
+git commit -m "chore: release sdk <version>"
+git tag sdk-v<version>
+git push --follow-tags
+```
+
+Use `minor` or `major` instead of `patch` when the bump guide below applies.
 
 First-time npm setup:
 
