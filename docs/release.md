@@ -76,15 +76,9 @@ Inspect the generated tarballs if this is the first publish. Then publish:
 pnpm release:sdk patch --publish
 ```
 
-If npm asks for a one-time password during publish, complete the browser flow
-or re-run with a fresh code:
-
-```bash
-pnpm release:sdk patch --publish --otp 123456
-```
-
-Only use `--otp` when npm explicitly asks for it. A normal logged-in npm
-session is enough when your account policy allows it.
+If npm asks for browser authentication or 2FA during publish, complete the npm
+prompt. If npm exits before publishing anything, re-run the same publish command
+after authentication succeeds.
 
 Publish order is handled by the script:
 

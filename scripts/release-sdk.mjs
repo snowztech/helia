@@ -6,7 +6,6 @@ import { basename, join } from "node:path";
 
 const bump = process.argv[2];
 const publish = process.argv.includes("--publish");
-const otp = readOption("otp");
 const allowed = new Set(["patch", "minor", "major"]);
 let publishedCount = 0;
 
@@ -74,13 +73,7 @@ try {
   }
 
   for (const tarball of tarballs) {
-    run("npm", [
-      "publish",
-      tarball,
-      "--access",
-      "public",
-      ...(otp ? ["--otp", otp] : []),
-    ]);
+    run("npm", ["publish", tarball, "--access", "public"]);
     publishedCount += 1;
   }
 
@@ -160,13 +153,4 @@ function run(command, args) {
 
 function output(command, args) {
   return execFileSync(command, args, { encoding: "utf8" }).trim();
-}
-
-function readOption(name) {
-  const prefix = `--${name}=`;
-  const inline = process.argv.find((arg) => arg.startsWith(prefix));
-  if (inline) return inline.slice(prefix.length);
-  const index = process.argv.indexOf(`--${name}`);
-  if (index === -1) return null;
-  return process.argv[index + 1] ?? null;
 }
