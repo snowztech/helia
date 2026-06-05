@@ -7,6 +7,7 @@ import { basename, join } from "node:path";
 const bump = process.argv[2];
 const publish = process.argv.includes("--publish");
 const allowed = new Set(["patch", "minor", "major"]);
+let publishingStarted = false;
 
 const packages = [
   { name: "@gethelia/widget", dir: "packages/widget" },
@@ -45,8 +46,8 @@ try {
   for (const pkg of packages) {
     const before = listTarballs(packDir);
     run("pnpm", [
-      "--filter",
-      pkg.name,
+      "--dir",
+      pkg.dir,
       "pack",
       "--pack-destination",
       packDir,
@@ -71,10 +72,11 @@ try {
     process.exit(0);
   }
 
+  publishingStarted = true;
   for (const pkg of packages) {
     run("pnpm", [
-      "--filter",
-      pkg.name,
+      "--dir",
+      pkg.dir,
       "publish",
       "--access",
       "public",
@@ -91,7 +93,7 @@ try {
   console.log(`  git tag sdk-v${nextVersion}`);
   console.log("  git push --follow-tags");
 } catch (err) {
-  if (!publish) restoreManifests(originalManifests);
+  if (!publish || !publishingStarted) restoreManifests(originalManifests);
   console.error("");
   console.error(err instanceof Error ? err.message : String(err));
   process.exit(1);
