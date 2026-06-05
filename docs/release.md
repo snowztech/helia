@@ -49,6 +49,11 @@ npm whoami
 Make sure your npm account can publish public packages under the `@gethelia`
 scope.
 
+If your npm account requires browser authentication or 2FA, complete that with
+`npm login` before starting the release. The release script publishes packed
+tarballs with `npm publish`, so it uses the same npm session as your normal
+terminal.
+
 Run a dry release first:
 
 ```bash
@@ -70,6 +75,16 @@ Inspect the generated tarballs if this is the first publish. Then publish:
 ```bash
 pnpm release:sdk patch --publish
 ```
+
+If npm asks for a one-time password during publish, complete the browser flow
+or re-run with a fresh code:
+
+```bash
+pnpm release:sdk patch --publish --otp 123456
+```
+
+Only use `--otp` when npm explicitly asks for it. A normal logged-in npm
+session is enough when your account policy allows it.
 
 Publish order is handled by the script:
 
