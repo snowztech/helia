@@ -1,6 +1,6 @@
 {
   "name": "@gethelia/server",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Server helpers for signing Helia end-user identity.",
   "license": "AGPL-3.0-only",
   "private": false,

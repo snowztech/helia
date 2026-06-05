@@ -1,6 +1,6 @@
 {
   "name": "@gethelia/widget",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Helia widget runtime for script tag and vanilla embeds.",
   "license": "AGPL-3.0-only",
   "private": false,

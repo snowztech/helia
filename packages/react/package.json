@@ -1,6 +1,6 @@
 {
   "name": "@gethelia/react",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "React wrapper for the Helia widget.",
   "license": "AGPL-3.0-only",
   "private": false,
