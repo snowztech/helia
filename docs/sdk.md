@@ -97,7 +97,7 @@ import { HeliaWidget } from "@gethelia/react";
 export function AppShell() {
   return (
     <HeliaWidget
-      workspace="00000000-0000-0000-0000-000000000000"
+      workspace="YOUR_WORKSPACE_ID"
       tokenEndpoint="/api/helia-identity"
     />
   );
@@ -108,7 +108,7 @@ Embedded mode renders a target container when no `target` is provided:
 
 ```tsx
 <HeliaWidget
-  workspace="00000000-0000-0000-0000-000000000000"
+  workspace="YOUR_WORKSPACE_ID"
   mode="embedded"
   style={{ height: 600 }}
 />
@@ -129,7 +129,7 @@ users, add `data-token-endpoint`:
 ```html
 <script
   src="https://your-helia-admin/w.js"
-  data-workspace="00000000-0000-0000-0000-000000000000"
+  data-workspace="YOUR_WORKSPACE_ID"
   data-token-endpoint="/api/helia-identity"
   async
 ></script>

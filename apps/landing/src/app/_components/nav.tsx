@@ -5,15 +5,9 @@ import { ThemeToggle } from "./theme-toggle";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.gethelia.dev";
 
 const NAV_LINKS = [
-  { label: "features", href: "/#features" },
   { label: "pricing", href: "/#pricing" },
   { label: "docs", href: "/docs" },
-  { label: "github", href: "https://github.com/snowztech/helia" },
 ];
-
-function isExternalHref(href: string) {
-  return href.startsWith("http");
-}
 
 export function Nav() {
   return (
@@ -28,25 +22,13 @@ export function Nav() {
           className="hidden items-center gap-5 text-[13px] text-muted md:flex"
         >
           {NAV_LINKS.map((link) => (
-            isExternalHref(link.href) ? (
-              <a
-                key={link.label}
-                href={link.href}
-                className="transition-colors hover:text-fg"
-                rel="noreferrer"
-                target="_blank"
-              >
-                {link.label}
-              </a>
-            ) : (
-              <Link
-                key={link.label}
-                href={link.href}
-                className="transition-colors hover:text-fg"
-              >
-                {link.label}
-              </Link>
-            )
+            <Link
+              key={link.label}
+              href={link.href}
+              className="transition-colors hover:text-fg"
+            >
+              {link.label}
+            </Link>
           ))}
         </nav>
 

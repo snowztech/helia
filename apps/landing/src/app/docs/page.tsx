@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Footer } from "../_components/footer";
 import { HeliaWordmark } from "../_components/logo";
 import { ThemeToggle } from "../_components/theme-toggle";
+import { BackendEndpointExamples } from "./backend-endpoint-examples";
 import { CopyCode } from "./copy-code";
 import { DocsNav } from "./docs-nav";
 import { InstallCommands } from "./install-commands";
@@ -25,7 +26,7 @@ const sections = [
   { id: "self-host", label: "self-host" },
 ];
 
-const workspaceId = "00000000-0000-0000-0000-000000000000";
+const workspaceId = "YOUR_WORKSPACE_ID";
 
 export default function DocsPage() {
   return (
@@ -198,59 +199,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <DocSection id="identity" title="Signed users">
             <p>
               Use signed identity when Helia should know who is chatting. Your
-              backend returns a signed identity for the current user; Helia
-              verifies that signature on chat requests. This works the same on
-              Helia Cloud and self-hosted Helia.
+              backend returns a signed identity for the current user, and the
+              widget sends it with chat requests.
             </p>
             <StepList
               items={[
                 "Install @gethelia/server in your backend.",
                 "Generate an identity secret in Helia Settings.",
                 "Store it as HELIA_IDENTITY_SECRET on the server.",
-                "Create a token endpoint in your existing backend.",
+                "Create a token endpoint in whichever backend you already use.",
                 "Connect that endpoint to the script tag or React widget.",
                 "Enable Reject anonymous chats only after signed traffic works.",
               ]}
             />
             <Callout>
-              Use one backend example below. Next.js apps usually use the route
-              handler. Apps with a separate Node server can use the Express
-              version.
+              The token endpoint returns{" "}
+              <InlineCode>{`{ id, name?, signature }`}</InlineCode>. Helia
+              verifies the signature before attaching that user to the
+              conversation.
             </Callout>
-            <CodeBlock
-              title="Backend token endpoint: Next.js"
-              code={`import { signIdentity } from "@gethelia/server";
-
-export async function GET() {
-  const user = await currentUser();
-  if (!user) return new Response("unauthorized", { status: 401 });
-
-  return Response.json(
-    signIdentity(
-      { id: user.id, name: user.name },
-      process.env.HELIA_IDENTITY_SECRET!,
-    ),
-  );
-}`}
-            />
-            <Details title="Backend token endpoint: Express">
-              <CodeBlock
-                title="Node / Express"
-                code={`import express from "express";
-import { signIdentity } from "@gethelia/server";
-
-const app = express();
-
-app.get("/api/helia/token", requireAuth, (req, res) => {
-  res.json(
-    signIdentity(
-      { id: req.user.id, name: req.user.name },
-      process.env.HELIA_IDENTITY_SECRET!,
-    ),
-  );
-});`}
-              />
-            </Details>
+            <BackendEndpointExamples />
             <p>
               After the endpoint works, connect it to whichever widget install
               you use.
