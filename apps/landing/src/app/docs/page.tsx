@@ -75,10 +75,20 @@ export default function DocsPage() {
 
           <DocSection id="start" title="Quick start">
             <p>
-              Start from the Helia admin you use. Cloud users open
-              `app.gethelia.dev`; self-hosted users open their own Helia admin
-              domain.
+              Start from the Helia admin you use. Cloud users open the hosted
+              app. Self-hosted users open their own Helia admin domain.
             </p>
+            <div className="flex flex-wrap gap-2 text-xs">
+              <a
+                href={APP_URL}
+                className="rounded-full border border-line bg-card px-3 py-1.5 text-fg transition-colors hover:border-primary/60"
+              >
+                Helia Cloud: app.gethelia.dev
+              </a>
+              <span className="rounded-full border border-line bg-card px-3 py-1.5 text-muted">
+                Self-hosted: your Helia admin URL
+              </span>
+            </div>
             <div className="grid gap-3 md:grid-cols-3">
               <InfoCard
                 title="Website or CMS"
@@ -95,8 +105,9 @@ export default function DocsPage() {
             </div>
             <InstallCommands />
             <Callout>
-              You only need `@gethelia/server` when your backend signs logged-in
-              users. Anonymous widgets do not need a backend package.
+              You only need <InlineCode>@gethelia/server</InlineCode> when your
+              backend signs logged-in users. Anonymous widgets do not need a
+              backend package.
             </Callout>
           </DocSection>
 
@@ -106,9 +117,9 @@ export default function DocsPage() {
               is needed. Paste the snippet from your Helia admin.
             </p>
             <Callout>
-              Replace `https://your-helia-admin` and the workspace id only when
-              writing examples by hand. The admin-generated snippet already
-              fills both values correctly.
+              Replace <InlineCode>https://your-helia-admin</InlineCode> and the
+              workspace id only when writing examples by hand. The
+              admin-generated snippet already fills both values correctly.
             </Callout>
             <StepList
               items={[
@@ -196,13 +207,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 "Install @gethelia/server in your backend.",
                 "Generate an identity secret in Helia Settings.",
                 "Store it as HELIA_IDENTITY_SECRET on the server.",
-                "Return signIdentity(...) from a token endpoint after your own auth resolves the user.",
-                "Pass tokenEndpoint to the React widget or data-token-endpoint to the script tag.",
+                "Create a token endpoint in your existing backend.",
+                "Connect that endpoint to the script tag or React widget.",
                 "Enable Reject anonymous chats only after signed traffic works.",
               ]}
             />
+            <Callout>
+              Use one backend example below. Next.js apps usually use the route
+              handler. Apps with a separate Node server can use the Express
+              version.
+            </Callout>
             <CodeBlock
-              title="Next.js route handler"
+              title="Backend token endpoint: Next.js"
               code={`import { signIdentity } from "@gethelia/server";
 
 export async function GET() {
@@ -217,27 +233,7 @@ export async function GET() {
   );
 }`}
             />
-            <p>
-              Then connect the token endpoint to the widget. Enable “Reject
-              anonymous chats” only after signed users work in production.
-            </p>
-            <CodeBlock
-              title="React widget with identity"
-              code={`<HeliaWidget
-  workspace="${workspaceId}"
-  tokenEndpoint="/api/helia/token"
-/>`}
-            />
-            <CodeBlock
-              title="HTML widget with identity"
-              code={`<script
-  src="https://your-helia-admin/w.js"
-  data-workspace="${workspaceId}"
-  data-token-endpoint="/api/helia/token"
-  async
-></script>`}
-            />
-            <Details title="Optional: Express endpoint">
+            <Details title="Backend token endpoint: Express">
               <CodeBlock
                 title="Node / Express"
                 code={`import express from "express";
@@ -255,6 +251,26 @@ app.get("/api/helia/token", requireAuth, (req, res) => {
 });`}
               />
             </Details>
+            <p>
+              After the endpoint works, connect it to whichever widget install
+              you use.
+            </p>
+            <CodeBlock
+              title="React widget with identity"
+              code={`<HeliaWidget
+  workspace="${workspaceId}"
+  tokenEndpoint="/api/helia/token"
+/>`}
+            />
+            <CodeBlock
+              title="HTML widget with identity"
+              code={`<script
+  src="https://your-helia-admin/w.js"
+  data-workspace="${workspaceId}"
+  data-token-endpoint="/api/helia/token"
+  async
+></script>`}
+            />
           </DocSection>
 
           <DocSection id="self-host" title="Self-host">
@@ -272,7 +288,8 @@ docker compose up -d`}
             />
             <p>
               After your admin is running, open the Widget page and copy the
-              generated snippet. It will point at your self-hosted `w.js`.
+              generated snippet. It will point at your self-hosted{" "}
+              <InlineCode>w.js</InlineCode>.
             </p>
           </DocSection>
         </div>
@@ -331,6 +348,14 @@ function Callout({ children }: { children: React.ReactNode }) {
     <div className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-xs leading-6 text-fg/80">
       {children}
     </div>
+  );
+}
+
+function InlineCode({ children }: { children: React.ReactNode }) {
+  return (
+    <code className="rounded bg-muted-bg px-1.5 py-0.5 text-[0.92em] text-fg">
+      {children}
+    </code>
   );
 }
 

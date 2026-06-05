@@ -43,12 +43,12 @@ Use this mental model:
 |-----------|--------------|
 | Website or CMS | Paste the script tag from the Widget page |
 | React or Next.js app | Install `@gethelia/react` and render `HeliaWidget` |
-| Logged-in users | Install `@gethelia/server` and return a signed identity from a token endpoint |
+| Logged-in users | Install `@gethelia/server` in your backend, then connect the token endpoint to the widget |
 | Self-hosting Helia itself | Run Helia with Docker, then copy the generated widget snippet |
 
 ## `@gethelia/server`
 
-Use this in your backend token endpoint after your own auth has identified
+Use this in the backend you already have after your own auth has identified
 the current user. The endpoint returns `{ id, name?, signature }`.
 
 ```bash
@@ -73,8 +73,8 @@ export async function GET() {
 }
 ```
 
-Pass that endpoint to the widget with `tokenEndpoint` in React or
-`data-token-endpoint` in the script tag.
+Pass that endpoint to whichever widget install path you use:
+`tokenEndpoint` in React or `data-token-endpoint` in the script tag.
 
 For server-to-server calls, use `identityHeaders(identity, secret)` and
 forward the returned `x-helia-user` and `x-helia-signature` headers.
