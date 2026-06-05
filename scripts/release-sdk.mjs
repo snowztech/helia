@@ -29,8 +29,9 @@ const originalManifests = new Map();
 
 for (const pkg of packages) {
   const manifestPath = join(pkg.dir, "package.json");
-  const manifest = readJson(manifestPath);
-  originalManifests.set(manifestPath, manifest);
+  const originalManifest = readFileSync(manifestPath, "utf8");
+  const manifest = JSON.parse(originalManifest);
+  originalManifests.set(manifestPath, originalManifest);
   manifest.version = nextVersion;
   writeJson(manifestPath, manifest);
 }
@@ -102,7 +103,7 @@ function writeJson(path, value) {
 
 function restoreManifests(manifests) {
   for (const [path, manifest] of manifests) {
-    writeJson(path, manifest);
+    writeFileSync(path, manifest);
   }
 }
 
