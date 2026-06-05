@@ -172,10 +172,11 @@ export const sourceEvents = pgTable(
  *  - `headers` are extra outbound headers (e.g. a static API key the
  *     customer issued for us). Stored encrypted in v1.5 — plaintext for now.
  *
- * Per-end-user identity ("coach_id from JWT") lands in a later milestone.
+ * Per-end-user context ("coach_id from signed identity") lands in a later
+ * milestone.
  * The `source` field on parameters is forward-looking: "llm" (visible to
- * the model) vs "context" (server-injected from a verified JWT). Only
- * "llm" is honoured in MVP.
+ * the model) vs "context" (server-injected from verified identity/context).
+ * Only "llm" is honoured in MVP.
  */
 export type ToolParam = {
   name: string;

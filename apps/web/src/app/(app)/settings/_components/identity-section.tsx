@@ -231,7 +231,7 @@ function IntegrationGuide({
 
 function CodeSamples({ workspaceId }: { workspaceId: string }) {
   const [backendTab, setBackendTab] = useState<"node" | "next">("node");
-  const [embedTab, setEmbedTab] = useState<"html" | "next">("html");
+  const [embedTab, setEmbedTab] = useState<"html" | "next" | "react">("html");
   const backendCode = backendTab === "node" ? NODE_SAMPLE : NEXT_SAMPLE;
 
   const widgetSrc =
@@ -253,8 +253,19 @@ import Script from "next/script";
   data-token-endpoint="/api/helia/token"
   strategy="afterInteractive"
 />`;
+  const reactSnippet = `import { HeliaWidget } from "@gethelia/react";
 
-  const embedCode = embedTab === "html" ? htmlSnippet : nextSnippet;
+<HeliaWidget
+  workspace="${workspaceId}"
+  tokenEndpoint="/api/helia/token"
+/>`;
+
+  const embedCode =
+    embedTab === "html"
+      ? htmlSnippet
+      : embedTab === "next"
+        ? nextSnippet
+        : reactSnippet;
 
   return (
     <div className="space-y-5">
@@ -271,6 +282,14 @@ import Script from "next/script";
 
       <Step
         number={2}
+        title="Install the backend SDK"
+        description="Only needed when Helia should know the logged-in user."
+      >
+        <CodeBlock code="pnpm add @gethelia/server" language="bash" />
+      </Step>
+
+      <Step
+        number={3}
         title="Add a signing route to your backend"
         description="Returns a signed identity for the logged-in user."
       >
@@ -297,7 +316,7 @@ import Script from "next/script";
       </Step>
 
       <Step
-        number={3}
+        number={4}
         title="Embed the widget"
         description="Fetches a fresh signed token on every page load."
       >
@@ -317,6 +336,12 @@ import Script from "next/script";
                 onClick={() => setEmbedTab("next")}
               >
                 Next.js
+              </TabButton>
+              <TabButton
+                active={embedTab === "react"}
+                onClick={() => setEmbedTab("react")}
+              >
+                React
               </TabButton>
             </div>
           }
@@ -425,36 +450,33 @@ function CodeBlock({
   );
 }
 
-const NODE_SAMPLE = `import crypto from "node:crypto";
+const NODE_SAMPLE = `import { signIdentity } from "@gethelia/server";
 
 app.get("/api/helia/token", (req, res) => {
   const user = /* your auth */;
   if (!user) return res.status(401).send("unauthorized");
 
-  const payload = user.name ? { id: user.id, name: user.name } : { id: user.id };
-  const signature = crypto
-    .createHmac("sha256", process.env.HELIA_IDENTITY_SECRET)
-    .update(JSON.stringify(payload))
-    .digest("hex");
-
-  res.json({ ...payload, signature });
+  res.json(
+    signIdentity(
+      { id: user.id, name: user.name },
+      process.env.HELIA_IDENTITY_SECRET,
+    ),
+  );
 });`;
 
 const NEXT_SAMPLE = `// app/api/helia/token/route.ts
-import crypto from "node:crypto";
 import { headers } from "next/headers";
+import { signIdentity } from "@gethelia/server";
 import { auth } from "@/lib/auth";
 
 export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return new Response("unauthorized", { status: 401 });
 
-  const { id, name } = session.user;
-  const payload = name ? { id, name } : { id };
-  const signature = crypto
-    .createHmac("sha256", process.env.HELIA_IDENTITY_SECRET!)
-    .update(JSON.stringify(payload))
-    .digest("hex");
-
-  return Response.json({ ...payload, signature });
+  return Response.json(
+    signIdentity(
+      { id: session.user.id, name: session.user.name },
+      process.env.HELIA_IDENTITY_SECRET!,
+    ),
+  );
 }`;

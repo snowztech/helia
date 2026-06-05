@@ -93,6 +93,9 @@ export default function WidgetPage() {
     "floating",
   );
   const [widgetTarget, setWidgetTarget] = useState("#helia-chat");
+  const [installKind, setInstallKind] = useState<"html" | "next" | "react">(
+    "html",
+  );
 
   useEffect(() => {
     api
@@ -156,9 +159,21 @@ export default function WidgetPage() {
   // the snippet works on paste. The container needs an explicit height;
   // otherwise the chat collapses to 0 and devs think the widget is broken.
   const snippet =
-    widgetMode === "embedded"
-      ? `<div id="${widgetTarget.replace(/^#/, "")}" style="height: 600px"></div>\n${scriptTag}`
-      : scriptTag;
+    installKind === "html"
+      ? widgetMode === "embedded"
+        ? `<div id="${widgetTarget.replace(/^#/, "")}" style="height: 600px"></div>\n${scriptTag}`
+        : scriptTag
+      : installKind === "next"
+        ? nextScriptSnippet(widgetSrc, ws.id, widgetMode, widgetTarget)
+        : reactSnippet(ws.id, widgetMode);
+  const installLabel =
+    installKind === "html" ? "html" : installKind === "next" ? "next.js" : "react";
+  const installHint =
+    installKind === "react"
+      ? "Install @gethelia/react in your app, then render the component."
+      : installKind === "next"
+        ? "No Helia package needed. Uses Next.js Script and your hosted widget file."
+        : "No package install needed. Paste this HTML on your site.";
 
   const save = async () => {
     setSaving(true);
@@ -385,9 +400,17 @@ export default function WidgetPage() {
           <Section title="Install">
             <div className="rounded-lg border border-border bg-card p-4">
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                  html
-                </span>
+                <SegGroup
+                  options={[
+                    { value: "html", label: "HTML" },
+                    { value: "next", label: "Next.js" },
+                    { value: "react", label: "React" },
+                  ]}
+                  value={installKind}
+                  onChange={(v) =>
+                    setInstallKind(v as "html" | "next" | "react")
+                  }
+                />
                 <Button size="sm" variant="ghost" onClick={copy}>
                   <HugeiconsIcon
                     icon={copied ? Tick02Icon : Copy01Icon}
@@ -396,6 +419,12 @@ export default function WidgetPage() {
                   {copied ? "copied" : "copy"}
                 </Button>
               </div>
+              <div className="mb-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                {installLabel}
+              </div>
+              <p className="mb-2 text-[11px] text-muted-foreground">
+                {installHint}
+              </p>
               <pre className="overflow-x-auto rounded-md bg-muted px-3 py-2.5 text-[11px] leading-relaxed text-foreground">
                 {snippet}
               </pre>
@@ -414,6 +443,47 @@ export default function WidgetPage() {
       </div>
     </div>
   );
+}
+
+function nextScriptSnippet(
+  widgetSrc: string,
+  workspaceId: string,
+  mode: "floating" | "embedded",
+  target: string,
+): string {
+  const attrs =
+    mode === "embedded"
+      ? `\n  data-mode="embedded"\n  data-target="${target}"`
+      : "";
+  const targetEl =
+    mode === "embedded"
+      ? `<div id="${target.replace(/^#/, "")}" style={{ height: 600 }} />\n\n`
+      : "";
+  return `import Script from "next/script";
+
+${targetEl}<Script
+  src="${widgetSrc}"
+  data-workspace="${workspaceId}"${attrs}
+  strategy="afterInteractive"
+/>`;
+}
+
+function reactSnippet(
+  workspaceId: string,
+  mode: "floating" | "embedded",
+): string {
+  if (mode === "embedded") {
+    return `import { HeliaWidget } from "@gethelia/react";
+
+<HeliaWidget
+  workspace="${workspaceId}"
+  mode="embedded"
+  style={{ height: 600 }}
+/>`;
+  }
+  return `import { HeliaWidget } from "@gethelia/react";
+
+<HeliaWidget workspace="${workspaceId}" />`;
 }
 
 function Section({

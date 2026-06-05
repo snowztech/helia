@@ -28,8 +28,8 @@ Roughly ordered by expected impact. Items move as real feedback lands.
 
 ### SDKs and install DX
 
-`@helia/server` exposes `signIdentity(user, secret)` and
-`identityHeaders(user, secret)`. `@helia/react` wraps the vanilla widget
+`@gethelia/server` exposes `signIdentity(user, secret)` and
+`identityHeaders(user, secret)`. `@gethelia/react` wraps the vanilla widget
 as `<HeliaWidget />` for React/Next.js apps. The script tag remains the
 lowest-friction path; SDKs are for teams that want typed integration.
 

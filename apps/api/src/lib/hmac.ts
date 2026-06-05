@@ -3,7 +3,7 @@ import {
   signIdentity as signHeliaIdentity,
   verifyIdentity,
   type HeliaIdentity,
-} from "@helia/server";
+} from "@gethelia/server";
 
 export { verifyIdentity };
 

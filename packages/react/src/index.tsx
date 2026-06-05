@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo } from "react";
-import Helia, { type Identity, type WidgetHandle } from "@helia/widget";
+import Helia, { type Identity, type WidgetHandle } from "@gethelia/widget";
 import type { CSSProperties } from "react";
 
 export type HeliaWidgetProps = {
@@ -82,7 +82,7 @@ export function HeliaWidget(props: HeliaWidgetProps) {
   return <div id={generatedId} className={props.className} style={props.style} />;
 }
 
-export type { Identity, WidgetConfig, WidgetHandle } from "@helia/widget";
+export type { Identity, WidgetConfig, WidgetHandle } from "@gethelia/widget";
 
 async function fetchIdentity(endpoint: string): Promise<Identity | null> {
   const res = await fetch(endpoint, { credentials: "include" });

@@ -1,18 +1,27 @@
 {
-  "name": "@helia/react",
+  "name": "@gethelia/react",
   "version": "0.0.1",
   "private": false,
   "type": "module",
-  "main": "./src/index.tsx",
-  "types": "./src/index.tsx",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.tsx"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepack": "pnpm run build",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@helia/widget": "workspace:*"
+    "@gethelia/widget": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=18"

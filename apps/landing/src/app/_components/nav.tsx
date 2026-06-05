@@ -14,6 +14,12 @@ export function Nav() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
+          <Link
+            href="/docs"
+            className="hidden text-[13px] text-muted transition-colors hover:text-fg sm:block"
+          >
+            docs
+          </Link>
           <a
             href={`${APP_URL}/login`}
             className="hidden text-[13px] text-muted transition-colors hover:text-fg sm:block"

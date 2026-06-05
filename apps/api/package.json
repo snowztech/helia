@@ -17,7 +17,7 @@
     "@helia/config": "workspace:*",
     "@helia/db": "workspace:*",
     "@helia/rag": "workspace:*",
-    "@helia/server": "workspace:*",
+    "@gethelia/server": "workspace:*",
     "@hono/node-server": "^1.13.7",
     "@hono/zod-validator": "^0.4.1",
     "@types/bcryptjs": "^3.0.0",
