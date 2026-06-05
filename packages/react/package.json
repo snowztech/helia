@@ -16,9 +16,9 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "pnpm --filter @gethelia/widget build && tsc -p tsconfig.build.json",
     "prepack": "pnpm run build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "pnpm --filter @gethelia/widget build && tsc --noEmit"
   },
   "dependencies": {
     "@gethelia/widget": "workspace:*"
