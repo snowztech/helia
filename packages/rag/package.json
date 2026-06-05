@@ -11,9 +11,14 @@
     "./chunk": "./src/chunk.ts",
     "./embed": "./src/embed.ts",
     "./retrieve": "./src/retrieve.ts",
+    "./eval": "./src/eval.ts",
     "./prompt": "./src/prompt.ts",
     "./ingest": "./src/ingest.ts",
     "./crawl": "./src/crawl.ts"
+  },
+  "scripts": {
+    "eval": "tsx src/eval-cli.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.3.0",
@@ -28,7 +33,9 @@
   },
   "devDependencies": {
     "@types/jsdom": "^21.1.7",
+    "@types/node": "^22.10.0",
     "@types/pdf-parse": "^1.1.5",
+    "tsx": "^4.19.0",
     "typescript": "^5.7.0"
   }
 }

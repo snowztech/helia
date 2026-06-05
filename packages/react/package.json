@@ -1,0 +1,33 @@
+{
+  "name": "@gethelia/react",
+  "version": "0.0.1",
+  "private": false,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "pnpm --filter @gethelia/widget build && tsc -p tsconfig.build.json",
+    "prepack": "pnpm run build",
+    "typecheck": "pnpm --filter @gethelia/widget build && tsc --noEmit"
+  },
+  "dependencies": {
+    "@gethelia/widget": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "19.0.0",
+    "typescript": "^5.7.0"
+  }
+}

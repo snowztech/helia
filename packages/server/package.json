@@ -1,5 +1,5 @@
 {
-  "name": "@gethelia/widget",
+  "name": "@gethelia/server",
   "version": "0.0.1",
   "private": false,
   "type": "module",
@@ -16,13 +16,12 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && esbuild src/loader.ts --bundle --format=iife --global-name=Helia --outfile=dist/w.js --minify --target=es2020 --sourcemap",
+    "build": "tsc -p tsconfig.build.json",
     "prepack": "pnpm run build",
-    "dev": "esbuild src/loader.ts --bundle --format=iife --global-name=Helia --outfile=dist/w.js --target=es2020 --sourcemap --servedir=. --serve=localhost:5173",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "esbuild": "^0.24.0",
+    "@types/node": "^22.10.0",
     "typescript": "^5.7.0"
   }
 }

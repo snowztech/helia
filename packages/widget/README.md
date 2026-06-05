@@ -1,4 +1,4 @@
-# @helia/widget
+# @gethelia/widget
 
 The embeddable chat widget. Pure TypeScript (no React), bundled to a single
 IIFE script by esbuild. Customers drop one `<script>` tag on their site.
@@ -44,8 +44,8 @@ src/
 ## Build
 
 ```bash
-pnpm --filter @helia/widget build   # one-shot, minified bundle in dist/
-pnpm --filter @helia/widget dev     # esbuild --servedir on port 5173
+pnpm --filter @gethelia/widget build   # one-shot, minified bundle in dist/
+pnpm --filter @gethelia/widget dev     # esbuild --servedir on port 5173
 ```
 
 The bundle target is `<30 KB minified`. Current size: ~20 KB.

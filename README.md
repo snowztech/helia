@@ -122,6 +122,8 @@ packages/
 ├── agent/    # generic agent loop (persona + tools + maxSteps), AI SDK based
 ├── db/       # Drizzle schema + Postgres client
 ├── rag/      # extract / chunk / embed / retrieve / prompt / crawl / ingest
+├── react/    # React wrapper around the vanilla widget
+├── server/   # identity-signing helpers for customer backends
 └── widget/   # vanilla TS embed bundle (~20 KB minified)
 ```
 
@@ -133,6 +135,7 @@ top of that, any HTTP tools the workspace owner registered (via the
 
 Full design in [`docs/architecture.md`](./docs/architecture.md). Long-arc
 direction in [`docs/roadmap.md`](./docs/roadmap.md).
+SDK install notes live in [`docs/sdk.md`](./docs/sdk.md).
 
 **Stack** — Next.js 15 · TypeScript · pnpm workspaces · Hono · Postgres +
 pgvector · Drizzle · Vercel AI SDK · OpenAI · shadcn/ui · hugeicons.

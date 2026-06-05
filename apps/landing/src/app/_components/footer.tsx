@@ -4,6 +4,7 @@ const VERSION = process.env.NEXT_PUBLIC_HELIA_VERSION ?? "dev";
 
 const LINKS = [
   { label: "github", href: "https://github.com/snowztech/helia" },
+  { label: "docs", href: "/docs" },
   { label: "privacy", href: "/privacy" },
   { label: "terms", href: "/terms" },
   { label: "legal", href: "/legal" },

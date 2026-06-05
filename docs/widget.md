@@ -17,50 +17,64 @@ The widget lives in `packages/widget`. See [`roadmap.md`](./roadmap.md) for what
 ### The default snippet
 
 ```html
-<script src="https://app.gethelia.dev/w.js" data-workspace="ws_xxx" async></script>
+<script src="https://your-helia-admin/w.js" data-workspace="ws_xxx" async></script>
 ```
 
 That's it. The loader fetches the workspace config from `/v1/widget/config?ws=ws_xxx`, mounts a launcher button in the corner, and lazy-loads the chat panel when the user opens it.
 
-The config response includes the theme, the bot persona, the greeting, the allowed origin list, and the chat endpoint URL. It is cached on the CDN edge with stale-while-revalidate so theme changes propagate within seconds without the customer touching their HTML.
-
-### HTML overrides
-
-For agencies or power users who want to override one or two values without going to the admin UI:
+Embedded mode mounts the panel inside a page container instead of using the
+floating launcher:
 
 ```html
-<script src="https://app.gethelia.dev/w.js"
-        data-workspace="ws_xxx"
-        data-primary="#0ea5e9"
-        data-position="left"
-        async></script>
+<div id="helia-chat" style="height: 600px"></div>
+<script
+  src="https://your-helia-admin/w.js"
+  data-workspace="ws_xxx"
+  data-mode="embedded"
+  data-target="#helia-chat"
+  async
+></script>
 ```
 
-Supported data attributes: `data-primary`, `data-position`, `data-greeting`, `data-launcher-text`, `data-tone`.
+React apps can use `<HeliaWidget />`; backend identity helpers live in
+`@gethelia/server`. See [`docs/sdk.md`](./sdk.md).
 
-### Full JS API
+The config response includes the theme, the bot persona, the greeting, the allowed origin list, and the chat endpoint URL. It is cached on the CDN edge with stale-while-revalidate so theme changes propagate within seconds without the customer touching their HTML.
 
-For dashboards where the host app already has design tokens and an auth session:
+### React install
 
-```js
-window.Helia.init({
-  workspace: 'ws_xxx',
-  userToken: '<signed JWT>',           // dashboard mode only
-  theme: {
-    primary: '#0ea5e9',
-    background: '#0b0b0b',
-    text: '#fafafa',
-    radius: '12px',
-    logo: '/img/bot.svg',
-    font: 'inherit',
-  },
-  bot: { name: 'Pedro', greeting: 'Hi, I am Pedro from FistDistance.' },
-  launcher: { position: 'bottom-right', shape: 'pill' },
-  tone: 'auto',
-});
+React and Next.js apps can install the wrapper package and render the same
+widget through a component:
+
+```tsx
+import { HeliaWidget } from "@gethelia/react";
+
+<HeliaWidget workspace="ws_xxx" />
 ```
 
-Anything passed here wins over the server config for that page load. The server config remains the default for everyone else.
+Authenticated apps add a token endpoint:
+
+```tsx
+<HeliaWidget workspace="ws_xxx" tokenEndpoint="/api/helia/token" />
+```
+
+The token endpoint returns `{ id, name?, signature }`, signed with
+`@gethelia/server`.
+
+### Runtime config
+
+The supported script/component config is intentionally small:
+
+| Field | Purpose |
+|-------|---------|
+| `workspace` / `data-workspace` | Public workspace id |
+| `apiUrl` / `data-api-url` | Override API origin for self-host/dev |
+| `mode` / `data-mode` | `floating` or `embedded` |
+| `target` / `data-target` | CSS selector for embedded mode |
+| `tokenEndpoint` / `data-token-endpoint` | Host route returning a signed identity |
+
+Branding, wording, position, theme, radius, suggestions, and avatar come
+from the workspace config edited in the admin UI.
 
 ## Branding
 
@@ -69,17 +83,15 @@ What the workspace owner can change from the admin UI in v1.
 | Field | What it controls |
 |-------|------------------|
 | Primary color | Header, send button, user message bubble |
-| Background color | Panel and message area |
-| Text color | All copy in the panel |
-| Logo | Header icon and bot avatar |
-| Bot name | Header title and message-from label |
+| Bot avatar | Header icon and launcher mark |
+| Bot name | Header title |
+| Bot subtitle | Header subtitle |
 | Greeting | First message shown when the panel opens |
-| Launcher position | bottom-right, bottom-left |
-| Launcher shape | circle or pill |
-| Launcher icon | default chat bubble or uploaded SVG |
-| Tone | light, dark, auto (follows `prefers-color-scheme`) |
-| Font | system default or `inherit` from the host page |
-| Powered-by badge | shown on Starter, hideable on Pro and above |
+| Placeholder | Input placeholder |
+| Suggestions | First-message suggested questions |
+| Position | bottom-right, bottom-left |
+| Theme | light, dark, auto |
+| Radius | Panel corner radius |
 
 Seven fields cover what 80 percent of customers will ever ask for. We intentionally do not ship a full CSS editor or HTML templates in v1. That path leads to a support nightmare and we cap it at config.
 
@@ -112,7 +124,7 @@ The widget is public surface area. A few rules keep it safe.
 - **CORS allowlist per workspace.** The widget config endpoint and the chat endpoint both check the `Origin` header against the workspace's allowed domain list. A `ws_xxx` key on the wrong domain returns 403.
 - **No secrets in the snippet.** The workspace ID is public on purpose. It is not a credential. Auth happens at the origin check.
 - **Rate limit per visitor IP and per workspace.** Default token budget per workspace per day. Hard cap on per-IP request rate. Both configurable.
-- **Signed user tokens in dashboard mode.** The host app signs a short-lived JWT with its private key. Helia verifies it with the workspace's public key (registered at setup). The agent gets a verified `user_id` and `role` in `ctx`. Tools may use these. The LLM cannot forge them.
+- **Signed identities in dashboard mode.** The host app exposes a token endpoint that returns `{ id, name?, signature }`. The signature is HMAC-SHA256 over the canonical user payload using the workspace identity secret. Helia verifies it on `/v1/chat` before attaching the user to the turn.
 - **Tool outputs are untrusted.** Anything that comes back from a tool call is wrapped in a `<tool_result trust="low">` envelope in the prompt. The persona prompt tells the model that content inside that envelope is data, not instructions. Prevents indirect prompt injection through scraped pages and HTTP-tool responses.
 
 ## Performance targets
@@ -129,27 +141,22 @@ These numbers go in the CI bundle-size check once the package exists.
 | Method | Path | Purpose |
 |--------|------|---------|
 | `GET` | `/v1/widget/config?ws=ws_xxx` | Theme, bot persona, allowed origin, chat URL. Cached at edge. |
-| `POST` | `/v1/chat` | SSE stream. Same endpoint the admin chat page uses. Auth differs (workspace API key + Origin check instead of session). |
+| `POST` | `/v1/chat` | AI SDK data stream. Widget calls include `?ws=...`, `?conv=...`, and optional identity headers. |
 
 The widget does not call source endpoints directly. Anything related to source management stays in the admin UI.
 
 ## What the widget does not do (in v1)
 
-- It does not authenticate end users on the host site. That is v1.5 (dashboard mode with signed JWT).
+- It does not authenticate end users on the host site. The host app owns auth and only gives Helia a signed identity claim.
 - It does not run custom JavaScript per workspace. Workspaces theme through config, not code.
 - It does not work in iframes by default. We have not tested it there. If a customer needs it, we treat that as a real feature, not a hack.
 - It does not support file upload from the visitor. Read-only conversation in v1.
 
 ## Build and ship
 
-The widget package is published to npm as `@helia/widget` and served as a static asset at `https://app.gethelia.dev/w.js`. The served file is the immutable, versioned build. A separate `https://app.gethelia.dev/w.js` pointer lets customers pin a version if they want.
+`@gethelia/widget` is the vanilla runtime package. `pnpm --filter @gethelia/widget
+build` produces `dist/w.js`, which the web app copies to `apps/web/public/w.js`
+during `@helia/web` builds.
 
-`pnpm --filter @helia/widget build` produces the loader and the panel bundles. CI runs the bundle-size check, the cross-browser smoke test, and the visual snapshot of the default theme.
-
-## Open questions
-
-These are decided when we get to them, not before.
-
-- Do we ship a React component wrapper next to the script tag? Probably yes once we have a paying customer who asks. Same widget, just a thin component.
-- Do we expose a "send message programmatically" API for chained UX flows? Wait until v1.5 dashboard mode lands and see if anyone needs it.
-- Do we support multiple widgets on the same page? Not in v1. The widget assumes one instance per page.
+`@gethelia/react` is a thin wrapper over the same runtime. It should not fork
+chat behavior.

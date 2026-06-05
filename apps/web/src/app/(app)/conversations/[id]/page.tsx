@@ -8,6 +8,7 @@ import {
   Alert02Icon,
   ArrowLeft02Icon,
   Delete02Icon,
+  InformationCircleIcon,
   SparklesIcon,
   UserBlock01Icon,
 } from "@hugeicons/core-free-icons";
@@ -188,6 +189,8 @@ function BackLink() {
  */
 function Turn({ turn }: { turn: ConversationTurn }) {
   const toolCalls = collectToolCalls(turn);
+  const hasDiagnostics =
+    turn.retrieval.length > 0 || toolCalls.length > 0 || turn.steps.length > 0;
 
   return (
     <div className="space-y-2">
@@ -217,20 +220,26 @@ function Turn({ turn }: { turn: ConversationTurn }) {
             </div>
           )}
 
-          {(turn.retrieval.length > 0 || toolCalls.length > 0) && (
+          {hasDiagnostics && (
             <details className="rounded-md border border-border-subtle bg-muted/30 px-3 py-1.5 text-xs">
               <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
-                {[
-                  turn.retrieval.length > 0
-                    ? `${turn.retrieval.length} source${turn.retrieval.length === 1 ? "" : "s"}`
-                    : null,
-                  toolCalls.length > 0
-                    ? `${toolCalls.length} tool call${toolCalls.length === 1 ? "" : "s"}`
-                    : null,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
+                <span className="inline-flex items-center gap-1">
+                  <HugeiconsIcon icon={InformationCircleIcon} size={12} />
+                  why this answer
+                  <span className="text-muted-foreground/70">
+                    ({diagnosticLabel(turn, toolCalls.length)})
+                  </span>
+                </span>
               </summary>
+
+              <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                <Metric label="model" value={turn.model} />
+                <Metric
+                  label="tokens"
+                  value={turn.totalTokens.toLocaleString()}
+                />
+                <Metric label="latency" value={`${turn.totalLatencyMs}ms`} />
+              </div>
 
               {turn.retrieval.length > 0 && (
                 <div className="mt-2 space-y-1">
@@ -286,6 +295,12 @@ function Turn({ turn }: { turn: ConversationTurn }) {
                   </ul>
                 </div>
               )}
+
+              {turn.steps.length > 0 && (
+                <div className="mt-3">
+                  <JsonBlock label="raw agent steps" value={turn.steps} />
+                </div>
+              )}
             </details>
           )}
 
@@ -299,6 +314,33 @@ function Turn({ turn }: { turn: ConversationTurn }) {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function diagnosticLabel(turn: ConversationTurn, toolCallCount: number) {
+  return [
+    turn.retrieval.length > 0
+      ? `${turn.retrieval.length} source${turn.retrieval.length === 1 ? "" : "s"}`
+      : null,
+    toolCallCount > 0
+      ? `${toolCallCount} tool${toolCallCount === 1 ? "" : "s"}`
+      : null,
+    turn.steps.length > 0
+      ? `${turn.steps.length} step${turn.steps.length === 1 ? "" : "s"}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-border-subtle bg-background px-2 py-1">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
+      <div className="truncate text-[11px] text-foreground">{value}</div>
     </div>
   );
 }

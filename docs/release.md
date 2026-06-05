@@ -1,44 +1,100 @@
 # Releasing
 
-Solo-maintainer flow. Three commands.
+Helia has two release tracks:
 
-The root `package.json` version is the source of truth. Both the API
-(`/v1/system`) and the admin footer read it directly. Workspace
-packages stay at `0.0.0` (they're `private: true`, their versions are
-meaningless).
+- **App releases** ship the hosted/self-hosted product and bump the root
+  `package.json` version.
+- **SDK releases** publish the public npm packages:
+  `@gethelia/widget`, `@gethelia/server`, and `@gethelia/react`.
 
-## Bump → tag → push
+Keep them separate. The hosted app can ship without publishing npm packages,
+and SDK packages can patch without changing the hosted app version.
+
+## App release
+
+Use this for product changes, backend changes, dashboard changes, docs shipped
+with the app, and deployable self-hosted changes.
 
 ```bash
-pnpm version patch            # or minor / major
+pnpm release:app patch
+# or minor / major
+```
+
+The script:
+
+1. Requires a clean git worktree.
+2. Runs `pnpm typecheck`.
+3. Runs `pnpm version <patch|minor|major>`.
+4. Prints the push and GitHub release commands.
+
+Then push the version commit and tag:
+
+```bash
 git push --follow-tags
 gh release create v$(node -p "require('./package.json').version") --generate-notes
 ```
 
-That's it. Each step:
+## SDK release
 
-- `pnpm version patch` bumps `package.json`, commits the change, and
-  creates a `vX.Y.Z` tag. No need to touch workspace packages.
-- `git push --follow-tags` pushes the commit and the tag.
-- `gh release create ...` publishes a GitHub release with auto-generated
-  notes from commits since the previous tag.
+Use this when the public npm API changes, package docs change, or the widget,
+React wrapper, or server helpers need to be published.
 
-If Railway is wired to auto-deploy from `main`, the new version is live
-within a couple of minutes. The footer and `/settings → System` reflect
-it automatically because both read from the bumped `package.json`.
+First-time npm setup:
 
-## When to bump
+```bash
+npm login
+npm whoami
+```
 
-Loose Semver, applied honestly:
+Make sure your npm account can publish public packages under the `@gethelia`
+scope.
 
-- **patch**: bug fix, polish, dependency update, no schema/API surface change
-- **minor**: new feature, new endpoint, additive schema migration
-- **major**: breaking schema or API change, env var renamed, behavior changed in a way that requires customer action
+Run a dry release first:
 
-## When this stops being enough
+```bash
+pnpm release:sdk patch
+# or minor / major
+```
 
-Move to [Changesets](https://github.com/changesets/changesets) the
-first time you accept a contributor's PR. Changesets gives PR authors
-a way to declare the impact of their change (patch / minor / major +
-a one-line summary), and assembles the changelog for you on release.
-Solo maintainer doesn't need this.
+The script:
+
+1. Requires a clean git worktree.
+2. Temporarily bumps all three SDK package versions together.
+3. Runs SDK typecheck and builds.
+4. Packs the packages to a temporary directory.
+5. Verifies packed manifests do not leak `workspace:` dependency ranges.
+6. Restores package manifests and stops before publishing.
+
+Inspect the generated tarballs if this is the first publish. Then publish:
+
+```bash
+pnpm release:sdk patch --publish
+```
+
+Publish order is handled by the script:
+
+1. `@gethelia/widget`
+2. `@gethelia/server`
+3. `@gethelia/react`
+
+After publishing, commit and tag the SDK version bump:
+
+```bash
+git add packages/widget/package.json packages/server/package.json packages/react/package.json
+git commit -m "chore: release sdk <version>"
+git tag sdk-v<version>
+git push --follow-tags
+```
+
+## Bump guide
+
+- **patch**: bug fix, docs correction, package metadata fix, no behavior break
+- **minor**: new feature, new endpoint, additive SDK API
+- **major**: breaking API, required migration, renamed env var, behavior change
+  that requires customer action
+
+## Later
+
+Move to Changesets after external contributors start opening PRs or SDK
+packages need independent versioning. Until then, the scripts keep release DX
+simple and explicit.
