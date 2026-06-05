@@ -6,8 +6,9 @@ import { basename, join } from "node:path";
 
 const bump = process.argv[2];
 const publish = process.argv.includes("--publish");
+const otp = readOption("otp");
 const allowed = new Set(["patch", "minor", "major"]);
-let publishingStarted = false;
+let publishedCount = 0;
 
 const packages = [
   { name: "@gethelia/widget", dir: "packages/widget" },
@@ -72,9 +73,15 @@ try {
     process.exit(0);
   }
 
-  publishingStarted = true;
   for (const tarball of tarballs) {
-    run("npm", ["publish", tarball, "--access", "public"]);
+    run("npm", [
+      "publish",
+      tarball,
+      "--access",
+      "public",
+      ...(otp ? ["--otp", otp] : []),
+    ]);
+    publishedCount += 1;
   }
 
   console.log("");
@@ -86,7 +93,7 @@ try {
   console.log(`  git tag sdk-v${nextVersion}`);
   console.log("  git push --follow-tags");
 } catch (err) {
-  if (!publish || !publishingStarted) restoreManifests(originalManifests);
+  if (!publish || publishedCount === 0) restoreManifests(originalManifests);
   console.error("");
   console.error(err instanceof Error ? err.message : String(err));
   process.exit(1);
@@ -153,4 +160,13 @@ function run(command, args) {
 
 function output(command, args) {
   return execFileSync(command, args, { encoding: "utf8" }).trim();
+}
+
+function readOption(name) {
+  const prefix = `--${name}=`;
+  const inline = process.argv.find((arg) => arg.startsWith(prefix));
+  if (inline) return inline.slice(prefix.length);
+  const index = process.argv.indexOf(`--${name}`);
+  if (index === -1) return null;
+  return process.argv[index + 1] ?? null;
 }
