@@ -15,13 +15,24 @@ The integration model is the same in both cases.
 In normal setup, copy snippets from your Helia admin. The generated `w.js`
 URL already points at the correct hosted or self-hosted origin.
 
-## Choose an install path
+## Install
 
-| Path | Use when | Packages |
-|------|----------|----------|
-| Script tag | Static site, CMS, no build step | none |
-| React widget | React/Next app shell | `@gethelia/react` |
-| Authenticated app | Widget should know the logged-in user | `@gethelia/server` plus script tag or React |
+Most websites do not install an npm package. Copy the script tag from your
+Helia admin and paste it into the site.
+
+For React or Next.js apps:
+
+```bash
+pnpm add @gethelia/react
+npm install @gethelia/react
+```
+
+For backend identity endpoints:
+
+```bash
+pnpm add @gethelia/server
+npm install @gethelia/server
+```
 
 Anonymous installs only need the workspace id. Authenticated installs add a
 token endpoint that returns `{ id, name?, signature }`.
