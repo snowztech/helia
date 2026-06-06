@@ -1,0 +1,27 @@
+[
+  {
+    "name": "grounded-policy-answer",
+    "question": "What is the refund policy?",
+    "expectedBehavior": "Answers from retrieved policy text in natural prose, without inline source labels. Source buttons should appear separately."
+  },
+  {
+    "name": "missing-information",
+    "question": "Do you offer phone support on Sundays?",
+    "expectedBehavior": "If the knowledge base does not cover Sunday phone support, says that the available information does not specify it and suggests contacting the business."
+  },
+  {
+    "name": "pricing-or-plan-question",
+    "question": "Which plan should I choose?",
+    "expectedBehavior": "Uses retrieved pricing or plan details when present, keeps the answer concise, and avoids inventing plan differences."
+  },
+  {
+    "name": "exact-code-question",
+    "question": "What does error API-KEY-403 mean?",
+    "expectedBehavior": "Uses exact retrieved terms when present. If no matching code is found, says the knowledge base does not cover that exact error."
+  },
+  {
+    "name": "multi-source-answer",
+    "question": "How do I install Helia and identify logged-in users?",
+    "expectedBehavior": "Combines relevant retrieved sources into a short answer, avoids internal tool details, and leaves citations to the source buttons."
+  }
+]

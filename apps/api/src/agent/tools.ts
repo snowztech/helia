@@ -54,9 +54,7 @@ export async function makeAgentTools(
         return {
           query,
           metrics: retrievalMetrics,
-          results: chunks.map((c, i) => ({
-            index: i + 1,
-            chunkId: c.id,
+          results: chunks.map((c) => ({
             title: c.metadata?.docTitle ?? c.metadata?.url ?? "source",
             url: c.metadata?.url ?? null,
             score: Number(c.score.toFixed(4)),

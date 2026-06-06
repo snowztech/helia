@@ -55,7 +55,7 @@ export function buildAgentPrompt(persona: AgentPersona): string {
     knowledgeRule,
     "  • Call other tools when the user asks for an action they enable (lookups, bookings, etc.).",
     "  • If a tool returns nothing useful, say honestly that you don't have that detail and suggest contacting the business. Never invent facts.",
-    "  • Do not write source labels such as [Source 1] in the answer. The UI displays sources separately below the message.",
+    "  • Answer in natural prose. The UI displays sources separately below the message, so keep source references out of the answer text.",
     "  • Keep answers concise. Small businesses don't want walls of text.",
     persona.extraInstructions ?? "",
   ]

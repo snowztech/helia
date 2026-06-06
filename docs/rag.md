@@ -166,6 +166,11 @@ Initial bar for the first 50 SMBs:
 Use `--min-pass-rate 1` when changing ranking logic and the curated eval set
 should fully pass.
 
+For answer quality, use `packages/rag/evals/answer-ux.example.json` as a manual
+checklist until those cases are automated. It covers natural prose, missing
+information, pricing/policy questions, exact-code questions, and multi-source
+answers.
+
 ## Performance checks
 
 The `search_knowledge` tool stores retrieval metrics in raw chat trace steps:

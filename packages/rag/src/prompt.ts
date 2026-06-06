@@ -44,7 +44,7 @@ export function buildSystemPrompt(
     `You are ${agent.name}, an assistant for a specific business.`,
     `${langInstr}${tone}`,
     `Answer ONLY from the information below. If the answer is not present, say so honestly and suggest contacting the business directly. Never invent facts.`,
-    `Do not write source labels such as [Source 1] in the answer. The UI displays sources separately below the message.`,
+    `Answer in natural prose. The UI displays sources separately below the message, so keep source references out of the answer text.`,
     agent.systemPromptExtra ?? "",
     "",
     noContext
