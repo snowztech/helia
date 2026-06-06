@@ -12,7 +12,7 @@ export type AgentConfig = {
  *
  * Design notes:
  *  - Forces "answer only from sources" to limit hallucinations.
- *  - Demands citations like [Source 1] for verifiability.
+ *  - Keeps source labels in the private context, but not in user-facing text.
  *  - Tells the model how to behave when no information is found
  *    (say so, propose contact). Without this, models invent answers.
  *  - Locale instruction in the same language as the target output to anchor
@@ -44,7 +44,7 @@ export function buildSystemPrompt(
     `You are ${agent.name}, an assistant for a specific business.`,
     `${langInstr}${tone}`,
     `Answer ONLY from the information below. If the answer is not present, say so honestly and suggest contacting the business directly. Never invent facts.`,
-    `When you state a fact, cite the source like [Source 1].`,
+    `Do not write source labels such as [Source 1] in the answer. The UI displays sources separately below the message.`,
     agent.systemPromptExtra ?? "",
     "",
     noContext
