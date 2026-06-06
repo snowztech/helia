@@ -1,16 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/sonner";
-import { api } from "@/lib/api";
+import { api, hostedSourceLimit } from "@/lib/api";
 
 type Tab = "pdf" | "text" | "url";
 
@@ -24,6 +25,23 @@ export default function UploadPage() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("pdf");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const [blocked, setBlocked] = useState<string | null>(null);
+
+  useEffect(() => {
+    Promise.all([api.listSources(), api.getWorkspace(), api.getSystem()])
+      .then(([sources, workspace, system]) => {
+        const limit = hostedSourceLimit(workspace.workspace, system);
+        if (limit !== null && sources.sources.length >= limit) {
+          setBlocked(
+            `Free includes ${limit} sources. Upgrade to Starter for more.`,
+          );
+        }
+      })
+      .catch(() => {
+        // Server-side enforcement still protects the limit. Avoid blocking
+        // upload if this preflight check fails.
+      });
+  }, []);
 
   const wrap = async (
     run: () => Promise<{ source: { id: string }; error?: string }>,
@@ -61,6 +79,17 @@ export default function UploadPage() {
         <h1 className="text-2xl">add a source.</h1>
       </header>
 
+      {blocked && (
+        <Card>
+          <CardContent className="space-y-3 py-4 text-sm">
+            <p>{blocked}</p>
+            <Button asChild size="sm">
+              <a href="/settings#billing">upgrade</a>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
         <TabsList>
           <TabsTrigger value="pdf">pdf</TabsTrigger>
@@ -69,13 +98,13 @@ export default function UploadPage() {
         </TabsList>
 
         <TabsContent value="pdf">
-          <PdfForm wrap={wrap} busy={busy} />
+          <PdfForm wrap={wrap} busy={busy || Boolean(blocked)} />
         </TabsContent>
         <TabsContent value="text">
-          <TextForm wrap={wrap} busy={busy} />
+          <TextForm wrap={wrap} busy={busy || Boolean(blocked)} />
         </TabsContent>
         <TabsContent value="url">
-          <UrlForm wrap={wrap} busy={busy} />
+          <UrlForm wrap={wrap} busy={busy || Boolean(blocked)} />
         </TabsContent>
       </Tabs>
 

@@ -6,6 +6,7 @@ import { and, asc, eq } from "drizzle-orm";
 import { db } from "../lib/state";
 import { currentWorkspace } from "../lib/auth";
 import { encryptHeaders, maskHeaders } from "../lib/tool-headers";
+import { toolsAllowed } from "../lib/plans";
 
 export const toolsRouter = new Hono();
 
@@ -55,6 +56,12 @@ toolsRouter.get("/", async (c) => {
 
 toolsRouter.post("/", zValidator("json", Body), async (c) => {
   const ws = currentWorkspace(c);
+  if (!toolsAllowed(ws)) {
+    return c.json(
+      { error: "Tools are available on Starter for production assistants." },
+      402,
+    );
+  }
   const body = c.req.valid("json");
   const [created] = await db
     .insert(toolsTable)
@@ -75,6 +82,12 @@ toolsRouter.patch(
     const ws = currentWorkspace(c);
     const id = c.req.param("id");
     const patch = c.req.valid("json");
+    if (patch.enabled === true && !toolsAllowed(ws)) {
+      return c.json(
+        { error: "Tools are available on Starter for production assistants." },
+        402,
+      );
+    }
 
     let nextHeaders: Record<string, string> | undefined;
     if (patch.headers) {

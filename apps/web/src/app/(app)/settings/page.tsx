@@ -17,6 +17,7 @@ import { IdentitySection } from "./_components/identity-section";
 import { LimitsSection } from "./_components/limits-section";
 import { BansSection } from "./_components/bans-section";
 import { EmbedAllowlist } from "./_components/embed-allowlist";
+import { BillingSection } from "./_components/billing-section";
 
 // Models we expose in the dropdown. The DB column accepts any string so
 // power-users can paste whatever they want, but typical usage picks one of
@@ -283,6 +284,10 @@ export default function SettingsPage() {
         />
       </Section>
 
+      <Section title="Billing" id="billing">
+        <BillingSection workspace={ws} system={system} />
+      </Section>
+
       <Section title="User identity" id="user-identity">
         <IdentitySection
           workspaceId={ws.id}
@@ -393,4 +398,3 @@ function KeyStatusDot({ ok }: { ok: boolean }) {
     />
   );
 }
-

@@ -100,7 +100,7 @@ export default function TermsPage() {
       <Section heading="service availability">
         <p>
           We aim for high availability but provide the service "as is"
-          without uptime guarantees on free or Pro plans. Scale tier
+          without uptime guarantees on free or Starter plans. Custom plan
           customers may negotiate a written SLA.
         </p>
       </Section>

@@ -11,6 +11,7 @@ import {
 } from "@helia/rag";
 import { db, log } from "../lib/state";
 import { currentWorkspace } from "../lib/auth";
+import { sourceLimitError } from "../lib/plans";
 
 export const sourcesRouter = new Hono();
 
@@ -66,7 +67,11 @@ sourcesRouter.post("/pdf", async (c) => {
   if (file.size > 50 * 1024 * 1024)
     return c.json({ error: "file too large (max 50 MB)" }, 400);
 
-  const workspaceId = currentWorkspace(c).id;
+  const ws = currentWorkspace(c);
+  const limit = await sourceLimitError(ws);
+  if (limit) return c.json(limit, 402);
+
+  const workspaceId = ws.id;
   const [source] = await db
     .insert(sources)
     .values({ workspaceId, name: file.name, type: "pdf", status: "queued" })
@@ -96,7 +101,11 @@ const TextBody = z.object({
 
 sourcesRouter.post("/text", zValidator("json", TextBody), async (c) => {
   const { name, text } = c.req.valid("json");
-  const workspaceId = currentWorkspace(c).id;
+  const ws = currentWorkspace(c);
+  const limit = await sourceLimitError(ws);
+  if (limit) return c.json(limit, 402);
+
+  const workspaceId = ws.id;
   const [source] = await db
     .insert(sources)
     .values({ workspaceId, name, type: "text", status: "queued" })
@@ -127,7 +136,11 @@ sourcesRouter.post("/url", zValidator("json", UrlBody), async (c) => {
     return c.json({ error: "only http(s) URLs supported" }, 400);
   }
 
-  const workspaceId = currentWorkspace(c).id;
+  const ws = currentWorkspace(c);
+  const limit = await sourceLimitError(ws);
+  if (limit) return c.json(limit, 402);
+
+  const workspaceId = ws.id;
   const [source] = await db
     .insert(sources)
     .values({

@@ -23,7 +23,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/sonner";
-import { api, HEADER_KEEP, type HeliaTool } from "@/lib/api";
+import {
+  api,
+  HEADER_KEEP,
+  hostedToolsAllowed,
+  type HeliaTool,
+  type SystemInfo,
+  type Workspace,
+} from "@/lib/api";
 import { ToolDialog, type ToolDraft } from "./_components/tool-dialog";
 
 const EMPTY_DRAFT: ToolDraft = {
@@ -40,6 +47,8 @@ const EMPTY_DRAFT: ToolDraft = {
 
 export default function ToolsPage() {
   const [tools, setTools] = useState<HeliaTool[]>([]);
+  const [workspace, setWorkspace] = useState<Workspace | null>(null);
+  const [system, setSystem] = useState<SystemInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<HeliaTool | null>(null);
@@ -48,6 +57,12 @@ export default function ToolsPage() {
   const refresh = async () => {
     try {
       const { tools: rows } = await api.listTools();
+      const [workspaceRes, systemRes] = await Promise.all([
+        api.getWorkspace(),
+        api.getSystem(),
+      ]);
+      setWorkspace(workspaceRes.workspace);
+      setSystem(systemRes);
       // newest first
       setTools(
         [...rows].sort(
@@ -65,11 +80,13 @@ export default function ToolsPage() {
   }, []);
 
   const openCreate = () => {
+    if (toolsLocked) return;
     setEditing(null);
     setDialogOpen(true);
   };
 
   const openEdit = (t: HeliaTool) => {
+    if (toolsLocked) return;
     setEditing(t);
     setDialogOpen(true);
   };
@@ -104,6 +121,7 @@ export default function ToolsPage() {
   };
 
   const toggleEnabled = async (t: HeliaTool, next: boolean) => {
+    if (toolsLocked && next) return;
     // optimistic
     setTools((prev) =>
       prev.map((row) => (row.id === t.id ? { ...row, enabled: next } : row)),
@@ -116,6 +134,9 @@ export default function ToolsPage() {
     }
   };
 
+  const toolsLocked =
+    workspace && system ? !hostedToolsAllowed(workspace, system) : false;
+
   return (
     <div className="space-y-6">
       <header className="sticky top-0 z-20 -mx-4 flex items-end justify-between sm:-mx-6 gap-4 border-b border-border-subtle bg-background px-4 py-3 sm:px-6">
@@ -125,10 +146,23 @@ export default function ToolsPage() {
             HTTP endpoints the agent can call.
           </p>
         </div>
-        <Button onClick={openCreate}>
+        <Button onClick={openCreate} disabled={toolsLocked}>
           <HugeiconsIcon icon={PlusSignIcon} size={14} /> add tool
         </Button>
       </header>
+
+      {toolsLocked && (
+        <Card>
+          <CardContent className="py-4 text-sm">
+            <span className="text-foreground">
+              Tools are available on Starter for production assistants.
+            </span>{" "}
+            <a href="/settings#billing" className="text-primary underline">
+              Upgrade to enable tools.
+            </a>
+          </CardContent>
+        </Card>
+      )}
 
       {loading ? (
         <ul className="divide-y divide-border rounded-md border border-border">
@@ -147,7 +181,7 @@ export default function ToolsPage() {
         <Card>
           <CardContent className="flex flex-col items-center gap-4 py-10">
             <p className="text-sm text-muted-foreground">No tools yet.</p>
-            <Button onClick={openCreate}>
+            <Button onClick={openCreate} disabled={toolsLocked}>
               <HugeiconsIcon icon={PlusSignIcon} size={14} /> add your first tool
             </Button>
           </CardContent>
@@ -175,12 +209,14 @@ export default function ToolsPage() {
                 <Switch
                   checked={t.enabled}
                   onCheckedChange={(v) => toggleEnabled(t, v)}
+                  disabled={toolsLocked}
                   aria-label={`${t.enabled ? "disable" : "enable"} ${t.name}`}
                 />
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => openEdit(t)}
+                  disabled={toolsLocked}
                   aria-label="Edit"
                 >
                   <HugeiconsIcon icon={PencilEdit01Icon} size={16} />

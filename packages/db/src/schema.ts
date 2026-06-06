@@ -21,6 +21,19 @@ export const EMBEDDING_DIMENSIONS = 1536;
 export const workspaces = pgTable("workspaces", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
+  // Hosted billing state. Self-host installs can ignore these fields.
+  plan: text("plan", { enum: ["free", "starter"] })
+    .default("free")
+    .notNull(),
+  billingStatus: text("billing_status", {
+    enum: ["none", "active", "trialing", "past_due", "canceled"],
+  })
+    .default("none")
+    .notNull(),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  stripePriceId: text("stripe_price_id"),
+  currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
   // BCP-47 locale (en, fr, ...). Used in the agent system prompt.
   // FTS uses 'simple' config (language-agnostic) for now.
   locale: text("locale").default("en").notNull(),
@@ -66,7 +79,7 @@ export const workspaces = pgTable("workspaces", {
   // Counts against the sum of chat_traces.totalTokens since the 1st of the
   // current month. Owners raise it from /settings.
   tokenQuotaMonthly: integer("token_quota_monthly")
-    .default(1_000_000)
+    .default(100_000)
     .notNull(),
   // Domains allowed to embed the widget for this workspace. Enforced
   // server-side on /v1/chat and /v1/widget/config. Empty array = allow

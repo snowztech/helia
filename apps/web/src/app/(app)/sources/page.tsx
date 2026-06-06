@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { api } from "@/lib/api";
+import { api, hostedSourceLimit } from "@/lib/api";
 import { AutoRefresh } from "../_components/auto-refresh";
 import { StatusBadge } from "../_components/status-badge";
 import { DeleteSourceButton } from "../_components/delete-source-button";
@@ -10,14 +10,22 @@ export const dynamic = "force-dynamic";
 
 export default async function SourcesPage() {
   let sources: Awaited<ReturnType<typeof api.listSources>>["sources"] = [];
+  let sourceLimit: number | null = null;
   let apiError: string | null = null;
   try {
-    const res = await api.listSources();
+    const [res, workspace, system] = await Promise.all([
+      api.listSources(),
+      api.getWorkspace(),
+      api.getSystem(),
+    ]);
     sources = res.sources;
+    sourceLimit = hostedSourceLimit(workspace.workspace, system);
   } catch (err) {
     apiError = String(err);
   }
 
+  const sourceLimitReached =
+    sourceLimit !== null && sources.length >= sourceLimit;
   const hasInFlight = sources.some(
     (s) => s.status === "queued" || s.status === "processing",
   );
@@ -33,10 +41,28 @@ export default async function SourcesPage() {
             Docs, web pages, and text the agent can search.
           </p>
         </div>
-        <Button asChild>
-          <Link href="/upload">+ add source</Link>
-        </Button>
+        {sourceLimitReached ? (
+          <Button disabled>+ add source</Button>
+        ) : (
+          <Button asChild>
+            <Link href="/upload">+ add source</Link>
+          </Button>
+        )}
       </header>
+
+      {sourceLimitReached && (
+        <Card>
+          <CardContent className="py-4 text-sm">
+            <span className="text-foreground">
+              Free includes {sourceLimit} sources.
+            </span>{" "}
+            <Link href="/settings#billing" className="text-primary underline">
+              Upgrade to Starter
+            </Link>{" "}
+            <span className="text-muted-foreground">for more.</span>
+          </CardContent>
+        </Card>
+      )}
 
       {apiError && (
         <Card>
@@ -52,9 +78,11 @@ export default async function SourcesPage() {
         <Card>
           <CardContent className="flex flex-col items-center gap-3 py-10">
             <p className="text-sm text-muted-foreground">No sources yet.</p>
-            <Button asChild size="sm" variant="outline">
-              <Link href="/upload">+ add source</Link>
-            </Button>
+            {!sourceLimitReached && (
+              <Button asChild size="sm" variant="outline">
+                <Link href="/upload">+ add source</Link>
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (

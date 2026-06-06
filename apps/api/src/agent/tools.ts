@@ -2,11 +2,12 @@ import { tool } from "ai";
 import { z } from "zod";
 import { and, eq } from "drizzle-orm";
 import type { AgentToolSet } from "@helia/agent";
-import { tools as toolsTable } from "@helia/db";
+import { tools as toolsTable, workspaces } from "@helia/db";
 import { retrieve } from "@helia/rag";
-import { db, log } from "../lib/state";
+import { db, HELIA_MODE, log } from "../lib/state";
 import { buildHttpTool } from "./http-tool";
 import type { Identity } from "../routes/chat";
+import { toolsAllowed } from "../lib/plans";
 
 /**
  * Concrete tool implementations for a workspace.
@@ -64,6 +65,15 @@ export async function makeAgentTools(
       },
     }),
   };
+
+  if (HELIA_MODE === "hosted") {
+    const [ws] = await db
+      .select()
+      .from(workspaces)
+      .where(eq(workspaces.id, workspaceId))
+      .limit(1);
+    if (!ws || !toolsAllowed(ws)) return result;
+  }
 
   const httpTools = await db
     .select()

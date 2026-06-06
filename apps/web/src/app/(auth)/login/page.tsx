@@ -1,17 +1,29 @@
 "use client";
 
+import { Suspense } from "react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api, ApiError } from "@/lib/api";
+import { safeNextPath, withNext } from "@/lib/redirect";
 import { PasswordInput } from "../_components/password-input";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = safeNextPath(searchParams.get("next"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -21,7 +33,7 @@ export default function LoginPage() {
     setBusy(true);
     try {
       await api.login({ email, password });
-      router.replace("/");
+      router.replace(next ?? "/");
     } catch (err) {
       const msg =
         err instanceof ApiError && err.status === 401
@@ -79,7 +91,10 @@ export default function LoginPage() {
 
       <p className="text-sm text-muted-foreground">
         No account?{" "}
-        <Link href="/signup" className="text-primary hover:underline">
+        <Link
+          href={withNext("/signup", next)}
+          className="text-primary hover:underline"
+        >
           Create one
         </Link>
       </p>

@@ -192,6 +192,12 @@ Two Railway services + external Postgres. No server admin.
   HELIA_SIGNUP=open
   RESEND_API_KEY=re_...                 # optional
   HELIA_EMAIL_FROM=Helia <no-reply@gethelia.dev>
+  STRIPE_SECRET_KEY=sk_live_...         # hosted billing, optional until launch
+  STRIPE_WEBHOOK_SECRET=whsec_...
+  STRIPE_STARTER_PRICE_ID=price_...
+  BILLING_SUCCESS_URL=https://app.gethelia.dev/settings?billing=success
+  BILLING_CANCEL_URL=https://app.gethelia.dev/settings?billing=cancel
+  BILLING_PORTAL_RETURN_URL=https://app.gethelia.dev/settings
   NODE_ENV=production
   PORT=4000
   ```
@@ -201,6 +207,23 @@ Two Railway services + external Postgres. No server admin.
 
 - Custom domain → `api.gethelia.dev`. Railway gives you a CNAME target;
   add it at your DNS host.
+- Stripe webhook endpoint → `https://api.gethelia.dev/v1/billing/webhook`.
+  Subscribe to checkout session and customer subscription events so Helia can
+  upgrade/downgrade workspace quotas automatically.
+
+#### Stripe setup checklist
+
+1. Create a Stripe product named `Helia Starter`.
+2. Create a recurring monthly price for `$29/mo`.
+3. Copy that price id to `STRIPE_STARTER_PRICE_ID`.
+4. Create a webhook endpoint:
+   `https://api.gethelia.dev/v1/billing/webhook`.
+5. Subscribe it to:
+   `checkout.session.completed`,
+   `customer.subscription.created`,
+   `customer.subscription.updated`, and
+   `customer.subscription.deleted`.
+6. Copy the webhook signing secret to `STRIPE_WEBHOOK_SECRET`.
 
 ### 3. Railway: web service
 

@@ -61,6 +61,12 @@ export type WidgetTheme = "light" | "dark" | "auto";
 export type Workspace = {
   id: string;
   name: string;
+  plan: "free" | "starter";
+  billingStatus: "none" | "active" | "trialing" | "past_due" | "canceled";
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
+  stripePriceId: string | null;
+  currentPeriodEnd: string | null;
   locale: string;
   model: string;
   brandPrimary: string;
@@ -108,6 +114,7 @@ export type SystemInfo = {
   provider: "openai";
   model: string;
   keyConfigured: boolean;
+  billingConfigured: boolean;
   allowedOrigins: string[] | "wildcard" | "dev-localhost";
   nodeEnv: string;
 };
@@ -140,7 +147,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     const text = await res.text().catch(() => res.statusText);
-    throw new ApiError(res.status, path, `${res.status} ${path}: ${text}`);
+    let message = text;
+    try {
+      const json = JSON.parse(text) as { error?: unknown };
+      if (typeof json.error === "string") message = json.error;
+    } catch {
+      // keep raw response text
+    }
+    throw new ApiError(res.status, path, `${res.status} ${path}: ${message}`);
   }
   return res.json() as Promise<T>;
 }
@@ -166,7 +180,18 @@ export const api = {
       credentials: "include",
       body: fd,
     });
-    if (!res.ok) throw new Error(`upload pdf failed: ${res.status}`);
+    if (!res.ok) {
+      const text = await res.text().catch(() => res.statusText);
+      let message: string | null = null;
+      try {
+        const json = JSON.parse(text) as { error?: unknown };
+        if (typeof json.error === "string") message = json.error;
+      } catch {
+        // fall through
+      }
+      if (message) throw new Error(message);
+      throw new Error(`upload pdf failed: ${res.status}`);
+    }
     return res.json() as Promise<{ source: Source; error?: string }>;
   },
 
@@ -222,6 +247,12 @@ export const api = {
   getMetrics: () => request<Metrics>("/v1/metrics"),
 
   getUsage: () => request<Usage>("/v1/metrics/usage"),
+
+  createBillingCheckout: () =>
+    request<{ url: string }>("/v1/billing/checkout", { method: "POST" }),
+
+  createBillingPortal: () =>
+    request<{ url: string }>("/v1/billing/portal", { method: "POST" }),
 
   listConversations: (opts?: { limit?: number; errors?: boolean }) => {
     const q = new URLSearchParams();
@@ -351,6 +382,23 @@ export type Usage = {
   tokenQuotaMonthly: number;
   monthResetsAt: string;
 };
+
+export const FREE_SOURCE_LIMIT = 3;
+export const STARTER_SOURCE_LIMIT = 50;
+
+export function hostedSourceLimit(workspace: Workspace, system: SystemInfo): number | null {
+  if (system.mode !== "hosted") return null;
+  return workspace.plan === "starter" ? STARTER_SOURCE_LIMIT : FREE_SOURCE_LIMIT;
+}
+
+export function hostedToolsAllowed(workspace: Workspace, system: SystemInfo): boolean {
+  if (system.mode !== "hosted") return true;
+  return (
+    workspace.plan === "starter" &&
+    (workspace.billingStatus === "active" ||
+      workspace.billingStatus === "trialing")
+  );
+}
 
 export type ConversationSummary = {
   id: string;

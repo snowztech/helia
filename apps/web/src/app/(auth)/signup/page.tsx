@@ -1,17 +1,29 @@
 "use client";
 
+import { Suspense } from "react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api, ApiError } from "@/lib/api";
+import { safeNextPath, withNext } from "@/lib/redirect";
 import { PasswordInput } from "../_components/password-input";
 
 export default function SignupPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignupForm />
+    </Suspense>
+  );
+}
+
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = safeNextPath(searchParams.get("next"));
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,7 +42,7 @@ export default function SignupPage() {
         password,
         name: name.trim() || undefined,
       });
-      router.replace("/");
+      router.replace(next ?? "/");
     } catch (err) {
       const msg =
         err instanceof ApiError && err.status === 409
@@ -95,7 +107,10 @@ export default function SignupPage() {
 
       <p className="text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link href="/login" className="text-primary hover:underline">
+        <Link
+          href={withNext("/login", next)}
+          className="text-primary hover:underline"
+        >
           Sign in
         </Link>
       </p>

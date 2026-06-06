@@ -5,31 +5,33 @@ const TIERS = [
     name: "free",
     price: "$0",
     suffix: "forever",
-    blurb: "Hosted. Get going in a minute.",
+    blurb: "Hosted. Test Helia with real traffic.",
     bullets: [
-      "1M tokens / mo",
-      "Unlimited sources",
-      "Floating + inline widget",
-      "Branding, locale, tools",
+      "100k tokens / mo",
+      "3 sources",
+      "Floating + embedded widget",
+      "Branding and locale",
+      "Signed user identity",
       "Community support",
     ],
     cta: { label: "start free", href: `${APP_URL}/signup` },
     accent: false,
   },
   {
-    name: "pro",
-    price: "$19",
+    name: "starter",
+    price: "$29",
     suffix: "/ workspace / mo",
-    blurb: "More headroom + priority support.",
+    blurb: "For production assistants.",
     bullets: [
-      "10M tokens / mo",
-      "Everything in Free",
+      "1M tokens / mo",
+      "50 sources",
+      "Production tools",
+      "Higher traffic limits",
       "Priority email support",
-      "Early access to team features",
     ],
     cta: {
-      label: "contact us",
-      href: "mailto:gethelia@protonmail.com?subject=Helia%20Pro",
+      label: "subscribe",
+      href: `${APP_URL}/checkout/starter`,
     },
     accent: true,
   },
@@ -39,10 +41,10 @@ const TIERS = [
     suffix: "AGPL-3.0",
     blurb: "Run Helia on your own infra. Same code.",
     bullets: [
-      "Unlimited everything",
-      "Docker compose, Railway, Fly",
+      "Run on your own infra",
       "Bring your own OpenAI key",
       "No vendor lock-in",
+      "Community support",
     ],
     cta: {
       label: "view on github",
@@ -59,7 +61,8 @@ export function Pricing() {
         <span className="eyebrow justify-center">pricing</span>
         <h2 className="text-3xl md:text-4xl">simple, predictable.</h2>
         <p className="mx-auto max-w-md text-sm leading-relaxed text-muted">
-          Start free. Email us when you're ready for Pro. Self-host any time.
+          Start hosted for free, upgrade when traffic grows, or self-host any
+          time.
         </p>
       </div>
 

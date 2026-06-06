@@ -52,3 +52,14 @@ export const CORS_POLICY: CorsPolicy =
 export type HeliaMode = "hosted" | "self_host";
 export const HELIA_MODE: HeliaMode =
   process.env.HELIA_MODE === "hosted" ? "hosted" : "self_host";
+
+export const FREE_TOKEN_QUOTA = 100_000;
+export const STARTER_TOKEN_QUOTA = 1_000_000;
+
+export function billingConfigured(): boolean {
+  return Boolean(
+    process.env.STRIPE_SECRET_KEY &&
+      process.env.STRIPE_WEBHOOK_SECRET &&
+      process.env.STRIPE_STARTER_PRICE_ID,
+  );
+}

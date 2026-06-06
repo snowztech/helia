@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { CORS_POLICY, HELIA_MODE } from "../lib/state";
+import { billingConfigured, CORS_POLICY, HELIA_MODE } from "../lib/state";
 import { currentWorkspace } from "../lib/auth";
 import rootPkg from "../../../../package.json";
 
@@ -28,6 +28,7 @@ systemRouter.get("/", async (c) => {
     provider,
     model: ws.model,
     keyConfigured,
+    billingConfigured: billingConfigured(),
     allowedOrigins,
     nodeEnv: process.env.NODE_ENV ?? "development",
   });

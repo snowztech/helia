@@ -26,7 +26,10 @@ export function middleware(req: NextRequest) {
 
   if (!hasSession && !isAuthPath) {
     const url = req.nextUrl.clone();
+    const next = `${pathname}${req.nextUrl.search}`;
     url.pathname = "/login";
+    url.search = "";
+    url.searchParams.set("next", next);
     return NextResponse.redirect(url);
   }
 

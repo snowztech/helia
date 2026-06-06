@@ -114,6 +114,7 @@ const PUBLIC_PATHS = new Set([
   "/v1/auth/me",
   "/v1/auth/forgot-password",
   "/v1/auth/reset-password",
+  "/v1/billing/webhook",
 ]);
 
 export const authMiddleware: MiddlewareHandler = async (c, next) => {
@@ -152,4 +153,3 @@ export function currentWorkspace(c: Context): Workspace {
   }
   return ws;
 }
-
