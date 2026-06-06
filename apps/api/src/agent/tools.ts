@@ -35,19 +35,25 @@ export async function makeAgentTools(
           ),
       }),
       execute: async ({ query }) => {
+        let retrievalMetrics: unknown = null;
         const chunks = await retrieve(db, workspaceId, query, {
           finalTop: 5,
           minScore: 0.005,
+          onMetrics: (metrics) => {
+            retrievalMetrics = metrics;
+          },
         });
         if (chunks.length === 0) {
           return {
             query,
             results: [],
+            metrics: retrievalMetrics,
             note: "No relevant chunks found. Tell the user honestly that the knowledge base does not cover this.",
           };
         }
         return {
           query,
+          metrics: retrievalMetrics,
           results: chunks.map((c, i) => ({
             index: i + 1,
             chunkId: c.id,

@@ -341,6 +341,8 @@ export type Metrics = {
   messagesMonth: number;
   messagesTotal: number;
   avgLatencyMs: number;
+  p95LatencyMs: number;
+  errorsMonth: number;
   tokensMonth: number;
 };
 

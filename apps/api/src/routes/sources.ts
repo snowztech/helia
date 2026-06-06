@@ -3,7 +3,12 @@ import { zValidator } from "@hono/zod-validator";
 import { desc, eq, asc } from "drizzle-orm";
 import { z } from "zod";
 import { sourceEvents, sources } from "@helia/db";
-import { runIngestPdf, runIngestText, runIngestUrl } from "@helia/rag";
+import {
+  DEFAULT_INGEST_LIMITS,
+  runIngestPdf,
+  runIngestText,
+  runIngestUrl,
+} from "@helia/rag";
 import { db, log } from "../lib/state";
 import { currentWorkspace } from "../lib/auth";
 
@@ -82,7 +87,11 @@ sourcesRouter.post("/pdf", async (c) => {
 
 const TextBody = z.object({
   name: z.string().trim().min(1),
-  text: z.string().trim().min(20),
+  text: z
+    .string()
+    .trim()
+    .min(20)
+    .max(DEFAULT_INGEST_LIMITS.maxSourceChars),
 });
 
 sourcesRouter.post("/text", zValidator("json", TextBody), async (c) => {

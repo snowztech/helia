@@ -186,7 +186,11 @@ function MetricGrid({
             ? `${(metrics.avgLatencyMs / 1000).toFixed(1)}s`
             : "—"
         }
-        hint="this month"
+        hint={
+          metrics.p95LatencyMs > 0
+            ? `p95 ${(metrics.p95LatencyMs / 1000).toFixed(1)}s`
+            : "this month"
+        }
       />
     </div>
   );

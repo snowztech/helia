@@ -22,6 +22,19 @@ export type IngestContext = {
   db: Db;
   workspaceId: string;
   sourceId: string;
+  limits?: Partial<IngestLimits>;
+};
+
+export type IngestLimits = {
+  maxSourceChars: number;
+  maxChunksPerSource: number;
+};
+
+export const DEFAULT_INGEST_LIMITS: IngestLimits = {
+  // First-50 SMB default: enough for meaningful docs, small enough to keep
+  // one-process ingestion and pgvector predictable.
+  maxSourceChars: 1_000_000,
+  maxChunksPerSource: 2_000,
 };
 
 // ─── public orchestrators ────────────────────────────────────────────────
@@ -34,6 +47,7 @@ export async function runIngestPdf(ctx: IngestContext, buffer: Buffer): Promise<
 
     const doc = await extractPdf(buffer);
     await logEvent(ctx, "info", `Extracted ${doc.text.length} chars / ${doc.meta.pageCount ?? "?"} pages`);
+    enforceSourceTextLimit(ctx, doc.text.length);
 
     await persistDoc(ctx, doc, doc.meta.title ?? "PDF");
     await markReady(ctx, {
@@ -53,6 +67,7 @@ export async function runIngestText(ctx: IngestContext, text: string): Promise<v
     await clearExistingChunks(ctx);
 
     const doc = extractPlainText(text);
+    enforceSourceTextLimit(ctx, doc.text.length);
     await persistDoc(ctx, doc, "text");
     await markReady(ctx, { contentChars: doc.text.length });
   } catch (err) {
@@ -89,9 +104,12 @@ export async function runIngestUrl(
     }
 
     const total = pages.length;
+    let totalChunks = 0;
     for (let i = 0; i < pages.length; i++) {
       const p = pages[i]!;
       const pieces = chunkText(p.text);
+      totalChunks += pieces.length;
+      enforceChunkLimit(ctx, totalChunks);
       const docTitle = p.title ?? p.url;
       const enriched = pieces.map((piece) => ({
         ...piece,
@@ -128,6 +146,7 @@ async function persistDoc(
 ): Promise<void> {
   const pieces = chunkText(doc.text);
   if (pieces.length === 0) throw new Error("Extraction produced no content");
+  enforceChunkLimit(ctx, pieces.length);
   await logEvent(ctx, "info", `Chunked into ${pieces.length} pieces`);
 
   const enriched: EnrichedChunk[] = pieces.map((p) => ({
@@ -214,4 +233,29 @@ async function logEvent(
 function errorMessage(err: unknown): string {
   if (err instanceof Error) return err.message;
   return String(err);
+}
+
+function limits(ctx: IngestContext): IngestLimits {
+  return {
+    ...DEFAULT_INGEST_LIMITS,
+    ...ctx.limits,
+  };
+}
+
+function enforceSourceTextLimit(ctx: IngestContext, chars: number): void {
+  const max = limits(ctx).maxSourceChars;
+  if (chars > max) {
+    throw new Error(
+      `Source text is too large (${chars.toLocaleString()} chars, max ${max.toLocaleString()})`,
+    );
+  }
+}
+
+function enforceChunkLimit(ctx: IngestContext, chunks: number): void {
+  const max = limits(ctx).maxChunksPerSource;
+  if (chunks > max) {
+    throw new Error(
+      `Source creates too many chunks (${chunks.toLocaleString()}, max ${max.toLocaleString()})`,
+    );
+  }
 }

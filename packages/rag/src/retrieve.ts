@@ -14,12 +14,24 @@ export type RetrievedChunk = {
   score: number;
 };
 
+export type RetrievalMetrics = {
+  queryLength: number;
+  vectorTop: number;
+  ftsTop: number;
+  finalTop: number;
+  resultCount: number;
+  embedMs: number;
+  sqlMs: number;
+  totalMs: number;
+};
+
 export type RetrieveOptions = {
   vectorTop?: number;     // candidates from vector search (default 20)
   ftsTop?: number;        // candidates from full-text (default 20)
   finalTop?: number;      // returned after fusion (default 5)
   rrfK?: number;          // RRF constant (default 60)
   minScore?: number;      // skip results below this score (default 0)
+  onMetrics?: (metrics: RetrievalMetrics) => void;
 };
 
 /**
@@ -42,9 +54,13 @@ export async function retrieve(
   const rrfK = opts.rrfK ?? 60;
   const minScore = opts.minScore ?? 0;
 
+  const startedAt = Date.now();
+  const embedStartedAt = Date.now();
   const vec = await embedQuery(query);
+  const embedMs = Date.now() - embedStartedAt;
   const vecLiteral = `[${vec.join(",")}]`;
 
+  const sqlStartedAt = Date.now();
   const rows = await db.execute(sql`
     WITH vec AS (
       SELECT id,
@@ -77,6 +93,7 @@ export async function retrieve(
     ORDER BY score DESC
     LIMIT ${finalTop};
   `);
+  const sqlMs = Date.now() - sqlStartedAt;
 
   const results = (rows as unknown as Array<{
     id: string;
@@ -90,5 +107,17 @@ export async function retrieve(
     score: typeof r.score === "string" ? parseFloat(r.score) : r.score,
   }));
 
-  return results.filter((r) => r.score >= minScore);
+  const filtered = results.filter((r) => r.score >= minScore);
+  opts.onMetrics?.({
+    queryLength: query.length,
+    vectorTop,
+    ftsTop,
+    finalTop,
+    resultCount: filtered.length,
+    embedMs,
+    sqlMs,
+    totalMs: Date.now() - startedAt,
+  });
+
+  return filtered;
 }

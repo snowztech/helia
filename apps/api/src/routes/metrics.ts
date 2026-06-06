@@ -62,7 +62,9 @@ metricsRouter.get("/", async (c) => {
       conversations: distinctConv,
       messages: turnsCount,
       avgLatency: sql<number>`coalesce(avg(total_latency_ms), 0)::int`,
+      p95Latency: sql<number>`coalesce(percentile_cont(0.95) within group (order by total_latency_ms), 0)::int`,
       totalTokens: sql<number>`coalesce(sum(total_tokens), 0)::int`,
+      errors: sql<number>`count(*) filter (where error is not null)::int`,
     })
     .from(chatTraces)
     .where(
@@ -85,6 +87,8 @@ metricsRouter.get("/", async (c) => {
     messagesMonth: monthRow?.messages ?? 0,
     messagesTotal: totalRow?.messages ?? 0,
     avgLatencyMs: monthRow?.avgLatency ?? 0,
+    p95LatencyMs: monthRow?.p95Latency ?? 0,
+    errorsMonth: monthRow?.errors ?? 0,
     tokensMonth: monthRow?.totalTokens ?? 0,
   });
 });

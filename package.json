@@ -11,6 +11,7 @@
     "build": "pnpm -r build",
     "sdk:check": "pnpm --filter @gethelia/widget typecheck && pnpm --filter @gethelia/server typecheck && pnpm --filter @gethelia/react typecheck && pnpm --filter @gethelia/widget build && pnpm --filter @gethelia/server build && pnpm --filter @gethelia/react build",
     "sdk:pack": "pnpm --filter @gethelia/widget pack && pnpm --filter @gethelia/server pack && pnpm --filter @gethelia/react pack",
+    "rag:eval": "pnpm --filter @helia/rag eval",
     "release:app": "node scripts/release-app.mjs",
     "release:sdk": "node scripts/release-sdk.mjs",
     "start:api": "pnpm --filter @helia/api start",

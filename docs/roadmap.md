@@ -39,6 +39,9 @@ Today’s retrieval is hybrid vector + Postgres full-text with RRF. Good
 enough to ship, but not yet objectively measured. Upgrades that move
 quality without rewriting the stack, in order of ROI:
 
+The operational bar for the first 50 SMB workspaces lives in
+[`docs/rag-readiness.md`](./rag-readiness.md).
+
 1. **Eval harness** — small offline set of (question, expected source)
    per workspace. Run before deploys and before ranking changes.
 2. **Reranker** — top-50 candidates → cross-encoder → top-5 to LLM.
